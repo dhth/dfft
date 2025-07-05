@@ -11,6 +11,7 @@ alias jp := publish-dry
 alias l := lint
 alias lf := lint-fix
 alias r := run
+alias re := review
 alias t := test
 alias yf := yaml-fmt
 
@@ -56,6 +57,9 @@ test:
 run:
   cargo run
 
+review:
+  cargo insta test --review
+
 actionlint:
   actionlint
 
@@ -63,6 +67,7 @@ yaml-fmt:
   yamlfmt $(git ls-files '*.yml')
 
 a:
+  cargo check --all-targets
   cargo fmt --all
   cargo clippy --all-targets
   cargo nextest run

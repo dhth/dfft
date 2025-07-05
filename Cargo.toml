@@ -21,4 +21,8 @@ console = "0.16.0"
 ignore = "0.4.23"
 notify = "8.1.0"
 notify-debouncer-full = "0.5.0"
-similar = "2.7.0"
+similar = { version = "2.7.0", features = [ "inline" ] }
+
+[dev-dependencies]
+insta = "1.43.1"
+strip-ansi-escapes = "0.2.1"
