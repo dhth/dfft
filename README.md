@@ -9,7 +9,7 @@
 outputs them as they happen.
 
 > `dfft` is very early in the development process, and is not ready for use.
-> It's behaviour and interface is likely to change for a while.
+> Its behaviour and interface is likely to change for a while.
 
 Todo
 ---
