@@ -1,5 +1,6 @@
 use anyhow::Context;
 use console::Style;
+use ignore::gitignore::Gitignore;
 use ignore::gitignore::GitignoreBuilder;
 use notify::EventKind;
 use notify::RecursiveMode;
@@ -8,7 +9,7 @@ use notify_debouncer_full::new_debouncer;
 use similar::TextDiff;
 use std::collections::HashMap;
 use std::fs;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::time::Duration;
 
 const READ_LABEL: &str = "   READ   ";
@@ -16,24 +17,12 @@ const CREATED_LABEL: &str = " CREATED  ";
 const MODIFIED_LABEL: &str = " MODIFIED ";
 const REMOVED_LABEL: &str = " REMOVED  ";
 const ERROR_LABEL: &str = "  ERROR   ";
+const GITIGNORE_PATH: &str = ".gitignore";
+const DFFTIGNORE_PATH: &str = ".dfftignore";
 
 fn main() -> anyhow::Result<()> {
     let root = std::fs::canonicalize(".")?;
-    let mut builder = GitignoreBuilder::new(&root);
-
-    let gitignore_path = PathBuf::from(".gitignore");
-    let gitignore = if gitignore_path.exists() {
-        if let Some(e) = builder.add(".gitignore") {
-            return Err(anyhow::anyhow!("couldn't parse .gitignore file: {e}"));
-        }
-        Some(
-            builder
-                .build()
-                .context("couldn't set up .gitignore builder")?,
-        )
-    } else {
-        None
-    };
+    let gitignore = get_ignore(&root)?;
 
     let read = Style::new().black().on_white().bold().apply_to(READ_LABEL);
     let created = Style::new()
@@ -138,6 +127,43 @@ fn main() -> anyhow::Result<()> {
     }
 
     Ok(())
+}
+
+// TODO: consider .git/index as well
+fn get_ignore<P>(root: P) -> anyhow::Result<Option<Gitignore>>
+where
+    P: AsRef<Path>,
+{
+    let gitignore_path = PathBuf::from(GITIGNORE_PATH);
+    let dfftignore_path = PathBuf::from(DFFTIGNORE_PATH);
+
+    if !gitignore_path.exists()
+        && !gitignore_path.is_file()
+        && !dfftignore_path.exists()
+        && !dfftignore_path.is_file()
+    {
+        return Ok(None);
+    }
+
+    let mut builder = GitignoreBuilder::new(&root);
+
+    if gitignore_path.exists() && gitignore_path.is_file() {
+        if let Some(e) = builder.add(&gitignore_path) {
+            return Err(anyhow::anyhow!("couldn't parse .gitignore file: {e}"));
+        }
+    }
+
+    if dfftignore_path.exists() && dfftignore_path.is_file() {
+        if let Some(e) = builder.add(&dfftignore_path) {
+            return Err(anyhow::anyhow!("couldn't parse .dfftignore file: {e}"));
+        }
+    }
+
+    Ok(Some(
+        builder
+            .build()
+            .context("couldn't set up .gitignore builder")?,
+    ))
 }
 
 fn get_diff(old: &str, new: &str) -> Option<String> {

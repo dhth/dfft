@@ -8,11 +8,13 @@
 `dfft` (short for "diff-trail") watches for changes to files in a directory, and
 outputs them as they happen.
 
+> `dfft` is very early in the development process, and is not ready for use.
+> It's behaviour and interface is likely to change for a while.
+
 Todo
 ---
 
-- Add TUI
-- Show a better diff
-- Consider all `.gitignore` files in a repo
-- Consider `.git/index`
-- Add `dfft` specific ignore file
+- [ ] Add TUI
+- [ ] Show a better diff
+- [ ] Consider `.git/index`
+- [x] Consider `dfft` specific ignore file
