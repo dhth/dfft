@@ -1,0 +1,24 @@
+[package]
+name = "dfft"
+version = "0.1.0-alpha.1"
+edition = "2024"
+license = "MIT"
+description = "dfft shows you changes to files in a directory as they happen"
+keywords = [
+    "cli",
+    "diff",
+]
+categories = [
+    "command-line-utilities",
+]
+exclude = [
+    ".github",
+]
+
+[dependencies]
+anyhow = "1.0.98"
+console = "0.16.0"
+ignore = "0.4.23"
+notify = "8.1.0"
+notify-debouncer-full = "0.5.0"
+similar = "2.7.0"
