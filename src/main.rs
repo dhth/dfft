@@ -1,12 +1,13 @@
+mod diff;
 use anyhow::Context;
 use console::Style;
+use diff::get_diff;
 use ignore::gitignore::Gitignore;
 use ignore::gitignore::GitignoreBuilder;
 use notify::EventKind;
 use notify::RecursiveMode;
 use notify::event::{CreateKind, DataChange, ModifyKind, RemoveKind};
 use notify_debouncer_full::new_debouncer;
-use similar::TextDiff;
 use std::collections::HashMap;
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -95,17 +96,16 @@ fn main() -> anyhow::Result<()> {
 
                         if let Ok(contents) = fs::read_to_string(f).context("couldn't read file contents") {
                         let was_held = cache.insert(f.to_string_lossy().to_string(), contents.clone());
+                        println!("{} {path_str}", &modified);
                         match was_held {
                             Some(old) => {
                                 if let Some(diff) = get_diff(&old, &contents) {
-                                    println!("{} {path_str}", &modified);
-                                    println!("{}\n", get_diff_with_color(&diff));
+                                    println!("\n{diff}\n");
                                 }
                             }
-                            None => println!("{} {path_str}\nfirst snapshot captured, diffs will be available from now onwards\n", &modified),
+                            None => println!("\nfirst snapshot captured, diffs will be available from now onwards\n"),
                         }
                         }
-
                     }
                 }
                 EventKind::Remove(RemoveKind::File) => {
@@ -129,7 +129,6 @@ fn main() -> anyhow::Result<()> {
     Ok(())
 }
 
-// TODO: consider .git/index as well
 fn get_ignore<P>(root: P) -> anyhow::Result<Option<Gitignore>>
 where
     P: AsRef<Path>,
@@ -162,26 +161,6 @@ where
     Ok(Some(
         builder
             .build()
-            .context("couldn't set up .gitignore builder")?,
+            .context("couldn't set up a matcher for ignoring files")?,
     ))
-}
-
-fn get_diff(old: &str, new: &str) -> Option<String> {
-    let diff = TextDiff::from_lines(old, new).unified_diff().to_string();
-    if diff.is_empty() { None } else { Some(diff) }
-}
-
-fn get_diff_with_color(diff: &str) -> String {
-    diff.lines()
-        .map(|l| {
-            if l.starts_with("-") {
-                Style::new().red().apply_to(l).to_string()
-            } else if l.starts_with("+") {
-                Style::new().green().apply_to(l).to_string()
-            } else {
-                l.to_string()
-            }
-        })
-        .collect::<Vec<_>>()
-        .join("\n")
 }

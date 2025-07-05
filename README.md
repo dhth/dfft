@@ -15,6 +15,7 @@ Todo
 ---
 
 - [ ] Add TUI
-- [ ] Show a better diff
+- [x] Show a better diff
+- [ ] Add CLI help
 - [ ] Consider `.git/index`
 - [x] Consider `dfft` specific ignore file
