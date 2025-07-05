@@ -7,3 +7,12 @@
 
 `dfft` (short for "diff-trail") watches for changes to files in a directory, and
 outputs them as they happen.
+
+Todo
+---
+
+- Add TUI
+- Show a better diff
+- Consider all `.gitignore` files in a repo
+- Consider `.git/index`
+- Add `dfft` specific ignore file
