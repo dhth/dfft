@@ -1,5 +1,6 @@
 use super::common::*;
 use super::model::{Model, UserMessage};
+use crate::domain::{Change, ChangeKind, ModifiedResult};
 use ratatui::{
     Frame,
     layout::{Alignment, Constraint, Layout, Rect},
@@ -14,9 +15,7 @@ pub fn view(model: &mut Model, frame: &mut Frame) {
         return;
     }
 
-    match model.active_pane {
-        _ => render_changes_view(model, frame),
-    }
+    render_changes_view(model, frame)
 }
 
 fn render_terminal_too_small_view(dimensions: &TerminalDimensions, frame: &mut Frame) {
@@ -57,20 +56,35 @@ fn render_change(model: &Model, frame: &mut Frame, rect: Rect) {
 
     let maybe_selected_index = model.changes.state.selected();
 
-    let details = if let Some(selected_index) = maybe_selected_index {
+    let lines = if let Some(selected_index) = maybe_selected_index {
         let maybe_change = model.changes.items.get(selected_index);
         match maybe_change {
-            Some(change) => match &change.result {
-                Ok(diff) => diff,
-                Err(e) => e,
+            Some(change) => match &change.change.kind {
+                ChangeKind::Created(Ok(_)) => vec![Line::raw("created").gray()],
+                ChangeKind::Created(Err(e)) => {
+                    vec![Line::raw(format!("error reading file contents: {e}"))]
+                }
+                ChangeKind::Modified(Ok(result)) => match result {
+                    ModifiedResult::InitialSnapshot => {
+                        vec![Line::raw(
+                            "initial snapshot captured; diffs will be available from now onwards",
+                        )]
+                    }
+                    ModifiedResult::Diff(None) => vec![Line::raw("nothing changed")],
+                    ModifiedResult::Diff(Some(d)) => get_colored_diff(d),
+                },
+                ChangeKind::Modified(Err(e)) => {
+                    vec![Line::raw(format!("error reading file contents: {e}"))]
+                }
+                ChangeKind::Removed => vec![Line::raw("file removed")],
             },
-            None => "something went wrong",
+            None => vec![Line::raw("something went wrong")],
         }
     } else {
-        "change details will appear here"
+        vec![Line::raw("change details will appear here")]
     };
 
-    let details = Paragraph::new(details)
+    let details = Paragraph::new(lines)
         .block(
             Block::bordered()
                 .border_style(Style::default().fg(border_color))
@@ -88,6 +102,23 @@ fn render_change(model: &Model, frame: &mut Frame, rect: Rect) {
         .alignment(Alignment::Left);
 
     frame.render_widget(&details, rect);
+}
+
+fn get_colored_diff<'a>(diff: &'a str) -> Vec<Line<'a>> {
+    let mut lines = vec![];
+    for line in diff.lines() {
+        if line.starts_with("@@") {
+            lines.push(Line::raw(line).blue());
+        } else if line.starts_with("-") {
+            lines.push(Line::raw(line).red());
+        } else if line.starts_with("+") {
+            lines.push(Line::raw(line).green());
+        } else {
+            lines.push(Line::raw(line).gray());
+        }
+    }
+
+    lines
 }
 
 fn render_changes_list(model: &mut Model, frame: &mut Frame, rect: Rect) {

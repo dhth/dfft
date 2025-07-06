@@ -5,6 +5,8 @@ use super::model::*;
 use super::msg::{Msg, get_event_handling_msg};
 use super::update::update;
 use super::view::view;
+use crate::changes::listen_for_changes;
+use crate::domain::Change;
 use ratatui::Terminal;
 use ratatui::backend::CrosstermBackend;
 use std::collections::HashMap;
@@ -67,6 +69,12 @@ impl AppTui {
             handle_command(cmd.clone(), self.event_tx.clone()).await;
         }
 
+        let (changes_sender, mut changes_rec) = mpsc::channel::<Change>(100);
+
+        tokio::spawn(async move {
+            listen_for_changes(changes_sender.clone()).await;
+        });
+
         // first render
         self.model.render_counter += 1;
         self.terminal.draw(|f| view(&mut self.model, f))?;
@@ -75,7 +83,7 @@ impl AppTui {
             tokio::select! {
                 _instant = message_clear_interval.tick() => {
                     if self.model.user_message.is_some() {
-                        _ = self.event_tx.try_send(Msg::ClearUserMsg);
+                        _ = self.event_tx.try_send(Msg::ClearUserMessage);
                     }
                 }
 
@@ -93,6 +101,11 @@ impl AppTui {
                     for cmd in cmds {
                         handle_command(cmd.clone(), self.event_tx.clone()).await;
                     }
+                }
+
+                Some(change) = changes_rec.recv() => {
+                    let msg = Msg::ChangeReceived(change);
+                    let _ = self.event_tx.try_send(msg);
                 }
 
                 Ok(ready) = tokio::task::spawn_blocking(|| ratatui::crossterm::event::poll(Duration::from_millis(EVENT_POLL_DURATION_MS))) => {

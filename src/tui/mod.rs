@@ -1,4 +1,3 @@
-#![allow(dead_code, unused)]
 mod app;
 mod cmd;
 mod common;

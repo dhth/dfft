@@ -1,10 +1,11 @@
 use super::common::Pane;
 use super::model::Model;
+use crate::domain::Change;
 use ratatui::crossterm::event::{Event, KeyCode, KeyEventKind, KeyModifiers};
 
 pub enum Msg {
-    ChangeReceived(String),
-    ClearUserMsg,
+    ChangeReceived(Change),
+    ClearUserMessage,
     GoBackOrQuit,
     GoToFirstListItem,
     GoToLastListItem,
@@ -42,6 +43,7 @@ pub fn get_event_handling_msg(model: &Model, event: Event) -> Option<Msg> {
                         }
                         _ => None,
                     },
+                    _ => None,
                 },
                 _ => None,
             },

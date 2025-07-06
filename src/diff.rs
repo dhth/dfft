@@ -2,8 +2,13 @@ use console::{Style, style};
 use similar::ChangeTag;
 use similar::TextDiff;
 
-struct Line(Option<usize>);
-impl std::fmt::Display for Line {
+use ratatui::{
+    style::{Color, Stylize},
+    text::{Line, Masked, Span},
+};
+
+struct ChangeLineNum(Option<usize>);
+impl std::fmt::Display for ChangeLineNum {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self.0 {
             None => write!(f, "    "),
@@ -31,8 +36,8 @@ pub fn get_diff(old: &str, new: &str) -> Option<String> {
 
                 diff_lines.push(format!(
                     "{}{} |{}",
-                    style(Line(change.old_index())).dim(),
-                    style(Line(change.new_index())).dim(),
+                    style(ChangeLineNum(change.old_index())).dim(),
+                    style(ChangeLineNum(change.new_index())).dim(),
                     s.apply_to(sign).bold(),
                 ));
 
@@ -55,6 +60,19 @@ pub fn get_diff(old: &str, new: &str) -> Option<String> {
     } else {
         Some(diff_lines.join(""))
     }
+}
+
+enum DiffLine {
+    Separator,
+    ChangeRemoved {
+        old_line_num: Option<usize>,
+        new_line_num: Option<usize>,
+    },
+}
+
+pub fn get_diff2(old: &str, new: &str) -> Option<String> {
+    let diff = TextDiff::from_lines(old, new).unified_diff().to_string();
+    if diff.is_empty() { None } else { Some(diff) }
 }
 
 #[cfg(test)]

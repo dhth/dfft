@@ -19,3 +19,4 @@ Todo
 - [ ] Add CLI help
 - [ ] Consider `.git/index`
 - [x] Consider `dfft` specific ignore file
+- [ ] Better error handling

@@ -20,12 +20,14 @@ pub const CLEAR_USER_MESSAGE_LOOP_INTERVAL_SECS: u64 = 10;
 #[derive(PartialEq, Debug, Clone, Copy)]
 pub enum Pane {
     ChangesList,
+    Help,
 }
 
 impl std::fmt::Display for Pane {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Pane::ChangesList => write!(f, "dl"),
+            Pane::Help => write!(f, "help"),
         }
     }
 }

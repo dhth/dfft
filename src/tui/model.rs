@@ -1,4 +1,5 @@
 use super::common::*;
+use crate::domain::{Change, ChangeKind, ModifiedResult};
 use ratatui::{
     text::Line,
     widgets::{ListItem, ListState},
@@ -29,31 +30,8 @@ impl UserMessage {
 }
 
 #[derive(Debug)]
-pub struct Change {
-    pub file_path: PathBuf,
-    pub result: anyhow::Result<String>,
-}
-
-#[derive(Debug)]
 pub struct ChangeItem {
-    pub file_path: String,
-    pub result: Result<String, String>,
-}
-
-// TODO: this can be improved
-impl From<&Change> for ChangeItem {
-    fn from(value: &Change) -> Self {
-        let result = value
-            .result
-            .as_ref()
-            .map_err(|e| e.to_string())
-            .map(|diff| diff.to_string());
-
-        Self {
-            file_path: value.file_path.to_string_lossy().to_string(),
-            result,
-        }
-    }
+    pub change: Change,
 }
 
 #[derive(Debug)]
@@ -64,33 +42,17 @@ pub struct Changes {
 
 impl Changes {
     fn new() -> Self {
-        let mut state = ListState::default().with_selected(Some(0));
-        let items = vec![
-            ChangeItem {
-                file_path: "path/to/file-a.txt".to_string(),
-                result: Ok("this is a diff".to_string()),
-            },
-            ChangeItem {
-                file_path: "path/to/file-b.txt".to_string(),
-                result: Ok("this is another diff".to_string()),
-            },
-            ChangeItem {
-                file_path: "path/to/file-c.txt".to_string(),
-                result: Ok("this is yet another diff".to_string()),
-            },
-        ];
+        let mut state = ListState::default();
+        let items = vec![];
 
         Self { items, state }
     }
 }
 
 impl Changes {
-    pub fn append(&mut self, changes: &[Change]) {
-        let mut new_items = changes
-            .iter()
-            .map(|change| ChangeItem::from(change))
-            .collect();
-        self.items.append(&mut new_items);
+    pub fn append(&mut self, change: Change) {
+        let item = ChangeItem { change };
+        self.items.push(item);
 
         let selected = match self.state.selected() {
             Some(i) => Some(i),
@@ -109,7 +71,7 @@ impl Changes {
 
 impl From<&ChangeItem> for ListItem<'_> {
     fn from(value: &ChangeItem) -> Self {
-        let line = Line::from(value.file_path.clone());
+        let line = Line::from(value.change.file_path.to_string_lossy().to_string());
         ListItem::new(line)
     }
 }
@@ -150,6 +112,7 @@ impl Model {
         let active_pane = Some(self.active_pane);
         match self.active_pane {
             Pane::ChangesList => self.running_state = RunningState::Done,
+            Pane::Help => {}
         }
 
         self.last_active_pane = active_pane;
@@ -158,25 +121,29 @@ impl Model {
     pub(super) fn select_next_list_item(&mut self) {
         match self.active_pane {
             Pane::ChangesList => self.changes.state.select_next(),
+            Pane::Help => {}
         }
     }
 
     pub(super) fn select_previous_list_item(&mut self) {
         match self.active_pane {
             Pane::ChangesList => self.changes.state.select_previous(),
+            Pane::Help => {}
         }
     }
 
     pub(super) fn select_first_list_item(&mut self) {
         match self.active_pane {
             Pane::ChangesList => self.changes.state.select_first(),
-            _ => {}
+            Pane::Help => {}
         }
     }
     pub(super) fn select_last_list_item(&mut self) {
-        match self.active_pane {
-            Pane::ChangesList => self.changes.state.select_last(),
-            _ => {}
+        if self.active_pane == Pane::ChangesList {
+            self.changes.state.select_last()
         }
+    }
+    pub(super) fn add_change(&mut self, change: Change) {
+        self.changes.append(change);
     }
 }

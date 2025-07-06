@@ -8,7 +8,7 @@ pub fn update(model: &mut Model, msg: Msg) -> Vec<Cmd> {
     let mut cmds = Vec::new();
 
     match msg {
-        Msg::ChangeReceived(diff) => {}
+        Msg::ChangeReceived(change) => model.add_change(change),
         Msg::GoToNextListItem => model.select_next_list_item(),
         Msg::GoToPreviousListItem => model.select_previous_list_item(),
         Msg::GoToFirstListItem => model.select_first_list_item(),
@@ -18,7 +18,7 @@ pub fn update(model: &mut Model, msg: Msg) -> Vec<Cmd> {
             model.terminal_too_small =
                 !(width >= MIN_TERMINAL_WIDTH && height >= MIN_TERMINAL_HEIGHT);
         }
-        Msg::ClearUserMsg => {
+        Msg::ClearUserMessage => {
             let now = Instant::now();
             let reset_message = match &model.user_message {
                 Some(message) => match message {
