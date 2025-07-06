@@ -41,9 +41,30 @@ pub fn get_event_handling_msg(model: &Model, event: Event) -> Option<Msg> {
                                 None
                             }
                         }
+                        KeyCode::Tab | KeyCode::BackTab => Some(Msg::GoToPane(Pane::Diff)),
                         _ => None,
                     },
-                    _ => None,
+                    Pane::Diff => match key_event.code {
+                        KeyCode::Tab | KeyCode::BackTab => Some(Msg::GoToPane(Pane::ChangesList)),
+                        KeyCode::Char('c') => {
+                            if key_event.modifiers == KeyModifiers::CONTROL {
+                                Some(Msg::QuitImmediately)
+                            } else {
+                                None
+                            }
+                        }
+                        _ => None,
+                    },
+                    Pane::Help => match key_event.code {
+                        KeyCode::Char('c') => {
+                            if key_event.modifiers == KeyModifiers::CONTROL {
+                                Some(Msg::QuitImmediately)
+                            } else {
+                                None
+                            }
+                        }
+                        _ => None,
+                    },
                 },
                 _ => None,
             },

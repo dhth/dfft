@@ -112,6 +112,7 @@ impl Model {
         let active_pane = Some(self.active_pane);
         match self.active_pane {
             Pane::ChangesList => self.running_state = RunningState::Done,
+            Pane::Diff => {}
             Pane::Help => {}
         }
 
@@ -121,6 +122,7 @@ impl Model {
     pub(super) fn select_next_list_item(&mut self) {
         match self.active_pane {
             Pane::ChangesList => self.changes.state.select_next(),
+            Pane::Diff => {}
             Pane::Help => {}
         }
     }
@@ -128,6 +130,7 @@ impl Model {
     pub(super) fn select_previous_list_item(&mut self) {
         match self.active_pane {
             Pane::ChangesList => self.changes.state.select_previous(),
+            Pane::Diff => {}
             Pane::Help => {}
         }
     }
@@ -135,6 +138,7 @@ impl Model {
     pub(super) fn select_first_list_item(&mut self) {
         match self.active_pane {
             Pane::ChangesList => self.changes.state.select_first(),
+            Pane::Diff => {}
             Pane::Help => {}
         }
     }

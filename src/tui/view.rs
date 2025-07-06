@@ -1,6 +1,7 @@
 use super::common::*;
 use super::model::{Model, UserMessage};
 use crate::domain::{Change, ChangeKind, ModifiedResult};
+use ratatui::style::Color;
 use ratatui::{
     Frame,
     layout::{Alignment, Constraint, Layout, Rect},
@@ -8,6 +9,19 @@ use ratatui::{
     text::{Line, Span},
     widgets::{Block, List, ListDirection, ListItem, Padding, Paragraph, Wrap},
 };
+
+const SECTION_TITLE_FG_COLOR: Color = Color::from_u32(0x151515);
+const PRIMARY_COLOR: Color = Color::from_u32(0xea76cb);
+const SECONDARY_COLOR: Color = Color::from_u32(0xa6f0fc);
+const MESSAGE_COLOR: Color = Color::from_u32(0xd3869b);
+const INACTIVE_PANE_TITLE_BG_COLOR: Color = Color::from_u32(0x7c7f93);
+const INACTIVE_PANE_BORDER_COLOR: Color = Color::from_u32(0x7c7f93);
+const INACTIVE_PANE_SELECTED_COLOR: Color = Color::from_u32(0xfabd2f);
+const INFO_MESSAGE_COLOR: Color = Color::from_u32(0x83a598);
+const ERROR_MESSAGE_COLOR: Color = Color::from_u32(0xfb4934);
+const DIFF_REMOVED_COLOR: Color = Color::from_u32(0xf7768e);
+const DIFF_ADDED_COLOR: Color = Color::from_u32(0x9ece6a);
+const TITLE: &str = " dfft ";
 
 pub fn view(model: &mut Model, frame: &mut Frame) {
     if model.terminal_too_small {
@@ -41,8 +55,23 @@ Press (q/<ctrl+c>/<esc> to exit)
     frame.render_widget(p, frame.area());
 }
 
-fn render_change(model: &Model, frame: &mut Frame, rect: Rect) {
-    let (border_color, title_color, highlight_color) = if model.active_pane == Pane::ChangesList {
+fn render_changes_view(model: &mut Model, frame: &mut Frame) {
+    let main_rect = Layout::default()
+        .direction(ratatui::layout::Direction::Vertical)
+        .constraints(vec![
+            Constraint::Min(10),
+            Constraint::Max(12),
+            Constraint::Length(1),
+        ])
+        .split(frame.area());
+
+    render_diff(model, frame, main_rect[0]);
+    render_changes_list(model, frame, main_rect[1]);
+    render_status_line(model, frame, main_rect[2]);
+}
+
+fn render_diff(model: &Model, frame: &mut Frame, rect: Rect) {
+    let (border_color, title_color, highlight_color) = if model.active_pane == Pane::Diff {
         (PRIMARY_COLOR, PRIMARY_COLOR, PRIMARY_COLOR)
     } else {
         (
@@ -52,7 +81,7 @@ fn render_change(model: &Model, frame: &mut Frame, rect: Rect) {
         )
     };
 
-    let title = " change ";
+    let title = " diff ";
 
     let maybe_selected_index = model.changes.state.selected();
 
@@ -81,7 +110,7 @@ fn render_change(model: &Model, frame: &mut Frame, rect: Rect) {
             None => vec![Line::raw("something went wrong")],
         }
     } else {
-        vec![Line::raw("change details will appear here")]
+        vec![Line::raw("diffs will appear here")]
     };
 
     let details = Paragraph::new(lines)
@@ -104,27 +133,14 @@ fn render_change(model: &Model, frame: &mut Frame, rect: Rect) {
     frame.render_widget(&details, rect);
 }
 
-fn get_colored_diff<'a>(diff: &'a str) -> Vec<Line<'a>> {
-    let mut lines = vec![];
-    for line in diff.lines() {
-        if line.starts_with("@@") {
-            lines.push(Line::raw(line).blue());
-        } else if line.starts_with("-") {
-            lines.push(Line::raw(line).red());
-        } else if line.starts_with("+") {
-            lines.push(Line::raw(line).green());
-        } else {
-            lines.push(Line::raw(line).gray());
-        }
-    }
-
-    lines
-}
-
 fn render_changes_list(model: &mut Model, frame: &mut Frame, rect: Rect) {
     let items: Vec<ListItem> = model.changes.items.iter().map(ListItem::from).collect();
 
-    let title = " changes ";
+    let title = if items.is_empty() {
+        " changes ".to_string()
+    } else {
+        format!(" changes ({}) ", items.len())
+    };
 
     let (border_color, title_color, highlight_color) = if model.active_pane == Pane::ChangesList {
         (PRIMARY_COLOR, PRIMARY_COLOR, PRIMARY_COLOR)
@@ -194,17 +210,23 @@ fn render_status_line(model: &Model, frame: &mut Frame, rect: Rect) {
     frame.render_widget(&status_bar, rect);
 }
 
-fn render_changes_view(model: &mut Model, frame: &mut Frame) {
-    let main_rect = Layout::default()
-        .direction(ratatui::layout::Direction::Vertical)
-        .constraints(vec![
-            Constraint::Min(10),
-            Constraint::Max(12),
-            Constraint::Length(1),
-        ])
-        .split(frame.area());
+fn get_colored_diff<'a>(diff: &'a str) -> Vec<Line<'a>> {
+    let mut lines = vec![];
+    for line in diff.lines() {
+        if line.is_empty() {
+            continue;
+        }
 
-    render_change(model, frame, main_rect[0]);
-    render_changes_list(model, frame, main_rect[1]);
-    render_status_line(model, frame, main_rect[2]);
+        if line.starts_with("@@") {
+            lines.push(Line::raw(line).blue());
+        } else if line.starts_with("-") {
+            lines.push(Line::raw(line).fg(DIFF_REMOVED_COLOR));
+        } else if line.starts_with("+") {
+            lines.push(Line::raw(line).fg(DIFF_ADDED_COLOR));
+        } else {
+            lines.push(Line::raw(line).gray());
+        }
+    }
+
+    lines
 }
