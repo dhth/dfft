@@ -1,4 +1,7 @@
+#![allow(dead_code)]
 mod diff;
+mod tui;
+
 use anyhow::Context;
 use console::Style;
 use diff::get_diff;
@@ -21,7 +24,14 @@ const ERROR_LABEL: &str = "  ERROR   ";
 const GITIGNORE_PATH: &str = ".gitignore";
 const DFFTIGNORE_PATH: &str = ".dfftignore";
 
-fn main() -> anyhow::Result<()> {
+#[tokio::main]
+async fn main() -> anyhow::Result<()> {
+    tui::run().await?;
+
+    Ok(())
+}
+
+fn main2() -> anyhow::Result<()> {
     let root = std::fs::canonicalize(".")?;
     let gitignore = get_ignore(&root)?;
 
