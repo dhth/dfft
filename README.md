@@ -15,6 +15,7 @@ Todo
 ---
 
 - [ ] Add CLI argument parsing
+- [ ] Add flag to pre-populate cache at startup
 - [ ] Add TUI
 - [x] Show a better diff
 - [ ] Add CLI help

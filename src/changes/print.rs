@@ -1,5 +1,5 @@
+use super::diff::get_diff;
 use super::get_ignore;
-use crate::diff::get_diff;
 use anyhow::Context;
 use console::Style;
 use ignore::gitignore::Gitignore;

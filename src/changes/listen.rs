@@ -1,5 +1,5 @@
+use super::diff::get_unified_diff;
 use super::get_ignore;
-use crate::diff::get_unified_diff;
 use crate::domain::{Change, ChangeKind, ModifiedResult};
 use anyhow::Context;
 use console::Style;
@@ -10,7 +10,6 @@ use notify::RecursiveMode;
 use notify::event::{CreateKind, DataChange, ModifyKind, RemoveKind};
 use notify_debouncer_full::{DebouncedEvent, new_debouncer};
 use std::collections::HashMap;
-use std::fs;
 use std::path::{Path, PathBuf};
 use std::time::Duration;
 use tokio::sync::mpsc::{Sender, channel};
@@ -61,7 +60,7 @@ pub async fn listen_for_changes(
                                             continue;
                                         }
 
-                                        let change = match fs::read_to_string(f) {
+                                        let change = match tokio::fs::read_to_string(f).await {
                                             Ok(contents) => {
                                                 cache.insert(f.to_string_lossy().to_string(), contents);
                                                 Change {
@@ -87,7 +86,7 @@ pub async fn listen_for_changes(
                                             continue;
                                         }
 
-                                        let change = match fs::read_to_string(f) {
+                                        let change = match tokio::fs::read_to_string(f).await {
                                             Ok(contents) => {
                                                 let was_held = cache.insert(
                                                     f.to_string_lossy().to_string(),

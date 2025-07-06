@@ -1,4 +1,4 @@
-use crate::diff::get_unified_diff;
+use super::diff::get_unified_diff;
 use crate::domain::{Change, ChangeKind, ModifiedResult};
 use anyhow::Context;
 use console::Style;

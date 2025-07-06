@@ -1,6 +1,5 @@
 #![allow(dead_code, unused)]
 mod changes;
-mod diff;
 mod domain;
 mod tui;
 use tracing_subscriber::EnvFilter;
