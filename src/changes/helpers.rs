@@ -1,20 +1,7 @@
-use super::diff::get_unified_diff;
-use crate::domain::{Change, ChangeKind, ModifiedResult};
 use anyhow::Context;
-use console::Style;
 use ignore::gitignore::Gitignore;
 use ignore::gitignore::GitignoreBuilder;
-use notify::EventKind;
-use notify::RecursiveMode;
-use notify::event::{CreateKind, DataChange, ModifyKind, RemoveKind};
-use notify_debouncer_full::{DebouncedEvent, new_debouncer};
-use std::collections::HashMap;
-use std::fs;
 use std::path::{Path, PathBuf};
-use std::time::Duration;
-use tokio::sync::mpsc::{Sender, channel};
-use tokio_util::sync::CancellationToken;
-use tracing::debug;
 
 const GITIGNORE_PATH: &str = ".gitignore";
 const DFFTIGNORE_PATH: &str = ".dfftignore";

@@ -1,11 +1,10 @@
 use super::common::*;
-use crate::domain::{Change, ChangeKind, ModifiedResult};
+use crate::domain::Change;
 use ratatui::{
     text::Line,
     widgets::{ListItem, ListState},
 };
 use std::time::Instant;
-use std::{collections::HashMap, path::PathBuf};
 
 #[derive(Debug, Default, PartialEq, Eq)]
 pub enum RunningState {
@@ -15,11 +14,13 @@ pub enum RunningState {
 }
 
 #[derive(Debug)]
+#[allow(unused)]
 pub enum UserMessage {
     Info(String, Instant),
     Error(String, Instant),
 }
 
+#[allow(unused)]
 impl UserMessage {
     pub(super) fn info(message: &str) -> Self {
         UserMessage::Info(message.to_string(), Instant::now())
@@ -42,7 +43,7 @@ pub struct Changes {
 
 impl Changes {
     fn new() -> Self {
-        let mut state = ListState::default();
+        let state = ListState::default();
         let items = vec![];
 
         Self { items, state }

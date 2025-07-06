@@ -1,6 +1,6 @@
 use super::common::*;
 use super::model::{Model, UserMessage};
-use crate::domain::{Change, ChangeKind, ModifiedResult};
+use crate::domain::{ChangeKind, ModifiedResult};
 use ratatui::style::Color;
 use ratatui::{
     Frame,
@@ -12,8 +12,6 @@ use ratatui::{
 
 const SECTION_TITLE_FG_COLOR: Color = Color::from_u32(0x151515);
 const PRIMARY_COLOR: Color = Color::from_u32(0xa6d189);
-const SECONDARY_COLOR: Color = Color::from_u32(0xa6f0fc);
-const MESSAGE_COLOR: Color = Color::from_u32(0xd3869b);
 const INACTIVE_PANE_TITLE_BG_COLOR: Color = Color::from_u32(0x737994);
 const INACTIVE_PANE_BORDER_COLOR: Color = Color::from_u32(0x737994);
 const INACTIVE_PANE_SELECTED_COLOR: Color = Color::from_u32(0xfabd2f);
@@ -71,7 +69,7 @@ fn render_changes_view(model: &mut Model, frame: &mut Frame) {
 }
 
 fn render_diff(model: &Model, frame: &mut Frame, rect: Rect) {
-    let (border_color, title_color, highlight_color) = if model.active_pane == Pane::Diff {
+    let (border_color, title_color, _) = if model.active_pane == Pane::Diff {
         (PRIMARY_COLOR, PRIMARY_COLOR, PRIMARY_COLOR)
     } else {
         (

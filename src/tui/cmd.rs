@@ -1,4 +1,5 @@
 #[derive(Clone, Debug)]
+#[allow(dead_code)]
 pub(super) enum Cmd {
     Dummy,
 }

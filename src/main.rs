@@ -1,4 +1,3 @@
-#![allow(dead_code, unused)]
 mod changes;
 mod domain;
 mod tui;

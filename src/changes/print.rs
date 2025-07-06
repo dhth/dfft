@@ -2,15 +2,12 @@ use super::diff::get_diff;
 use super::get_ignore;
 use anyhow::Context;
 use console::Style;
-use ignore::gitignore::Gitignore;
-use ignore::gitignore::GitignoreBuilder;
 use notify::EventKind;
 use notify::RecursiveMode;
 use notify::event::{CreateKind, DataChange, ModifyKind, RemoveKind};
 use notify_debouncer_full::new_debouncer;
 use std::collections::HashMap;
 use std::fs;
-use std::path::{Path, PathBuf};
 use std::time::Duration;
 
 const READ_LABEL: &str = "   READ   ";
@@ -18,9 +15,8 @@ const CREATED_LABEL: &str = " CREATED  ";
 const MODIFIED_LABEL: &str = " MODIFIED ";
 const REMOVED_LABEL: &str = " REMOVED  ";
 const ERROR_LABEL: &str = "  ERROR   ";
-const GITIGNORE_PATH: &str = ".gitignore";
-const DFFTIGNORE_PATH: &str = ".dfftignore";
 
+#[allow(unused)]
 fn print_changes() -> anyhow::Result<()> {
     let root = std::fs::canonicalize(".")?;
     let gitignore = get_ignore(&root)?;

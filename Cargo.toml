@@ -32,3 +32,9 @@ tracing-subscriber = { version = "0.3.19", features = ["env-filter"] }
 [dev-dependencies]
 insta = "1.43.1"
 strip-ansi-escapes = "0.2.1"
+
+[lints.clippy]
+unwrap_used = "deny"
+expect_used = "deny"
+todo = "deny"
+dbg_macro = "deny"

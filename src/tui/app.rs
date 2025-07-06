@@ -10,16 +10,12 @@ use crate::domain::Change;
 use ratatui::Terminal;
 use ratatui::backend::CrosstermBackend;
 use ratatui::crossterm::event::poll;
-use std::collections::HashMap;
-use std::io::Error as IOError;
-use std::sync::Arc;
 use std::time::Duration;
 use tokio::sync::mpsc;
 use tokio::sync::mpsc::{Receiver, Sender};
 use tokio_util::sync::CancellationToken;
 
 const EVENT_POLL_DURATION_MS: u64 = 16;
-pub const REFRESH_RESULTS_INTERVAL_SECS: u64 = 10;
 
 pub async fn run() -> anyhow::Result<()> {
     let mut tui = AppTui::new()?;
@@ -39,10 +35,6 @@ impl AppTui {
     pub fn new() -> anyhow::Result<Self> {
         let terminal = ratatui::try_init()?;
         let (event_tx, event_rx) = mpsc::channel(10);
-        let mut initial_commands = Vec::new();
-        // for cluster in &clusters {
-        //     initial_commands.push(Command::GetServices(cluster.clone()));
-        // }
 
         let (width, height) = ratatui::crossterm::terminal::size()?;
 
@@ -57,7 +49,7 @@ impl AppTui {
             event_tx,
             event_rx,
             model,
-            initial_commands,
+            initial_commands: vec![],
             cancellation_token: CancellationToken::new(),
         })
     }
@@ -75,7 +67,8 @@ impl AppTui {
 
         let cancellation_token = self.cancellation_token.clone();
         tokio::spawn(async move {
-            listen_for_changes(changes_sender.clone(), cancellation_token).await;
+            // TODO: don't ignore this error
+            let _ = listen_for_changes(changes_sender.clone(), cancellation_token).await;
         });
 
         // first render

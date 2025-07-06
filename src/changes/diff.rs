@@ -2,11 +2,6 @@ use console::{Style, style};
 use similar::ChangeTag;
 use similar::TextDiff;
 
-use ratatui::{
-    style::{Color, Stylize},
-    text::{Line, Masked, Span},
-};
-
 struct ChangeLineNum(Option<usize>);
 impl std::fmt::Display for ChangeLineNum {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
@@ -60,14 +55,6 @@ pub fn get_diff(old: &str, new: &str) -> Option<String> {
     } else {
         Some(diff_lines.join(""))
     }
-}
-
-enum DiffLine {
-    Separator,
-    ChangeRemoved {
-        old_line_num: Option<usize>,
-        new_line_num: Option<usize>,
-    },
 }
 
 pub fn get_unified_diff(old: &str, new: &str) -> Option<String> {

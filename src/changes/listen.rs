@@ -2,15 +2,11 @@ use super::diff::get_unified_diff;
 use super::get_ignore;
 use crate::domain::{Change, ChangeKind, ModifiedResult};
 use anyhow::Context;
-use console::Style;
-use ignore::gitignore::Gitignore;
-use ignore::gitignore::GitignoreBuilder;
 use notify::EventKind;
 use notify::RecursiveMode;
 use notify::event::{CreateKind, DataChange, ModifyKind, RemoveKind};
-use notify_debouncer_full::{DebouncedEvent, new_debouncer};
+use notify_debouncer_full::new_debouncer;
 use std::collections::HashMap;
-use std::path::{Path, PathBuf};
 use std::time::Duration;
 use tokio::sync::mpsc::{Sender, channel};
 use tokio_util::sync::CancellationToken;
@@ -28,6 +24,8 @@ pub async fn listen_for_changes(
     let (tx, mut rx) = channel(10);
 
     let mut debouncer = new_debouncer(Duration::from_millis(1000), None, move |res| {
+        #[allow(clippy::unwrap_used)]
+        // TODO: fix this
         let rt = tokio::runtime::Runtime::new().unwrap();
         rt.block_on(async {
             let _ = tx.send(res).await;

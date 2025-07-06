@@ -5,8 +5,6 @@ use super::msg::Msg;
 use std::time::Instant;
 
 pub fn update(model: &mut Model, msg: Msg) -> Vec<Cmd> {
-    let mut cmds = Vec::new();
-
     match msg {
         Msg::ChangeReceived(change) => model.add_change(change),
         Msg::GoToNextListItem => model.select_next_list_item(),
@@ -46,5 +44,5 @@ pub fn update(model: &mut Model, msg: Msg) -> Vec<Cmd> {
         Msg::QuitImmediately => model.running_state = RunningState::Done,
     }
 
-    cmds
+    vec![]
 }
