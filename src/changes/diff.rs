@@ -2,6 +2,7 @@ use console::{Style, style};
 use similar::ChangeTag;
 use similar::TextDiff;
 
+#[allow(unused)]
 struct ChangeLineNum(Option<usize>);
 impl std::fmt::Display for ChangeLineNum {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
@@ -13,6 +14,7 @@ impl std::fmt::Display for ChangeLineNum {
 }
 
 // inspired by https://github.com/mitsuhiko/similar/blob/main/examples/terminal-inline.rs
+#[allow(unused)]
 pub fn get_diff(old: &str, new: &str) -> Option<String> {
     let diff = TextDiff::from_lines(old, new);
 

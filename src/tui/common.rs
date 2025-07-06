@@ -1,8 +1,6 @@
 pub const MIN_TERMINAL_WIDTH: u16 = 80;
 pub const MIN_TERMINAL_HEIGHT: u16 = 30;
 
-pub const CLEAR_USER_MESSAGE_LOOP_INTERVAL_SECS: u64 = 10;
-
 #[derive(PartialEq, Debug, Clone, Copy)]
 #[allow(dead_code)]
 pub enum Pane {

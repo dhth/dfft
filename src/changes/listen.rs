@@ -12,22 +12,24 @@ use tokio::sync::mpsc::{Sender, channel};
 use tokio_util::sync::CancellationToken;
 use tracing::debug;
 
+const EVENT_CHANNEL_BUFFER: usize = 100;
+
 pub async fn listen_for_changes(
     event_tx: Sender<Change>,
     cancellation_token: CancellationToken,
 ) -> anyhow::Result<()> {
-    let root = std::fs::canonicalize(".")?;
+    let root = tokio::fs::canonicalize(".").await?;
     let gitignore = get_ignore(&root)?;
 
     let mut cache: HashMap<String, String> = HashMap::new();
 
-    let (tx, mut rx) = channel(10);
+    let (tx, mut rx) = channel(EVENT_CHANNEL_BUFFER);
 
+    let runtime_handle = tokio::runtime::Handle::current();
     let mut debouncer = new_debouncer(Duration::from_millis(1000), None, move |res| {
-        #[allow(clippy::unwrap_used)]
-        // TODO: fix this
-        let rt = tokio::runtime::Runtime::new().unwrap();
-        rt.block_on(async {
+        let tx = tx.clone();
+        let runtime_handle = runtime_handle.clone();
+        runtime_handle.spawn(async move {
             let _ = tx.send(res).await;
         });
     })

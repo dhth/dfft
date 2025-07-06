@@ -55,8 +55,6 @@ impl AppTui {
     }
 
     pub async fn run(&mut self) -> anyhow::Result<()> {
-        let message_clear_duration = Duration::from_secs(CLEAR_USER_MESSAGE_LOOP_INTERVAL_SECS);
-        let mut message_clear_interval = tokio::time::interval(message_clear_duration);
         let _ = self.terminal.clear();
 
         for cmd in &self.initial_commands {
@@ -66,23 +64,21 @@ impl AppTui {
         let (changes_sender, mut changes_rec) = mpsc::channel::<Change>(100);
 
         let cancellation_token = self.cancellation_token.clone();
-        tokio::spawn(async move {
-            // TODO: don't ignore this error
-            let _ = listen_for_changes(changes_sender.clone(), cancellation_token).await;
-        });
 
         // first render
+        self.model.user_msg = Some(UserMsg::info("listening for changes..."));
         self.model.render_counter += 1;
         self.terminal.draw(|f| view(&mut self.model, f))?;
 
+        let event_tx_cloned = self.event_tx.clone();
+        tokio::spawn(async move {
+            if let Err(e) = listen_for_changes(changes_sender.clone(), cancellation_token).await {
+                let _ = event_tx_cloned.try_send(Msg::ListeningFailed(e.to_string()));
+            }
+        });
+
         loop {
             tokio::select! {
-                _instant = message_clear_interval.tick() => {
-                    if self.model.user_message.is_some() {
-                        _ = self.event_tx.try_send(Msg::ClearUserMessage);
-                    }
-                }
-
                 Some(message) = self.event_rx.recv() => {
                     let cmds = update(&mut self.model, message);
 

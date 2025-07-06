@@ -4,7 +4,7 @@ use ratatui::{
     text::Line,
     widgets::{ListItem, ListState},
 };
-use std::time::Instant;
+const USER_MESSAGE_DEFAULT_FRAMES: u16 = 4;
 
 #[derive(Debug, Default, PartialEq, Eq)]
 pub enum RunningState {
@@ -14,19 +14,43 @@ pub enum RunningState {
 }
 
 #[derive(Debug)]
-#[allow(unused)]
-pub enum UserMessage {
-    Info(String, Instant),
-    Error(String, Instant),
+pub enum MessageKind {
+    Info,
+    Error,
 }
 
-#[allow(unused)]
-impl UserMessage {
-    pub(super) fn info(message: &str) -> Self {
-        UserMessage::Info(message.to_string(), Instant::now())
+pub struct UserMsg {
+    pub frames_left: u16,
+    pub value: String,
+    pub kind: MessageKind,
+}
+
+impl UserMsg {
+    pub(super) fn info<S>(message: S) -> Self
+    where
+        S: Into<String>,
+    {
+        UserMsg {
+            frames_left: USER_MESSAGE_DEFAULT_FRAMES,
+            value: message.into(),
+            kind: MessageKind::Info,
+        }
     }
-    pub(super) fn error(message: &str) -> Self {
-        UserMessage::Error(message.to_string(), Instant::now())
+    pub(super) fn error<S>(message: S) -> Self
+    where
+        S: Into<String>,
+    {
+        UserMsg {
+            frames_left: USER_MESSAGE_DEFAULT_FRAMES,
+            value: message.into(),
+            kind: MessageKind::Error,
+        }
+    }
+
+    #[allow(unused)]
+    pub(super) fn with_frames_left(mut self, frames_left: u16) -> Self {
+        self.frames_left = frames_left;
+        self
     }
 }
 
@@ -82,7 +106,7 @@ pub struct Model {
     pub changes: Changes,
     pub last_active_pane: Option<Pane>,
     pub running_state: RunningState,
-    pub user_message: Option<UserMessage>,
+    pub user_msg: Option<UserMsg>,
     pub terminal_dimensions: TerminalDimensions,
     pub terminal_too_small: bool,
     pub render_counter: u64,
@@ -100,7 +124,7 @@ impl Model {
             changes: Changes::new(),
             last_active_pane: None,
             running_state: RunningState::Running,
-            user_message: None,
+            user_msg: None,
             terminal_dimensions,
             terminal_too_small,
             render_counter: 0,

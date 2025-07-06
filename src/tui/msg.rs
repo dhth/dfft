@@ -5,7 +5,6 @@ use ratatui::crossterm::event::{Event, KeyCode, KeyEventKind, KeyModifiers};
 
 pub enum Msg {
     ChangeReceived(Change),
-    ClearUserMessage,
     GoBackOrQuit,
     GoToFirstListItem,
     GoToLastListItem,
@@ -14,6 +13,7 @@ pub enum Msg {
     GoToPreviousListItem,
     QuitImmediately,
     TerminalResize(u16, u16),
+    ListeningFailed(String),
 }
 
 pub fn get_event_handling_msg(model: &Model, event: Event) -> Option<Msg> {

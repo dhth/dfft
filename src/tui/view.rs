@@ -1,5 +1,5 @@
 use super::common::*;
-use super::model::{Model, UserMessage};
+use super::model::{MessageKind, Model};
 use crate::domain::{ChangeKind, ModifiedResult};
 use ratatui::style::Color;
 use ratatui::{
@@ -181,14 +181,16 @@ fn render_status_line(model: &Model, frame: &mut Frame, rect: Rect) {
             .fg(SECTION_TITLE_FG_COLOR),
     )];
 
-    if let Some(msg) = &model.user_message {
-        let span = match msg {
-            UserMessage::Info(m, _) => {
-                Span::styled(format!(" {m}"), Style::new().fg(INFO_MESSAGE_COLOR))
-            }
-            UserMessage::Error(m, _) => {
-                Span::styled(format!(" {m}"), Style::new().fg(ERROR_MESSAGE_COLOR))
-            }
+    if let Some(msg) = &model.user_msg {
+        let span = match msg.kind {
+            MessageKind::Info => Span::styled(
+                format!(" {}", msg.value),
+                Style::new().fg(INFO_MESSAGE_COLOR),
+            ),
+            MessageKind::Error => Span::styled(
+                format!(" {}", msg.value),
+                Style::new().fg(ERROR_MESSAGE_COLOR),
+            ),
         };
 
         status_bar_lines.push(span);
