@@ -11,11 +11,11 @@ use ratatui::{
 };
 
 const SECTION_TITLE_FG_COLOR: Color = Color::from_u32(0x151515);
-const PRIMARY_COLOR: Color = Color::from_u32(0xea76cb);
+const PRIMARY_COLOR: Color = Color::from_u32(0xa6d189);
 const SECONDARY_COLOR: Color = Color::from_u32(0xa6f0fc);
 const MESSAGE_COLOR: Color = Color::from_u32(0xd3869b);
-const INACTIVE_PANE_TITLE_BG_COLOR: Color = Color::from_u32(0x7c7f93);
-const INACTIVE_PANE_BORDER_COLOR: Color = Color::from_u32(0x7c7f93);
+const INACTIVE_PANE_TITLE_BG_COLOR: Color = Color::from_u32(0x737994);
+const INACTIVE_PANE_BORDER_COLOR: Color = Color::from_u32(0x737994);
 const INACTIVE_PANE_SELECTED_COLOR: Color = Color::from_u32(0xfabd2f);
 const INFO_MESSAGE_COLOR: Color = Color::from_u32(0x83a598);
 const ERROR_MESSAGE_COLOR: Color = Color::from_u32(0xfb4934);

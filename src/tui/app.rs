@@ -9,6 +9,7 @@ use crate::changes::listen_for_changes;
 use crate::domain::Change;
 use ratatui::Terminal;
 use ratatui::backend::CrosstermBackend;
+use ratatui::crossterm::event::poll;
 use std::collections::HashMap;
 use std::io::Error as IOError;
 use std::sync::Arc;
@@ -109,9 +110,10 @@ impl AppTui {
                     let _ = self.event_tx.try_send(msg);
                 }
 
-                Ok(ready) = tokio::task::spawn_blocking(|| ratatui::crossterm::event::poll(Duration::from_millis(EVENT_POLL_DURATION_MS))) => {
+                Ok(ready) = tokio::task::spawn_blocking(|| poll(Duration::from_millis(EVENT_POLL_DURATION_MS))) => {
                     match ready {
                         Ok(true) => {
+                            // non blocking read since poll returned Ok(true)
                             let event = ratatui::crossterm::event::read()?;
                             self.model.event_counter += 1;
                             if let Some(handling_msg) = get_event_handling_msg(&self.model, event) {
