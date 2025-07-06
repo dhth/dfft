@@ -15,15 +15,14 @@ use std::sync::Arc;
 use std::time::Duration;
 use tokio::sync::mpsc;
 use tokio::sync::mpsc::{Receiver, Sender};
+use tokio_util::sync::CancellationToken;
 
 const EVENT_POLL_DURATION_MS: u64 = 16;
 pub const REFRESH_RESULTS_INTERVAL_SECS: u64 = 10;
 
 pub async fn run() -> anyhow::Result<()> {
     let mut tui = AppTui::new()?;
-    tui.run().await?;
-
-    Ok(())
+    tui.run().await
 }
 
 struct AppTui {
@@ -32,6 +31,7 @@ struct AppTui {
     pub(super) event_rx: Receiver<Msg>,
     pub(super) model: Model,
     pub(super) initial_commands: Vec<Cmd>,
+    pub(super) cancellation_token: CancellationToken,
 }
 
 impl AppTui {
@@ -57,6 +57,7 @@ impl AppTui {
             event_rx,
             model,
             initial_commands,
+            cancellation_token: CancellationToken::new(),
         })
     }
 
@@ -71,8 +72,9 @@ impl AppTui {
 
         let (changes_sender, mut changes_rec) = mpsc::channel::<Change>(100);
 
+        let cancellation_token = self.cancellation_token.clone();
         tokio::spawn(async move {
-            listen_for_changes(changes_sender.clone()).await;
+            listen_for_changes(changes_sender.clone(), cancellation_token).await;
         });
 
         // first render
@@ -91,8 +93,7 @@ impl AppTui {
                     let cmds = update(&mut self.model, message);
 
                     if self.model.running_state == RunningState::Done {
-                        self.exit()?;
-                        return Ok(());
+                        break;
                     }
 
                         self.model.render_counter += 1;
@@ -125,9 +126,13 @@ impl AppTui {
                 }
             }
         }
+
+        self.exit()
     }
 
-    fn exit(&mut self) -> Result<(), IOError> {
-        ratatui::try_restore()
+    fn exit(&mut self) -> anyhow::Result<()> {
+        self.cancellation_token.cancel();
+        ratatui::try_restore()?;
+        Ok(())
     }
 }

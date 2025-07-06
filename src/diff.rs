@@ -70,7 +70,7 @@ enum DiffLine {
     },
 }
 
-pub fn get_diff2(old: &str, new: &str) -> Option<String> {
+pub fn get_unified_diff(old: &str, new: &str) -> Option<String> {
     let diff = TextDiff::from_lines(old, new).unified_diff().to_string();
     if diff.is_empty() { None } else { Some(diff) }
 }

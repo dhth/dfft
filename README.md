@@ -14,6 +14,7 @@ outputs them as they happen.
 Todo
 ---
 
+- [ ] Add CLI argument parsing
 - [ ] Add TUI
 - [x] Show a better diff
 - [ ] Add CLI help

@@ -25,6 +25,7 @@ ratatui = "0.29.0"
 similar = { version = "2.7.0", features = [ "inline" ] }
 tokio = { version = "1.45.1", features = ["macros", "rt-multi-thread", "sync",
 "time"] }
+tokio-util = "0.7.15"
 tracing = "0.1.41"
 tracing-subscriber = { version = "0.3.19", features = ["env-filter"] }
 
