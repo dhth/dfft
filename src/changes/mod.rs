@@ -1,6 +1,6 @@
 mod diff;
 mod helpers;
-mod listen;
+mod watch;
 
 use helpers::*;
-pub use listen::listen_for_changes;
+pub use watch::watch_for_changes;

@@ -4,7 +4,11 @@ use ratatui::{
     text::Line,
     widgets::{ListItem, ListState},
 };
-const USER_MESSAGE_DEFAULT_FRAMES: u16 = 4;
+use tokio::sync::mpsc;
+use tokio::sync::mpsc::{Receiver, Sender};
+use tokio_util::sync::CancellationToken;
+
+const USER_MESSAGE_DEFAULT_FRAMES: u16 = 100;
 
 #[derive(Debug, Default, PartialEq, Eq)]
 pub enum RunningState {
@@ -103,6 +107,7 @@ impl From<&ChangeItem> for ListItem<'_> {
 
 pub struct Model {
     pub active_pane: Pane,
+    pub watching: bool,
     pub changes: Changes,
     pub last_active_pane: Option<Pane>,
     pub running_state: RunningState,
@@ -111,16 +116,22 @@ pub struct Model {
     pub terminal_too_small: bool,
     pub render_counter: u64,
     pub event_counter: u64,
+    pub changes_tx: Sender<Change>,
+    pub changes_rx: Receiver<Change>,
+    cancellation_token: CancellationToken,
     pub debug: bool,
 }
 
 impl Model {
-    pub fn new(terminal_dimensions: TerminalDimensions, debug: bool) -> Self {
+    pub fn new(terminal_dimensions: TerminalDimensions, watching: bool, debug: bool) -> Self {
         let terminal_too_small = terminal_dimensions.width < MIN_TERMINAL_WIDTH
             || terminal_dimensions.height < MIN_TERMINAL_HEIGHT;
 
+        let (changes_tx, changes_rx) = mpsc::channel::<Change>(100);
+
         Self {
             active_pane: Pane::ChangesList,
+            watching,
             changes: Changes::new(),
             last_active_pane: None,
             running_state: RunningState::Running,
@@ -129,6 +140,9 @@ impl Model {
             terminal_too_small,
             render_counter: 0,
             event_counter: 0,
+            changes_tx,
+            changes_rx,
+            cancellation_token: CancellationToken::new(),
             debug,
         }
     }
@@ -174,5 +188,19 @@ impl Model {
     }
     pub(super) fn add_change(&mut self, change: Change) {
         self.changes.append(change);
+    }
+
+    pub(super) fn get_cancellation_token(&self) -> CancellationToken {
+        self.cancellation_token.clone()
+    }
+
+    pub(super) fn pause_watching(&mut self) {
+        self.cancellation_token.cancel();
+        self.watching = false;
+    }
+
+    pub(super) fn regenerate_cancellation_token(&mut self) {
+        self.cancellation_token = CancellationToken::new();
+        self.watching = true;
     }
 }

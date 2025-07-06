@@ -4,7 +4,9 @@ use crate::domain::Change;
 use ratatui::crossterm::event::{Event, KeyCode, KeyEventKind, KeyModifiers};
 
 pub enum Msg {
-    ChangeReceived(Change),
+    // user actions
+    UserRequestedPausingWatching,
+    UserRequestedResumingWatching,
     GoBackOrQuit,
     GoToFirstListItem,
     GoToLastListItem,
@@ -13,7 +15,9 @@ pub enum Msg {
     GoToPreviousListItem,
     QuitImmediately,
     TerminalResize(u16, u16),
-    ListeningFailed(String),
+    // internal
+    WatchingFailed(String),
+    ChangeReceived(Change),
 }
 
 pub fn get_event_handling_msg(model: &Model, event: Event) -> Option<Msg> {
@@ -42,6 +46,13 @@ pub fn get_event_handling_msg(model: &Model, event: Event) -> Option<Msg> {
                             }
                         }
                         KeyCode::Tab | KeyCode::BackTab => Some(Msg::GoToPane(Pane::Diff)),
+                        KeyCode::Char(' ') => {
+                            if model.watching {
+                                Some(Msg::UserRequestedPausingWatching)
+                            } else {
+                                Some(Msg::UserRequestedResumingWatching)
+                            }
+                        }
                         _ => None,
                     },
                     Pane::Diff => match key_event.code {
@@ -51,6 +62,13 @@ pub fn get_event_handling_msg(model: &Model, event: Event) -> Option<Msg> {
                                 Some(Msg::QuitImmediately)
                             } else {
                                 None
+                            }
+                        }
+                        KeyCode::Char(' ') => {
+                            if model.watching {
+                                Some(Msg::UserRequestedPausingWatching)
+                            } else {
+                                Some(Msg::UserRequestedResumingWatching)
                             }
                         }
                         _ => None,

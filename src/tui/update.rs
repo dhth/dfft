@@ -4,6 +4,7 @@ use super::model::*;
 use super::msg::Msg;
 
 pub fn update(model: &mut Model, msg: Msg) -> Vec<Cmd> {
+    let mut cmds = vec![];
     match msg {
         Msg::ChangeReceived(change) => model.add_change(change),
         Msg::GoToNextListItem => model.select_next_list_item(),
@@ -21,8 +22,20 @@ pub fn update(model: &mut Model, msg: Msg) -> Vec<Cmd> {
         }
         Msg::GoBackOrQuit => model.go_back_or_quit(),
         Msg::QuitImmediately => model.running_state = RunningState::Done,
-        Msg::ListeningFailed(e) => {
-            model.user_msg = Some(UserMsg::error(format!("listening for changes failed: {e}")));
+        Msg::WatchingFailed(e) => {
+            model.user_msg = Some(UserMsg::error(format!("watching for changes failed: {e}")));
+        }
+        Msg::UserRequestedPausingWatching => {
+            model.user_msg = Some(UserMsg::info("watching paused"));
+            model.pause_watching();
+        }
+        Msg::UserRequestedResumingWatching => {
+            model.user_msg = Some(UserMsg::info("watching for changes"));
+            model.regenerate_cancellation_token();
+            cmds.push(Cmd::WatchForChanges((
+                model.changes_tx.clone(),
+                model.get_cancellation_token(),
+            )));
         }
     }
 
@@ -39,5 +52,5 @@ pub fn update(model: &mut Model, msg: Msg) -> Vec<Cmd> {
         }
     }
 
-    vec![]
+    cmds
 }

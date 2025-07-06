@@ -201,6 +201,8 @@ fn render_status_line(model: &Model, frame: &mut Frame, rect: Rect) {
             " [index: {:?}]",
             model.changes.state.selected()
         )));
+
+        status_bar_lines.push(Span::from(format!(" [watching: {:?}]", model.watching,)));
     }
 
     let status_bar_text = Line::from(status_bar_lines);

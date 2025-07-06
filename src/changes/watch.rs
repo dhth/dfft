@@ -14,7 +14,7 @@ use tracing::debug;
 
 const EVENT_CHANNEL_BUFFER: usize = 100;
 
-pub async fn listen_for_changes(
+pub async fn watch_for_changes(
     event_tx: Sender<Change>,
     cancellation_token: CancellationToken,
 ) -> anyhow::Result<()> {
@@ -43,7 +43,6 @@ pub async fn listen_for_changes(
     loop {
         tokio::select! {
             _ = cancellation_token.cancelled() => {
-                debug!("stopping change listener");
                 break;
             }
             Some(result) = rx.recv() => {
@@ -74,7 +73,6 @@ pub async fn listen_for_changes(
                                             },
                                         };
 
-                                        debug!("got a change: {:?}", &change);
                                         let _ = event_tx.send(change).await;
                                     }
                                 }
@@ -123,7 +121,6 @@ pub async fn listen_for_changes(
                                                 kind: ChangeKind::Modified(Err(e.to_string())),
                                             },
                                         };
-                                        debug!("got a change: {:?}", &change);
                                         let _ = event_tx.send(change).await;
                                     }
                                 }
@@ -141,7 +138,6 @@ pub async fn listen_for_changes(
                                             kind: ChangeKind::Removed,
                                         };
 
-                                        debug!("got a change: {:?}", &change);
                                         let _ = event_tx.send(change).await;
                                     }
                                 }
@@ -156,5 +152,6 @@ pub async fn listen_for_changes(
         }
     }
 
+    debug!("exiting change watcher");
     Ok(())
 }

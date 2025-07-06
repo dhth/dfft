@@ -5,15 +5,12 @@ use super::model::*;
 use super::msg::{Msg, get_event_handling_msg};
 use super::update::update;
 use super::view::view;
-use crate::changes::listen_for_changes;
-use crate::domain::Change;
 use ratatui::Terminal;
 use ratatui::backend::CrosstermBackend;
 use ratatui::crossterm::event::poll;
 use std::time::Duration;
 use tokio::sync::mpsc;
 use tokio::sync::mpsc::{Receiver, Sender};
-use tokio_util::sync::CancellationToken;
 
 const EVENT_POLL_DURATION_MS: u64 = 16;
 
@@ -27,8 +24,6 @@ struct AppTui {
     pub(super) event_tx: Sender<Msg>,
     pub(super) event_rx: Receiver<Msg>,
     pub(super) model: Model,
-    pub(super) initial_commands: Vec<Cmd>,
-    pub(super) cancellation_token: CancellationToken,
 }
 
 impl AppTui {
@@ -42,40 +37,34 @@ impl AppTui {
 
         let debug = std::env::var("DFFT_DEBUG").unwrap_or_default().trim() == "1";
 
-        let model = Model::new(terminal_dimensions, debug);
+        let model = Model::new(terminal_dimensions, true, debug);
 
         Ok(Self {
             terminal,
             event_tx,
             event_rx,
             model,
-            initial_commands: vec![],
-            cancellation_token: CancellationToken::new(),
         })
     }
 
     pub async fn run(&mut self) -> anyhow::Result<()> {
         let _ = self.terminal.clear();
 
-        for cmd in &self.initial_commands {
-            handle_command(cmd.clone(), self.event_tx.clone()).await;
-        }
-
-        let (changes_sender, mut changes_rec) = mpsc::channel::<Change>(100);
-
-        let cancellation_token = self.cancellation_token.clone();
-
         // first render
-        self.model.user_msg = Some(UserMsg::info("listening for changes..."));
+        self.model.user_msg = Some(UserMsg::info("watching for changes..."));
         self.model.render_counter += 1;
         self.terminal.draw(|f| view(&mut self.model, f))?;
 
-        let event_tx_cloned = self.event_tx.clone();
-        tokio::spawn(async move {
-            if let Err(e) = listen_for_changes(changes_sender.clone(), cancellation_token).await {
-                let _ = event_tx_cloned.try_send(Msg::ListeningFailed(e.to_string()));
-            }
-        });
+        let mut initial_cmds = vec![];
+        let changes_tx = self.model.changes_tx.clone();
+        initial_cmds.push(Cmd::WatchForChanges((
+            changes_tx,
+            self.model.get_cancellation_token(),
+        )));
+
+        for cmd in initial_cmds {
+            handle_command(cmd.clone(), self.event_tx.clone()).await;
+        }
 
         loop {
             tokio::select! {
@@ -94,7 +83,7 @@ impl AppTui {
                     }
                 }
 
-                Some(change) = changes_rec.recv() => {
+                Some(change) = self.model.changes_rx.recv() => {
                     let msg = Msg::ChangeReceived(change);
                     let _ = self.event_tx.try_send(msg);
                 }
@@ -122,7 +111,7 @@ impl AppTui {
     }
 
     fn exit(&mut self) -> anyhow::Result<()> {
-        self.cancellation_token.cancel();
+        self.model.pause_watching();
         ratatui::try_restore()?;
         Ok(())
     }
