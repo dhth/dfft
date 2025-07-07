@@ -5,19 +5,20 @@ use ratatui::crossterm::event::{Event, KeyCode, KeyEventKind, KeyModifiers};
 
 pub enum Msg {
     // user actions
-    UserRequestedPausingWatching,
-    UserRequestedResumingWatching,
     GoBackOrQuit,
     GoToFirstListItem,
     GoToLastListItem,
     GoToNextListItem,
     GoToPane(Pane),
     GoToPreviousListItem,
+    PauseWatching,
     QuitImmediately,
+    ResetList,
+    ResumeWatching,
     TerminalResize(u16, u16),
     // internal
-    WatchingFailed(String),
     ChangeReceived(Change),
+    WatchingFailed(String),
 }
 
 pub fn get_event_handling_msg(model: &Model, event: Event) -> Option<Msg> {
@@ -37,39 +38,37 @@ pub fn get_event_handling_msg(model: &Model, event: Event) -> Option<Msg> {
                         KeyCode::Char('k') | KeyCode::Up => Some(Msg::GoToPreviousListItem),
                         KeyCode::Char('g') => Some(Msg::GoToFirstListItem),
                         KeyCode::Char('G') => Some(Msg::GoToLastListItem),
-                        KeyCode::Esc | KeyCode::Char('q') => Some(Msg::GoBackOrQuit),
-                        KeyCode::Char('c') => {
-                            if key_event.modifiers == KeyModifiers::CONTROL {
-                                Some(Msg::QuitImmediately)
-                            } else {
-                                None
-                            }
+                        KeyCode::Char('r') if key_event.modifiers == KeyModifiers::CONTROL => {
+                            Some(Msg::ResetList)
                         }
+                        KeyCode::Esc | KeyCode::Char('q') => Some(Msg::GoBackOrQuit),
                         KeyCode::Tab | KeyCode::BackTab => Some(Msg::GoToPane(Pane::Diff)),
                         KeyCode::Char(' ') => {
                             if model.watching {
-                                Some(Msg::UserRequestedPausingWatching)
+                                Some(Msg::PauseWatching)
                             } else {
-                                Some(Msg::UserRequestedResumingWatching)
+                                Some(Msg::ResumeWatching)
                             }
+                        }
+                        KeyCode::Char('c') if key_event.modifiers == KeyModifiers::CONTROL => {
+                            Some(Msg::QuitImmediately)
                         }
                         _ => None,
                     },
                     Pane::Diff => match key_event.code {
                         KeyCode::Tab | KeyCode::BackTab => Some(Msg::GoToPane(Pane::ChangesList)),
-                        KeyCode::Char('c') => {
-                            if key_event.modifiers == KeyModifiers::CONTROL {
-                                Some(Msg::QuitImmediately)
-                            } else {
-                                None
-                            }
-                        }
                         KeyCode::Char(' ') => {
                             if model.watching {
-                                Some(Msg::UserRequestedPausingWatching)
+                                Some(Msg::PauseWatching)
                             } else {
-                                Some(Msg::UserRequestedResumingWatching)
+                                Some(Msg::ResumeWatching)
                             }
+                        }
+                        KeyCode::Char('r') if key_event.modifiers == KeyModifiers::CONTROL => {
+                            Some(Msg::ResetList)
+                        }
+                        KeyCode::Char('c') if key_event.modifiers == KeyModifiers::CONTROL => {
+                            Some(Msg::QuitImmediately)
                         }
                         _ => None,
                     },
