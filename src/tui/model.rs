@@ -213,6 +213,10 @@ impl Model {
         self.cancellation_token.clone()
     }
 
+    pub(super) fn reset_list(&mut self) {
+        self.changes = Changes::new();
+    }
+
     pub(super) fn pause_watching(&mut self) {
         self.cancellation_token.cancel();
         self.watching = false;
