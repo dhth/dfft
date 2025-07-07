@@ -2,8 +2,9 @@ use console::{Style, style};
 use similar::ChangeTag;
 use similar::TextDiff;
 
-struct Line(Option<usize>);
-impl std::fmt::Display for Line {
+#[allow(unused)]
+struct ChangeLineNum(Option<usize>);
+impl std::fmt::Display for ChangeLineNum {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self.0 {
             None => write!(f, "    "),
@@ -13,6 +14,7 @@ impl std::fmt::Display for Line {
 }
 
 // inspired by https://github.com/mitsuhiko/similar/blob/main/examples/terminal-inline.rs
+#[allow(unused)]
 pub fn get_diff(old: &str, new: &str) -> Option<String> {
     let diff = TextDiff::from_lines(old, new);
 
@@ -31,8 +33,8 @@ pub fn get_diff(old: &str, new: &str) -> Option<String> {
 
                 diff_lines.push(format!(
                     "{}{} |{}",
-                    style(Line(change.old_index())).dim(),
-                    style(Line(change.new_index())).dim(),
+                    style(ChangeLineNum(change.old_index())).dim(),
+                    style(ChangeLineNum(change.new_index())).dim(),
                     s.apply_to(sign).bold(),
                 ));
 
@@ -55,6 +57,11 @@ pub fn get_diff(old: &str, new: &str) -> Option<String> {
     } else {
         Some(diff_lines.join(""))
     }
+}
+
+pub fn get_unified_diff(old: &str, new: &str) -> Option<String> {
+    let diff = TextDiff::from_lines(old, new).unified_diff().to_string();
+    if diff.is_empty() { None } else { Some(diff) }
 }
 
 #[cfg(test)]
@@ -242,6 +249,136 @@ pub fn compute_diff(old: &str, new: &str) -> Option<String> {
         27  27   |                         diff_lines.push(format!("{}", s.apply_to(value).underlined().on_black()));
         28  28   |                     } else {
         29  29   |                         diff_lines.push(format!("{}", s.apply_to(value)));
+        "#);
+    }
+
+    #[test]
+    fn getting_unified_diff_works() {
+        // GIVEN
+        let old = r#"
+pub fn get_diff(old: &str, new: &str) -> Option<String> {
+    let diff = TextDiff::from_lines(old, new);
+
+    let mut diff_lines = vec![];
+    for (idx, group) in diff.grouped_ops(3).iter().enumerate() {
+        if idx > 0 {
+            diff_lines.push(format!("{:-^1$}\n", "-", 80));
+        }
+        for op in group {
+            for change in diff.iter_inline_changes(op) {
+                let (sign, s) = match change.tag() {
+                    ChangeTag::Delete => ("-", Style::new().red()),
+                    ChangeTag::Insert => ("+", Style::new().green()),
+                    ChangeTag::Equal => (" ", Style::new().dim()),
+                };
+
+                diff_lines.push(format!(
+                    "{}{} |{}",
+                    style(Line(change.old_index())).dim(),
+                    style(Line(change.new_index())).dim(),
+                    s.apply_to(sign).bold(),
+                ));
+
+                for (emphasized, value) in change.iter_strings_lossy() {
+                    if emphasized {
+                        diff_lines.push(format!("{}", s.apply_to(value).underlined().on_black()));
+                    } else {
+                        diff_lines.push(format!("{}", s.apply_to(value)));
+                    }
+                }
+                if change.missing_newline() {
+                    diff_lines.push("\n".to_string());
+                }
+            }
+        }
+    }
+
+    if diff_lines.is_empty() {
+        None
+    } else {
+        Some(diff_lines.join(""))
+    }
+}
+"#;
+
+        let new = r#"
+pub fn compute_diff(old: &str, new: &str) -> Option<String> {
+    let diff = TextDiff::from_lines(old, new);
+
+    let mut diff_lines = vec![];
+    for (idx, group) in diff.grouped_ops(3).iter().enumerate() {
+        if idx > 0 {
+            diff_lines.push(format!("{:-^1$}\n", "-", 80));
+        }
+        for op in group {
+            for change in diff.iter_inline_changes(op) {
+                let (sign, s) = match change.tag() {
+                    ChangeTag::Delete => ("-", Style::new().magenta()),
+                    ChangeTag::Insert => ("+", Style::new().green()),
+                    ChangeTag::Equal => (" ", Style::new().dim()),
+                };
+
+                diff_lines.push(format!(
+                    "{}{} |{}",
+                    style(Line(change.old_index())).dim(),
+                    style(Line(change.new_index())).dim(),
+                    s.apply_to(sign).bold(),
+                ));
+
+                for (emph, value) in change.iter_strings_lossy() {
+                    if emph {
+                        diff_lines.push(format!("{}", s.apply_to(value).underlined().on_black()));
+                    } else {
+                        diff_lines.push(format!("{}", s.apply_to(value)));
+                    }
+                }
+                if change.missing_newline() {
+                    diff_lines.push("\n".to_string());
+                }
+            }
+        }
+    }
+
+    if diff_lines.is_empty() {
+        None
+    } else {
+        Some(diff_lines.join(""))
+    }
+}
+"#;
+
+        // WHEN
+        let diff = get_unified_diff(old, new).expect("diff should've been calculated");
+
+        // THEN
+        assert_snapshot!(diff, @r#"
+        @@ -1,5 +1,5 @@
+         
+        -pub fn get_diff(old: &str, new: &str) -> Option<String> {
+        +pub fn compute_diff(old: &str, new: &str) -> Option<String> {
+             let diff = TextDiff::from_lines(old, new);
+         
+             let mut diff_lines = vec![];
+        @@ -10,7 +10,7 @@
+                 for op in group {
+                     for change in diff.iter_inline_changes(op) {
+                         let (sign, s) = match change.tag() {
+        -                    ChangeTag::Delete => ("-", Style::new().red()),
+        +                    ChangeTag::Delete => ("-", Style::new().magenta()),
+                             ChangeTag::Insert => ("+", Style::new().green()),
+                             ChangeTag::Equal => (" ", Style::new().dim()),
+                         };
+        @@ -22,8 +22,8 @@
+                             s.apply_to(sign).bold(),
+                         ));
+         
+        -                for (emphasized, value) in change.iter_strings_lossy() {
+        -                    if emphasized {
+        +                for (emph, value) in change.iter_strings_lossy() {
+        +                    if emph {
+                                 diff_lines.push(format!("{}", s.apply_to(value).underlined().on_black()));
+                             } else {
+                                 diff_lines.push(format!("{}", s.apply_to(value)));
         "#);
     }
 
