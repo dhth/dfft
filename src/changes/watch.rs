@@ -58,17 +58,18 @@ pub async fn watch_for_changes(
                                         }) {
                                             continue;
                                         }
+                                        let file_path = f.strip_prefix(&root).unwrap_or(f).to_string_lossy().to_string();
 
                                         let change = match tokio::fs::read_to_string(f).await {
                                             Ok(contents) => {
                                                 cache.insert(f.to_string_lossy().to_string(), contents);
                                                 Change {
-                                                    file_path: f.clone(),
+                                                    file_path,
                                                     kind: ChangeKind::Created(Ok(())),
                                                 }
                                             }
                                             Err(e) => Change {
-                                                file_path: f.clone(),
+                                                file_path,
                                                 kind: ChangeKind::Created(Err(e.to_string())),
                                             },
                                         };
@@ -84,6 +85,7 @@ pub async fn watch_for_changes(
                                             continue;
                                         }
 
+                                        let file_path = f.strip_prefix(&root).unwrap_or(f).to_string_lossy().to_string();
                                         let change = match tokio::fs::read_to_string(f).await {
                                             Ok(contents) => {
                                                 let was_held = cache.insert(
@@ -94,14 +96,14 @@ pub async fn watch_for_changes(
                                                     Some(old) => {
                                                         if let Some(diff) = get_unified_diff(&old, &contents) {
                                                             Change {
-                                                                file_path: f.clone(),
+                                                                file_path,
                                                                 kind: ChangeKind::Modified(Ok(
                                                                     ModifiedResult::Diff(Some(diff)),
                                                                 )),
                                                             }
                                                         } else {
                                                             Change {
-                                                                file_path: f.clone(),
+                                                                file_path,
                                                                 kind: ChangeKind::Modified(Ok(
                                                                     ModifiedResult::Diff(None),
                                                                 )),
@@ -109,7 +111,7 @@ pub async fn watch_for_changes(
                                                         }
                                                     }
                                                     None => Change {
-                                                        file_path: f.clone(),
+                                                        file_path,
                                                         kind: ChangeKind::Modified(Ok(
                                                             ModifiedResult::InitialSnapshot,
                                                         )),
@@ -117,7 +119,7 @@ pub async fn watch_for_changes(
                                                 }
                                             }
                                             Err(e) => Change {
-                                                file_path: f.clone(),
+                                                file_path,
                                                 kind: ChangeKind::Modified(Err(e.to_string())),
                                             },
                                         };
@@ -133,8 +135,9 @@ pub async fn watch_for_changes(
                                         }
 
                                         cache.remove(&f.to_string_lossy().to_string());
+                                        let file_path = f.strip_prefix(&root).unwrap_or(f).to_string_lossy().to_string();
                                         let change = Change {
-                                            file_path: f.clone(),
+                                            file_path,
                                             kind: ChangeKind::Removed,
                                         };
 

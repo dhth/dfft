@@ -17,8 +17,6 @@ const INACTIVE_PANE_BORDER_COLOR: Color = Color::from_u32(0x737994);
 const INACTIVE_PANE_SELECTED_COLOR: Color = Color::from_u32(0xfabd2f);
 const INFO_MESSAGE_COLOR: Color = Color::from_u32(0x83a598);
 const ERROR_MESSAGE_COLOR: Color = Color::from_u32(0xfb4934);
-const DIFF_REMOVED_COLOR: Color = Color::from_u32(0xf7768e);
-const DIFF_ADDED_COLOR: Color = Color::from_u32(0x9ece6a);
 const TITLE: &str = " dfft ";
 
 pub fn view(model: &mut Model, frame: &mut Frame) {
@@ -140,14 +138,10 @@ fn render_changes_list(model: &mut Model, frame: &mut Frame, rect: Rect) {
         format!(" changes ({}) ", items.len())
     };
 
-    let (border_color, title_color, highlight_color) = if model.active_pane == Pane::ChangesList {
-        (PRIMARY_COLOR, PRIMARY_COLOR, PRIMARY_COLOR)
+    let (border_color, title_color) = if model.active_pane == Pane::ChangesList {
+        (PRIMARY_COLOR, PRIMARY_COLOR)
     } else {
-        (
-            INACTIVE_PANE_BORDER_COLOR,
-            INACTIVE_PANE_TITLE_BG_COLOR,
-            INACTIVE_PANE_SELECTED_COLOR,
-        )
+        (INACTIVE_PANE_BORDER_COLOR, INACTIVE_PANE_TITLE_BG_COLOR)
     };
 
     let list = List::new(items)
@@ -163,10 +157,7 @@ fn render_changes_list(model: &mut Model, frame: &mut Frame, rect: Rect) {
                 )
                 .title(title),
         )
-        .style(Style::new().white())
         .highlight_symbol("> ")
-        .repeat_highlight_symbol(true)
-        .highlight_style(Style::new().fg(highlight_color))
         .direction(ListDirection::TopToBottom);
 
     frame.render_stateful_widget(list, rect, &mut model.changes.state);
@@ -224,7 +215,7 @@ fn get_colored_diff<'a>(diff: &'a str) -> Vec<Line<'a>> {
         } else if line.starts_with("-") {
             lines.push(Line::raw(line).fg(DIFF_REMOVED_COLOR));
         } else if line.starts_with("+") {
-            lines.push(Line::raw(line).fg(DIFF_ADDED_COLOR));
+            lines.push(Line::raw(line).fg(ADDED_COLOR));
         } else {
             lines.push(Line::raw(line).gray());
         }

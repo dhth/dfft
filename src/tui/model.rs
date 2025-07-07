@@ -1,14 +1,19 @@
 use super::common::*;
-use crate::domain::Change;
+use crate::domain::{Change, ChangeKind};
 use ratatui::{
-    text::Line,
+    style::{Style, Stylize},
+    text::{Line, Span},
     widgets::{ListItem, ListState},
 };
 use tokio::sync::mpsc;
 use tokio::sync::mpsc::{Receiver, Sender};
 use tokio_util::sync::CancellationToken;
 
-const USER_MESSAGE_DEFAULT_FRAMES: u16 = 100;
+const USER_MESSAGE_DEFAULT_FRAMES: u16 = 4;
+const CREATED_LABEL: &str = " created  ";
+const MODIFIED_LABEL: &str = " modified ";
+const REMOVED_LABEL: &str = " removed  ";
+const ERROR_LABEL: &str = "  error   ";
 
 #[derive(Debug, Default, PartialEq, Eq)]
 pub enum RunningState {
@@ -100,7 +105,21 @@ impl Changes {
 
 impl From<&ChangeItem> for ListItem<'_> {
     fn from(value: &ChangeItem) -> Self {
-        let line = Line::from(value.change.file_path.to_string_lossy().to_string());
+        let (label, color) = match value.change.kind {
+            ChangeKind::Created(Ok(_)) => (CREATED_LABEL, ADDED_COLOR),
+
+            ChangeKind::Created(Err(_)) => (ERROR_LABEL, ERROR_COLOR),
+            ChangeKind::Modified(Ok(_)) => (MODIFIED_LABEL, MODIFIED_COLOR),
+            ChangeKind::Modified(Err(_)) => (ERROR_LABEL, ERROR_COLOR),
+            ChangeKind::Removed => (REMOVED_LABEL, DIFF_REMOVED_COLOR),
+        };
+
+        let line = Line::from(vec![
+            Span::styled(label, Style::default().bg(color).black().bold()),
+            " ".into(),
+            Span::from(value.change.file_path.clone()),
+        ]);
+
         ListItem::new(line)
     }
 }

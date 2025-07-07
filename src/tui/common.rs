@@ -1,5 +1,11 @@
+use ratatui::style::Color;
+
 pub const MIN_TERMINAL_WIDTH: u16 = 80;
 pub const MIN_TERMINAL_HEIGHT: u16 = 30;
+pub const ADDED_COLOR: Color = Color::from_u32(0x9ece6a);
+pub const MODIFIED_COLOR: Color = Color::from_u32(0xfabd2f);
+pub const ERROR_COLOR: Color = Color::from_u32(0xfb4934);
+pub const DIFF_REMOVED_COLOR: Color = Color::from_u32(0xf7768e);
 
 #[derive(PartialEq, Debug, Clone, Copy)]
 #[allow(dead_code)]

@@ -1,10 +1,6 @@
-use std::path::PathBuf;
-
-// pub type ChangeResult = Result<Change, String>;
-
 #[derive(Clone, Debug)]
 pub struct Change {
-    pub file_path: PathBuf,
+    pub file_path: String,
     pub kind: ChangeKind,
 }
 
