@@ -14,10 +14,17 @@ outputs them as they happen.
 Todo
 ---
 
-- [ ] Add CLI argument parsing
-- [ ] Add flag to pre-populate cache at startup
 - [ ] Add TUI
-- [ ] Add CLI help
+    - [x] Add basic TUI
+    - [ ] Scrollable diff section
+    - [ ] Help page
+    - [ ] More detailed diffs
+    - [ ] Errors are shown to the user wherever possible
+        - [ ] Errors listening to fs events
+    - [ ] Consistent colors
+    - [ ] Fix issue with list cursor going beyond the limit
+    - [x] Stop/resume listening for changes
+- [ ] Add CLI argument parsing
+    - [ ] Add flag to pre-populate cache at startup
 - [ ] Consider `.git/index`
 - [x] Consider `dfft` specific ignore file
-- [ ] Better error handling
