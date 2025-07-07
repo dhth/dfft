@@ -179,33 +179,68 @@ impl Model {
     }
 
     pub(super) fn select_next_list_item(&mut self) {
-        match self.active_pane {
-            Pane::ChangesList => self.changes.state.select_next(),
-            Pane::Diff => {}
-            Pane::Help => {}
+        if self.active_pane == Pane::ChangesList {
+            if self.changes.state.selected().is_none() {
+                return;
+            }
+
+            if let Some(i) = self.changes.state.selected()
+                && i == self.changes.items.len() - 1
+            {
+                return;
+            }
+
+            self.changes.state.select_next();
         }
     }
 
     pub(super) fn select_previous_list_item(&mut self) {
-        match self.active_pane {
-            Pane::ChangesList => self.changes.state.select_previous(),
-            Pane::Diff => {}
-            Pane::Help => {}
+        if self.active_pane == Pane::ChangesList {
+            if self.changes.state.selected().is_none() {
+                return;
+            }
+
+            if let Some(i) = self.changes.state.selected()
+                && i == 0
+            {
+                return;
+            }
+
+            self.changes.state.select_previous();
         }
     }
 
     pub(super) fn select_first_list_item(&mut self) {
-        match self.active_pane {
-            Pane::ChangesList => self.changes.state.select_first(),
-            Pane::Diff => {}
-            Pane::Help => {}
-        }
+        if self.active_pane == Pane::ChangesList {
+            if self.changes.state.selected().is_none() {
+                return;
+            }
+
+            if let Some(i) = self.changes.state.selected()
+                && i == 0
+            {
+                return;
+            }
+
+            self.changes.state.select_first();
+        };
     }
     pub(super) fn select_last_list_item(&mut self) {
         if self.active_pane == Pane::ChangesList {
+            if self.changes.state.selected().is_none() {
+                return;
+            }
+
+            if let Some(i) = self.changes.state.selected()
+                && i == self.changes.items.len() - 1
+            {
+                return;
+            }
+
             self.changes.state.select_last()
         }
     }
+
     pub(super) fn add_change(&mut self, change: Change) {
         self.changes.append(change);
     }

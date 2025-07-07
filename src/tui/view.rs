@@ -22,6 +22,22 @@ const PAUSED_COLOR: Color = Color::from_u32(0xef9f76);
 const WATCHING_LABEL: &str = " [watching]";
 const PAUSED_LABEL: &str = " [ paused ]";
 const TITLE: &str = " dfft ";
+const BANNER: &str = r#"
+
+
+     888  .d888  .d888 888    
+     888 d88P"  d88P"  888    
+     888 888    888    888    
+ .d88888 888888 888888 888888 
+d88" 888 888    888    888    
+888  888 888    888    888    
+Y88b 888 888    888    Y88b.  
+ "Y88888 888    888     "Y888
+
+
+see changes to files in a directory as they happen
+‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾
+"#;
 
 pub fn view(model: &mut Model, frame: &mut Frame) {
     if model.terminal_too_small {
@@ -84,51 +100,66 @@ fn render_diff(model: &Model, frame: &mut Frame, rect: Rect) {
     let title = " diff ";
 
     let maybe_selected_index = model.changes.state.selected();
-
-    let lines = if let Some(selected_index) = maybe_selected_index {
-        let maybe_change = model.changes.items.get(selected_index);
-        match maybe_change {
-            Some(change) => match &change.change.kind {
-                ChangeKind::Created(Ok(_)) => vec![Line::raw("created").gray()],
-                ChangeKind::Created(Err(e)) => {
-                    vec![Line::raw(format!("error reading file contents: {e}"))]
-                }
-                ChangeKind::Modified(Ok(result)) => match result {
-                    ModifiedResult::InitialSnapshot => {
-                        vec![Line::raw(
-                            "initial snapshot captured; diffs will be available from now onwards",
-                        )]
+    let details = match maybe_selected_index {
+        Some(selected_index) => {
+            let maybe_change = model.changes.items.get(selected_index);
+            let lines = match maybe_change {
+                Some(change) => match &change.change.kind {
+                    ChangeKind::Created(Ok(_)) => vec![Line::raw("created").gray()],
+                    ChangeKind::Created(Err(e)) => {
+                        vec![Line::raw(format!("error reading file contents: {e}"))]
                     }
-                    ModifiedResult::Diff(None) => vec![Line::raw("nothing changed")],
-                    ModifiedResult::Diff(Some(d)) => get_colored_diff(d),
+                    ChangeKind::Modified(Ok(result)) => match result {
+                        ModifiedResult::InitialSnapshot => {
+                            vec![Line::raw(
+                                "initial snapshot captured; diffs will be available from now onwards",
+                            )]
+                        }
+                        ModifiedResult::Diff(None) => vec![Line::raw("nothing changed")],
+                        ModifiedResult::Diff(Some(d)) => get_colored_diff(d),
+                    },
+                    ChangeKind::Modified(Err(e)) => {
+                        vec![Line::raw(format!("error reading file contents: {e}"))]
+                    }
+                    ChangeKind::Removed => vec![Line::raw("file removed")],
                 },
-                ChangeKind::Modified(Err(e)) => {
-                    vec![Line::raw(format!("error reading file contents: {e}"))]
-                }
-                ChangeKind::Removed => vec![Line::raw("file removed")],
-            },
-            None => vec![Line::raw("something went wrong")],
-        }
-    } else {
-        vec![Line::raw("diffs will appear here")]
-    };
+                None => vec![Line::raw("something went wrong")],
+            };
 
-    let details = Paragraph::new(lines)
-        .block(
-            Block::bordered()
-                .border_style(Style::default().fg(border_color))
-                .title_style(
-                    Style::new()
-                        .bold()
-                        .bg(title_color)
-                        .fg(SECTION_TITLE_FG_COLOR),
+            Paragraph::new(lines)
+                .block(
+                    Block::bordered()
+                        .border_style(Style::default().fg(border_color))
+                        .title_style(
+                            Style::new()
+                                .bold()
+                                .bg(title_color)
+                                .fg(SECTION_TITLE_FG_COLOR),
+                        )
+                        .title(title)
+                        .padding(Padding::new(1, 0, 1, 0)),
                 )
-                .title(title)
-                .padding(Padding::new(1, 0, 1, 0)),
-        )
-        .style(Style::new().white().on_black())
-        .wrap(Wrap { trim: false })
-        .alignment(Alignment::Left);
+                .style(Style::new().white().on_black())
+                .wrap(Wrap { trim: false })
+                .alignment(Alignment::Left)
+        }
+        None => Paragraph::new(BANNER)
+            .block(
+                Block::bordered()
+                    .border_style(Style::default().fg(border_color))
+                    .title_style(
+                        Style::new()
+                            .bold()
+                            .bg(title_color)
+                            .fg(SECTION_TITLE_FG_COLOR),
+                    )
+                    .title(title)
+                    .padding(Padding::new(1, 0, 1, 0)),
+            )
+            .style(Style::new().fg(PRIMARY_COLOR))
+            .wrap(Wrap { trim: false })
+            .alignment(Alignment::Center),
+    };
 
     frame.render_widget(&details, rect);
 }
@@ -147,6 +178,26 @@ fn render_changes_list(model: &mut Model, frame: &mut Frame, rect: Rect) {
     } else {
         (INACTIVE_PANE_BORDER_COLOR, INACTIVE_PANE_TITLE_BG_COLOR)
     };
+
+    if items.is_empty() {
+        let p = Paragraph::new("changed will appear here as files change")
+            .block(
+                Block::bordered()
+                    .border_style(Style::default().fg(border_color))
+                    .title_style(
+                        Style::new()
+                            .bold()
+                            .bg(title_color)
+                            .fg(SECTION_TITLE_FG_COLOR),
+                    )
+                    .title(title)
+                    .padding(Padding::new(1, 0, 1, 0)),
+            )
+            .wrap(Wrap { trim: false })
+            .alignment(Alignment::Left);
+
+        return frame.render_widget(&p, rect);
+    }
 
     let list = List::new(items)
         .block(
