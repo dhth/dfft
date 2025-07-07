@@ -22,7 +22,6 @@ Todo
     - [ ] Errors are shown to the user wherever possible
         - [ ] Errors listening to fs events
     - [ ] Consistent colors
-    - [ ] Fix issue with list cursor going beyond the limit
     - [x] Stop/resume listening for changes
 - [ ] Add CLI argument parsing
     - [ ] Add flag to pre-populate cache at startup

@@ -85,12 +85,18 @@ impl Changes {
 }
 
 impl Changes {
-    pub fn append(&mut self, change: Change) {
+    pub fn append(&mut self, change: Change, select_newly_added: bool) {
         let item = ChangeItem { change };
         self.items.push(item);
 
         let selected = match self.state.selected() {
-            Some(i) => Some(i),
+            Some(i) => {
+                if select_newly_added {
+                    Some(i + 1)
+                } else {
+                    Some(i)
+                }
+            }
             None => {
                 if self.items.is_empty() {
                     None
@@ -242,7 +248,8 @@ impl Model {
     }
 
     pub(super) fn add_change(&mut self, change: Change) {
-        self.changes.append(change);
+        // TODO: set select_newly_added based on user choice in the future
+        self.changes.append(change, true);
     }
 
     pub(super) fn get_cancellation_token(&self) -> CancellationToken {
