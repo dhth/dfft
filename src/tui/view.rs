@@ -180,7 +180,7 @@ fn render_changes_list(model: &mut Model, frame: &mut Frame, rect: Rect) {
     };
 
     if items.is_empty() {
-        let p = Paragraph::new("changed will appear here as files change")
+        let p = Paragraph::new("changes will appear here")
             .block(
                 Block::bordered()
                     .border_style(Style::default().fg(border_color))
