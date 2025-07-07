@@ -51,7 +51,6 @@ impl AppTui {
         let _ = self.terminal.clear();
 
         // first render
-        self.model.user_msg = Some(UserMsg::info("watching for changes..."));
         self.model.render_counter += 1;
         self.terminal.draw(|f| view(&mut self.model, f))?;
 

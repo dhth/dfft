@@ -17,6 +17,10 @@ const INACTIVE_PANE_BORDER_COLOR: Color = Color::from_u32(0x737994);
 const INACTIVE_PANE_SELECTED_COLOR: Color = Color::from_u32(0xfabd2f);
 const INFO_MESSAGE_COLOR: Color = Color::from_u32(0x83a598);
 const ERROR_MESSAGE_COLOR: Color = Color::from_u32(0xfb4934);
+const WATCHING_COLOR: Color = Color::from_u32(0xbabbf1);
+const PAUSED_COLOR: Color = Color::from_u32(0xef9f76);
+const WATCHING_LABEL: &str = " [watching]";
+const PAUSED_LABEL: &str = " [ paused ]";
 const TITLE: &str = " dfft ";
 
 pub fn view(model: &mut Model, frame: &mut Frame) {
@@ -195,6 +199,17 @@ fn render_status_line(model: &Model, frame: &mut Frame, rect: Rect) {
 
         status_bar_lines.push(Span::from(format!(" [watching: {:?}]", model.watching,)));
     }
+
+    let (watching_label, watching_color) = if model.watching {
+        (WATCHING_LABEL, WATCHING_COLOR)
+    } else {
+        (PAUSED_LABEL, PAUSED_COLOR)
+    };
+
+    status_bar_lines.push(Span::styled(
+        watching_label,
+        Style::default().fg(watching_color).bold(),
+    ));
 
     let status_bar_text = Line::from(status_bar_lines);
 

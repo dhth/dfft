@@ -34,6 +34,7 @@ pub struct UserMsg {
     pub kind: MessageKind,
 }
 
+#[allow(unused)]
 impl UserMsg {
     pub(super) fn info<S>(message: S) -> Self
     where

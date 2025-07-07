@@ -17,13 +17,11 @@ pub fn update(model: &mut Model, msg: Msg) -> Vec<Cmd> {
         }
         Msg::GoToPreviousListItem => model.select_previous_list_item(),
         Msg::PauseWatching => {
-            model.user_msg = Some(UserMsg::info("watching paused"));
             model.pause_watching();
         }
         Msg::QuitImmediately => model.running_state = RunningState::Done,
         Msg::ResetList => model.reset_list(),
         Msg::ResumeWatching => {
-            model.user_msg = Some(UserMsg::info("watching for changes"));
             model.regenerate_cancellation_token();
             cmds.push(Cmd::WatchForChanges((
                 model.changes_tx.clone(),
@@ -38,6 +36,7 @@ pub fn update(model: &mut Model, msg: Msg) -> Vec<Cmd> {
         // internal
         Msg::ChangeReceived(change) => model.add_change(change),
         Msg::WatchingFailed(e) => {
+            model.watching = false;
             model.user_msg = Some(UserMsg::error(format!("watching for changes failed: {e}")));
         }
     }
