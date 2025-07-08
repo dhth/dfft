@@ -21,6 +21,7 @@ const WATCHING_COLOR: Color = Color::from_u32(0xbabbf1);
 const PAUSED_COLOR: Color = Color::from_u32(0xef9f76);
 const WATCHING_LABEL: &str = " [watching]";
 const PAUSED_LABEL: &str = " [ paused ]";
+const FOLLOWING_CHANGES_COLOR: Color = Color::from_u32(0xca9ee6);
 const TITLE: &str = " dfft ";
 const BANNER: &str = r#"
 
@@ -261,6 +262,13 @@ fn render_status_line(model: &Model, frame: &mut Frame, rect: Rect) {
         watching_label,
         Style::default().fg(watching_color).bold(),
     ));
+
+    if model.follow_changes {
+        status_bar_lines.push(Span::styled(
+            " [following changes]",
+            Style::default().fg(FOLLOWING_CHANGES_COLOR).bold(),
+        ));
+    }
 
     let status_bar_text = Line::from(status_bar_lines);
 

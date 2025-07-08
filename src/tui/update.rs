@@ -33,6 +33,9 @@ pub fn update(model: &mut Model, msg: Msg) -> Vec<Cmd> {
             model.terminal_too_small =
                 !(width >= MIN_TERMINAL_WIDTH && height >= MIN_TERMINAL_HEIGHT);
         }
+        Msg::ToggleFollowChanges => {
+            model.follow_changes = !model.follow_changes;
+        }
         // internal
         Msg::ChangeReceived(change) => model.add_change(change),
         Msg::WatchingFailed(e) => {

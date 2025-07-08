@@ -19,6 +19,7 @@ Todo
     - [ ] Scrollable diff section
     - [ ] Help page
     - [ ] More detailed diffs
+    - [x] Allow following changes
     - [ ] Errors are shown to the user wherever possible
         - [ ] Errors listening to fs events
     - [ ] Consistent colors

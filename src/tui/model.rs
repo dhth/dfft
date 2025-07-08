@@ -92,7 +92,7 @@ impl Changes {
         let selected = match self.state.selected() {
             Some(i) => {
                 if select_newly_added {
-                    Some(i + 1)
+                    Some(self.items.len() - 1)
                 } else {
                     Some(i)
                 }
@@ -135,6 +135,7 @@ pub struct Model {
     pub active_pane: Pane,
     pub watching: bool,
     pub changes: Changes,
+    pub follow_changes: bool,
     pub last_active_pane: Option<Pane>,
     pub running_state: RunningState,
     pub user_msg: Option<UserMsg>,
@@ -159,6 +160,7 @@ impl Model {
             active_pane: Pane::ChangesList,
             watching,
             changes: Changes::new(),
+            follow_changes: true,
             last_active_pane: None,
             running_state: RunningState::Running,
             user_msg: None,
@@ -248,8 +250,7 @@ impl Model {
     }
 
     pub(super) fn add_change(&mut self, change: Change) {
-        // TODO: set select_newly_added based on user choice in the future
-        self.changes.append(change, true);
+        self.changes.append(change, self.follow_changes);
     }
 
     pub(super) fn get_cancellation_token(&self) -> CancellationToken {

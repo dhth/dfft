@@ -16,6 +16,7 @@ pub enum Msg {
     ResetList,
     ResumeWatching,
     TerminalResize(u16, u16),
+    ToggleFollowChanges,
     // internal
     ChangeReceived(Change),
     WatchingFailed(String),
@@ -38,6 +39,7 @@ pub fn get_event_handling_msg(model: &Model, event: Event) -> Option<Msg> {
                         KeyCode::Char('k') | KeyCode::Up => Some(Msg::GoToPreviousListItem),
                         KeyCode::Char('g') => Some(Msg::GoToFirstListItem),
                         KeyCode::Char('G') => Some(Msg::GoToLastListItem),
+                        KeyCode::Char('f') => Some(Msg::ToggleFollowChanges),
                         KeyCode::Char('r') if key_event.modifiers == KeyModifiers::CONTROL => {
                             Some(Msg::ResetList)
                         }
