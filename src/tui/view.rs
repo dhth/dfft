@@ -10,7 +10,7 @@ use ratatui::{
     widgets::{Block, List, ListDirection, ListItem, Padding, Paragraph, Wrap},
 };
 
-const SECTION_TITLE_FG_COLOR: Color = Color::from_u32(0x151515);
+const PANE_TITLE_FG_COLOR: Color = Color::from_u32(0x151515);
 const PRIMARY_COLOR: Color = Color::from_u32(0xa6d189);
 const INACTIVE_PANE_TITLE_BG_COLOR: Color = Color::from_u32(0x737994);
 const INACTIVE_PANE_BORDER_COLOR: Color = Color::from_u32(0x737994);
@@ -22,6 +22,7 @@ const PAUSED_COLOR: Color = Color::from_u32(0xef9f76);
 const WATCHING_LABEL: &str = " [watching]";
 const PAUSED_LABEL: &str = " [ paused ]";
 const FOLLOWING_CHANGES_COLOR: Color = Color::from_u32(0xca9ee6);
+const HELP_COLOR: Color = Color::from_u32(0x8caaee);
 const TITLE: &str = " dfft ";
 const BANNER: &str = r#"
 
@@ -46,7 +47,10 @@ pub fn view(model: &mut Model, frame: &mut Frame) {
         return;
     }
 
-    render_changes_view(model, frame)
+    match model.active_pane {
+        Pane::ChangesList | Pane::Diff => render_main_view(model, frame),
+        Pane::Help => render_help_view(model, frame),
+    }
 }
 
 fn render_terminal_too_small_view(dimensions: &TerminalDimensions, frame: &mut Frame) {
@@ -72,7 +76,7 @@ Press (q/<ctrl+c>/<esc> to exit)
     frame.render_widget(p, frame.area());
 }
 
-fn render_changes_view(model: &mut Model, frame: &mut Frame) {
+fn render_main_view(model: &mut Model, frame: &mut Frame) {
     let main_rect = Layout::default()
         .direction(ratatui::layout::Direction::Vertical)
         .constraints(vec![
@@ -131,12 +135,7 @@ fn render_diff(model: &Model, frame: &mut Frame, rect: Rect) {
                 .block(
                     Block::bordered()
                         .border_style(Style::default().fg(border_color))
-                        .title_style(
-                            Style::new()
-                                .bold()
-                                .bg(title_color)
-                                .fg(SECTION_TITLE_FG_COLOR),
-                        )
+                        .title_style(Style::new().bold().bg(title_color).fg(PANE_TITLE_FG_COLOR))
                         .title(title)
                         .padding(Padding::new(1, 0, 1, 0)),
                 )
@@ -148,12 +147,7 @@ fn render_diff(model: &Model, frame: &mut Frame, rect: Rect) {
             .block(
                 Block::bordered()
                     .border_style(Style::default().fg(border_color))
-                    .title_style(
-                        Style::new()
-                            .bold()
-                            .bg(title_color)
-                            .fg(SECTION_TITLE_FG_COLOR),
-                    )
+                    .title_style(Style::new().bold().bg(title_color).fg(PANE_TITLE_FG_COLOR))
                     .title(title)
                     .padding(Padding::new(1, 0, 1, 0)),
             )
@@ -185,12 +179,7 @@ fn render_changes_list(model: &mut Model, frame: &mut Frame, rect: Rect) {
             .block(
                 Block::bordered()
                     .border_style(Style::default().fg(border_color))
-                    .title_style(
-                        Style::new()
-                            .bold()
-                            .bg(title_color)
-                            .fg(SECTION_TITLE_FG_COLOR),
-                    )
+                    .title_style(Style::new().bold().bg(title_color).fg(PANE_TITLE_FG_COLOR))
                     .title(title)
                     .padding(Padding::new(1, 0, 1, 0)),
             )
@@ -205,12 +194,7 @@ fn render_changes_list(model: &mut Model, frame: &mut Frame, rect: Rect) {
             Block::bordered()
                 .border_style(Style::default().fg(border_color))
                 .padding(Padding::new(0, 0, 1, 0))
-                .title_style(
-                    Style::new()
-                        .bold()
-                        .bg(title_color)
-                        .fg(SECTION_TITLE_FG_COLOR),
-                )
+                .title_style(Style::new().bold().bg(title_color).fg(PANE_TITLE_FG_COLOR))
                 .title(title),
         )
         .highlight_symbol("> ")
@@ -219,13 +203,43 @@ fn render_changes_list(model: &mut Model, frame: &mut Frame, rect: Rect) {
     frame.render_stateful_widget(list, rect, &mut model.changes.state);
 }
 
+fn render_help_view(model: &Model, frame: &mut Frame) {
+    let rect = Layout::default()
+        .direction(ratatui::layout::Direction::Vertical)
+        .constraints(vec![Constraint::Fill(1), Constraint::Length(1)])
+        .split(frame.area());
+
+    let lines: Vec<Line> = HELP_CONTENT
+        .lines()
+        .skip(model.help_scroll)
+        .map(Line::raw)
+        .collect();
+
+    let title = " help ";
+
+    let help_widget = Paragraph::new(lines)
+        .block(
+            Block::bordered()
+                .border_style(Style::default().fg(HELP_COLOR))
+                .title_style(Style::new().bold().bg(HELP_COLOR).fg(PANE_TITLE_FG_COLOR))
+                .title(title)
+                .padding(Padding::new(1, 0, 1, 0)),
+        )
+        .style(Style::new().white().on_black())
+        .wrap(Wrap { trim: false })
+        .alignment(Alignment::Left);
+
+    frame.render_widget(&help_widget, rect[0]);
+    render_status_line(model, frame, rect[1]);
+}
+
 fn render_status_line(model: &Model, frame: &mut Frame, rect: Rect) {
     let mut status_bar_lines = vec![Span::styled(
         TITLE,
         Style::new()
             .bold()
             .bg(PRIMARY_COLOR)
-            .fg(SECTION_TITLE_FG_COLOR),
+            .fg(PANE_TITLE_FG_COLOR),
     )];
 
     if let Some(msg) = &model.user_msg {

@@ -48,6 +48,7 @@ pub fn get_event_handling_msg(model: &Model, event: Event) -> Option<Msg> {
                         KeyCode::Char('c') if key_event.modifiers == KeyModifiers::CONTROL => {
                             Some(Msg::QuitImmediately)
                         }
+                        KeyCode::Char('?') => Some(Msg::GoToPane(Pane::Help)),
                         _ => None,
                     },
                     Pane::Diff => match key_event.code {
@@ -56,12 +57,19 @@ pub fn get_event_handling_msg(model: &Model, event: Event) -> Option<Msg> {
                         KeyCode::Char('r') if key_event.modifiers == KeyModifiers::CONTROL => {
                             Some(Msg::ResetList)
                         }
+                        KeyCode::Char('?') => Some(Msg::GoToPane(Pane::Help)),
+                        KeyCode::Esc | KeyCode::Char('q') => Some(Msg::GoBackOrQuit),
                         KeyCode::Char('c') if key_event.modifiers == KeyModifiers::CONTROL => {
                             Some(Msg::QuitImmediately)
                         }
                         _ => None,
                     },
                     Pane::Help => match key_event.code {
+                        KeyCode::Char('j') | KeyCode::Down => Some(Msg::GoDown),
+                        KeyCode::Char('k') | KeyCode::Up => Some(Msg::GoUp),
+                        KeyCode::Char('?') | KeyCode::Char('q') | KeyCode::Esc => {
+                            Some(Msg::GoBackOrQuit)
+                        }
                         KeyCode::Char('c') => {
                             if key_event.modifiers == KeyModifiers::CONTROL {
                                 Some(Msg::QuitImmediately)

@@ -147,6 +147,9 @@ pub struct Model {
     pub changes_rx: Receiver<Change>,
     cancellation_token: CancellationToken,
     pub debug: bool,
+    pub help_scroll: usize,
+    pub help_line_count: usize,
+    pub max_help_scroll_available: usize,
 }
 
 impl Model {
@@ -156,7 +159,7 @@ impl Model {
 
         let (changes_tx, changes_rx) = mpsc::channel::<Change>(100);
 
-        Self {
+        let mut model = Model {
             active_pane: Pane::ChangesList,
             watching,
             changes: Changes::new(),
@@ -172,49 +175,71 @@ impl Model {
             changes_rx,
             cancellation_token: CancellationToken::new(),
             debug,
-        }
+            help_scroll: 0,
+            help_line_count: HELP_CONTENT.lines().count(),
+            max_help_scroll_available: 0,
+        };
+
+        model.compute_max_help_scroll_available();
+
+        model
     }
 
     pub(super) fn go_back_or_quit(&mut self) {
         let active_pane = Some(self.active_pane);
         match self.active_pane {
             Pane::ChangesList => self.running_state = RunningState::Done,
-            Pane::Diff => {}
-            Pane::Help => {}
+            Pane::Diff => self.active_pane = Pane::ChangesList,
+            Pane::Help => match self.last_active_pane {
+                Some(p) => self.active_pane = p,
+                None => self.active_pane = Pane::ChangesList,
+            },
         }
 
         self.last_active_pane = active_pane;
     }
 
     pub(super) fn go_down(&mut self) {
-        if self.active_pane == Pane::ChangesList {
-            if self.changes.state.selected().is_none() {
-                return;
-            }
+        match self.active_pane {
+            Pane::ChangesList => {
+                if self.changes.state.selected().is_none() {
+                    return;
+                }
 
-            if let Some(i) = self.changes.state.selected()
-                && i == self.changes.items.len() - 1
-            {
-                return;
-            }
+                if let Some(i) = self.changes.state.selected()
+                    && i == self.changes.items.len() - 1
+                {
+                    return;
+                }
 
-            self.changes.state.select_next();
+                self.changes.state.select_next();
+            }
+            Pane::Help => {
+                self.scroll_help_down();
+            }
+            Pane::Diff => {}
         }
     }
 
     pub(super) fn go_up(&mut self) {
-        if self.active_pane == Pane::ChangesList {
-            if self.changes.state.selected().is_none() {
-                return;
-            }
+        match self.active_pane {
+            Pane::ChangesList => {
+                if self.changes.state.selected().is_none() {
+                    return;
+                }
 
-            if let Some(i) = self.changes.state.selected()
-                && i == 0
-            {
-                return;
-            }
+                if let Some(i) = self.changes.state.selected()
+                    && i == 0
+                {
+                    return;
+                }
 
-            self.changes.state.select_previous();
+                self.changes.state.select_previous();
+            }
+            Pane::Help => {
+                self.scroll_help_up();
+            }
+            Pane::Diff => {}
         }
     }
 
@@ -269,5 +294,56 @@ impl Model {
     pub(super) fn regenerate_cancellation_token(&mut self) {
         self.cancellation_token = CancellationToken::new();
         self.watching = true;
+    }
+
+    pub(super) fn scroll_help_down(&mut self) {
+        if self.help_scroll < self.max_help_scroll_available {
+            self.help_scroll += 1;
+        }
+    }
+
+    pub(super) fn scroll_help_up(&mut self) {
+        self.help_scroll = self.help_scroll.saturating_sub(1);
+    }
+
+    pub(super) fn compute_max_help_scroll_available(&mut self) {
+        // -help------------------------------
+        // |                                 | <- padding top
+        // | 1    keymaps                    |
+        // | 2    aaaaa                      |
+        // | 3    aaaaa                      | <- available height = 10 - 4 = 6
+        // | 4    aaaaa                      |
+        // | 5    aaaaa                      |
+        // | 6    aaaaa                      |
+        // |---------------------------------| <- help border
+        // | dfft                            | __ lower edge of screen
+        // | 7    aaaaa | <- not visible
+        // | 8    aaaaa |
+        // | 9    aaaaa | <- max scroll available = 3
+        // |            |
+        // |            |
+        // |            |
+        // --------------
+
+        // fully scrolled view
+
+        // -help------------------------------
+        // |                                 |
+        // | 4    aaaaa                      |
+        // | 5    aaaaa                      |
+        // | 6    aaaaa                      |
+        // | 7    aaaaa                      |
+        // | 8    aaaaa                      |
+        // | 9    aaaaa                      |
+        // |---------------------------------|
+        // | dfft                            |
+
+        self.max_help_scroll_available = if self.terminal_too_small {
+            0
+        } else {
+            // 4 => top border + padding top + lower border + status line
+            let available_height = self.terminal_dimensions.height as usize - 4;
+            self.help_line_count.saturating_sub(available_height)
+        };
     }
 }

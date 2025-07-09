@@ -22,6 +22,8 @@ pub fn update(model: &mut Model, msg: Msg) -> Vec<Cmd> {
             model.terminal_dimensions = TerminalDimensions { width, height };
             model.terminal_too_small =
                 !(width >= MIN_TERMINAL_WIDTH && height >= MIN_TERMINAL_HEIGHT);
+
+            model.compute_max_help_scroll_available();
         }
         Msg::ToggleFollowChanges => {
             model.follow_changes = !model.follow_changes;
