@@ -7,6 +7,8 @@ pub const MODIFIED_COLOR: Color = Color::from_u32(0xfabd2f);
 pub const ERROR_COLOR: Color = Color::from_u32(0xfb4934);
 pub const DIFF_REMOVED_COLOR: Color = Color::from_u32(0xf7768e);
 
+pub const HELP_CONTENT: &str = include_str!("static/help.txt");
+
 #[derive(PartialEq, Debug, Clone, Copy)]
 #[allow(dead_code)]
 pub enum Pane {
