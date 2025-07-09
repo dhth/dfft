@@ -311,3 +311,194 @@ fn get_colored_diff<'a>(diff: &'a str) -> Vec<Line<'a>> {
 
     lines
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::tui::{msg::Msg, update::update};
+
+    use super::*;
+    use insta::assert_snapshot;
+    use ratatui::{Terminal, backend::TestBackend};
+
+    fn get_test_terminal() -> (Terminal<TestBackend>, TerminalDimensions) {
+        let terminal = Terminal::new(TestBackend::new(MIN_TERMINAL_WIDTH, MIN_TERMINAL_HEIGHT))
+            .expect("terminal should've been created");
+        let terminal_dimensions =
+            TerminalDimensions::from((MIN_TERMINAL_WIDTH, MIN_TERMINAL_HEIGHT));
+
+        (terminal, terminal_dimensions)
+    }
+
+    #[test]
+    fn rendering_help_view_works() {
+        // GIVEN
+        let (mut terminal, terminal_dimensions) = get_test_terminal();
+
+        let mut model = Model::new(terminal_dimensions, true, false);
+        model.active_pane = Pane::Help;
+
+        // WHEN
+        terminal
+            .draw(|f| view(&mut model, f))
+            .expect("frame should've been drawn");
+
+        // THEN
+        assert_snapshot!(terminal.backend(), @r#"
+        "┌ help ────────────────────────────────────────────────────────────────────────┐"
+        "│                                                                              │"
+        "│ Keymaps                                                                      │"
+        "│ ---                                                                          │"
+        "│                                                                              │"
+        "│ General                                                                      │"
+        "│     ?                    show/hide help view                                 │"
+        "│     Esc / q              go back/exit                                        │"
+        "│     <ctrl+c>             exit immediately                                    │"
+        "│                                                                              │"
+        "│ Changes List Pane                                                            │"
+        "│     j / ↓                go down                                             │"
+        "│     k / ↑                go up                                               │"
+        "│     g                    go to top                                           │"
+        "│     G                    go to the bottom                                    │"
+        "│     f                    toggle following changes                            │"
+        "│     <c-r>                reset list                                          │"
+        "│     <space>              toggle watching                                     │"
+        "│     Tab                  switch to diff pane                                 │"
+        "│                                                                              │"
+        "│ Diff Pane                                                                    │"
+        "│     Tab                  switch to changes list pane                         │"
+        "└──────────────────────────────────────────────────────────────────────────────┘"
+        " dfft  [watching] [following changes]                                           "
+        "#);
+    }
+
+    #[test]
+    fn scrolling_help_view_works() {
+        // GIVEN
+        let (mut terminal, terminal_dimensions) = get_test_terminal();
+
+        let mut model = Model::new(terminal_dimensions, true, false);
+        model.active_pane = Pane::Help;
+        for _ in 1..=3 {
+            update(&mut model, Msg::GoDown);
+        }
+
+        // WHEN
+        terminal.draw(|f| view(&mut model, f)).unwrap();
+
+        // THEN
+        assert_snapshot!(terminal.backend(), @r#"
+        "┌ help ────────────────────────────────────────────────────────────────────────┐"
+        "│                                                                              │"
+        "│ General                                                                      │"
+        "│     ?                    show/hide help view                                 │"
+        "│     Esc / q              go back/exit                                        │"
+        "│     <ctrl+c>             exit immediately                                    │"
+        "│                                                                              │"
+        "│ Changes List Pane                                                            │"
+        "│     j / ↓                go down                                             │"
+        "│     k / ↑                go up                                               │"
+        "│     g                    go to top                                           │"
+        "│     G                    go to the bottom                                    │"
+        "│     f                    toggle following changes                            │"
+        "│     <c-r>                reset list                                          │"
+        "│     <space>              toggle watching                                     │"
+        "│     Tab                  switch to diff pane                                 │"
+        "│                                                                              │"
+        "│ Diff Pane                                                                    │"
+        "│     Tab                  switch to changes list pane                         │"
+        "│     <space>              toggle watching                                     │"
+        "│     <c-r>                reset list                                          │"
+        "│                                                                              │"
+        "└──────────────────────────────────────────────────────────────────────────────┘"
+        " dfft  [watching] [following changes]                                           "
+        "#);
+    }
+
+    #[test]
+    fn help_pane_doesnt_scroll_beyond_lower_limit() {
+        // GIVEN
+        let (mut terminal, terminal_dimensions) = get_test_terminal();
+
+        let mut model = Model::new(terminal_dimensions, true, false);
+        model.active_pane = Pane::Help;
+        for _ in 1..=20 {
+            update(&mut model, Msg::GoDown);
+        }
+
+        // WHEN
+        terminal.draw(|f| view(&mut model, f)).unwrap();
+
+        // THEN
+        assert_snapshot!(terminal.backend(), @r#"
+        "┌ help ────────────────────────────────────────────────────────────────────────┐"
+        "│                                                                              │"
+        "│     <ctrl+c>             exit immediately                                    │"
+        "│                                                                              │"
+        "│ Changes List Pane                                                            │"
+        "│     j / ↓                go down                                             │"
+        "│     k / ↑                go up                                               │"
+        "│     g                    go to top                                           │"
+        "│     G                    go to the bottom                                    │"
+        "│     f                    toggle following changes                            │"
+        "│     <c-r>                reset list                                          │"
+        "│     <space>              toggle watching                                     │"
+        "│     Tab                  switch to diff pane                                 │"
+        "│                                                                              │"
+        "│ Diff Pane                                                                    │"
+        "│     Tab                  switch to changes list pane                         │"
+        "│     <space>              toggle watching                                     │"
+        "│     <c-r>                reset list                                          │"
+        "│                                                                              │"
+        "│ Help Pane                                                                    │"
+        "│     j / ↓                go down                                             │"
+        "│     k / ↑                go up                                               │"
+        "└──────────────────────────────────────────────────────────────────────────────┘"
+        " dfft  [watching] [following changes]                                           "
+        "#);
+    }
+
+    #[test]
+    fn help_pane_doesnt_scroll_above_upper_limit() {
+        // GIVEN
+        let (mut terminal, terminal_dimensions) = get_test_terminal();
+
+        let mut model = Model::new(terminal_dimensions, true, false);
+        model.active_pane = Pane::Help;
+        for _ in 1..=3 {
+            update(&mut model, Msg::GoUp);
+        }
+
+        // WHEN
+        terminal
+            .draw(|f| view(&mut model, f))
+            .expect("frame should've been drawn");
+
+        // THEN
+        assert_snapshot!(terminal.backend(), @r#"
+        "┌ help ────────────────────────────────────────────────────────────────────────┐"
+        "│                                                                              │"
+        "│ Keymaps                                                                      │"
+        "│ ---                                                                          │"
+        "│                                                                              │"
+        "│ General                                                                      │"
+        "│     ?                    show/hide help view                                 │"
+        "│     Esc / q              go back/exit                                        │"
+        "│     <ctrl+c>             exit immediately                                    │"
+        "│                                                                              │"
+        "│ Changes List Pane                                                            │"
+        "│     j / ↓                go down                                             │"
+        "│     k / ↑                go up                                               │"
+        "│     g                    go to top                                           │"
+        "│     G                    go to the bottom                                    │"
+        "│     f                    toggle following changes                            │"
+        "│     <c-r>                reset list                                          │"
+        "│     <space>              toggle watching                                     │"
+        "│     Tab                  switch to diff pane                                 │"
+        "│                                                                              │"
+        "│ Diff Pane                                                                    │"
+        "│     Tab                  switch to changes list pane                         │"
+        "└──────────────────────────────────────────────────────────────────────────────┘"
+        " dfft  [watching] [following changes]                                           "
+        "#);
+    }
+}
