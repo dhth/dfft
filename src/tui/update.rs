@@ -8,14 +8,14 @@ pub fn update(model: &mut Model, msg: Msg) -> Vec<Cmd> {
     match msg {
         // user actions
         Msg::GoBackOrQuit => model.go_back_or_quit(),
-        Msg::GoToFirstListItem => model.select_first_list_item(),
-        Msg::GoToLastListItem => model.select_last_list_item(),
-        Msg::GoToNextListItem => model.select_next_list_item(),
+        Msg::GoDown => model.go_down(),
+        Msg::GoToBottom => model.go_to_bottom(),
         Msg::GoToPane(pane) => {
             model.last_active_pane = Some(model.active_pane);
             model.active_pane = pane;
         }
-        Msg::GoToPreviousListItem => model.select_previous_list_item(),
+        Msg::GoToTop => model.go_to_top(),
+        Msg::GoUp => model.go_up(),
         Msg::QuitImmediately => model.running_state = RunningState::Done,
         Msg::ResetList => model.reset_list(),
         Msg::TerminalResize(width, height) => {

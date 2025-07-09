@@ -186,7 +186,7 @@ impl Model {
         self.last_active_pane = active_pane;
     }
 
-    pub(super) fn select_next_list_item(&mut self) {
+    pub(super) fn go_down(&mut self) {
         if self.active_pane == Pane::ChangesList {
             if self.changes.state.selected().is_none() {
                 return;
@@ -202,7 +202,7 @@ impl Model {
         }
     }
 
-    pub(super) fn select_previous_list_item(&mut self) {
+    pub(super) fn go_up(&mut self) {
         if self.active_pane == Pane::ChangesList {
             if self.changes.state.selected().is_none() {
                 return;
@@ -218,7 +218,7 @@ impl Model {
         }
     }
 
-    pub(super) fn select_first_list_item(&mut self) {
+    pub(super) fn go_to_top(&mut self) {
         if self.active_pane == Pane::ChangesList {
             if self.changes.state.selected().is_none() {
                 return;
@@ -233,7 +233,7 @@ impl Model {
             self.changes.state.select_first();
         };
     }
-    pub(super) fn select_last_list_item(&mut self) {
+    pub(super) fn go_to_bottom(&mut self) {
         if self.active_pane == Pane::ChangesList {
             if self.changes.state.selected().is_none() {
                 return;

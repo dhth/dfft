@@ -6,11 +6,11 @@ use ratatui::crossterm::event::{Event, KeyCode, KeyEventKind, KeyModifiers};
 pub enum Msg {
     // user actions
     GoBackOrQuit,
-    GoToFirstListItem,
-    GoToLastListItem,
-    GoToNextListItem,
+    GoDown,
+    GoToBottom,
     GoToPane(Pane),
-    GoToPreviousListItem,
+    GoToTop,
+    GoUp,
     QuitImmediately,
     ResetList,
     TerminalResize(u16, u16),
@@ -34,10 +34,10 @@ pub fn get_event_handling_msg(model: &Model, event: Event) -> Option<Msg> {
             false => match key_event.kind {
                 KeyEventKind::Press => match model.active_pane {
                     Pane::ChangesList => match key_event.code {
-                        KeyCode::Char('j') | KeyCode::Down => Some(Msg::GoToNextListItem),
-                        KeyCode::Char('k') | KeyCode::Up => Some(Msg::GoToPreviousListItem),
-                        KeyCode::Char('g') => Some(Msg::GoToFirstListItem),
-                        KeyCode::Char('G') => Some(Msg::GoToLastListItem),
+                        KeyCode::Char('j') | KeyCode::Down => Some(Msg::GoDown),
+                        KeyCode::Char('k') | KeyCode::Up => Some(Msg::GoUp),
+                        KeyCode::Char('g') => Some(Msg::GoToTop),
+                        KeyCode::Char('G') => Some(Msg::GoToBottom),
                         KeyCode::Char('f') => Some(Msg::ToggleFollowChanges),
                         KeyCode::Char('r') if key_event.modifiers == KeyModifiers::CONTROL => {
                             Some(Msg::ResetList)
