@@ -11,12 +11,11 @@ pub enum Msg {
     GoToNextListItem,
     GoToPane(Pane),
     GoToPreviousListItem,
-    PauseWatching,
     QuitImmediately,
     ResetList,
-    ResumeWatching,
     TerminalResize(u16, u16),
     ToggleFollowChanges,
+    ToggleWatching,
     // internal
     ChangeReceived(Change),
     WatchingFailed(String),
@@ -45,13 +44,7 @@ pub fn get_event_handling_msg(model: &Model, event: Event) -> Option<Msg> {
                         }
                         KeyCode::Esc | KeyCode::Char('q') => Some(Msg::GoBackOrQuit),
                         KeyCode::Tab | KeyCode::BackTab => Some(Msg::GoToPane(Pane::Diff)),
-                        KeyCode::Char(' ') => {
-                            if model.watching {
-                                Some(Msg::PauseWatching)
-                            } else {
-                                Some(Msg::ResumeWatching)
-                            }
-                        }
+                        KeyCode::Char(' ') => Some(Msg::ToggleWatching),
                         KeyCode::Char('c') if key_event.modifiers == KeyModifiers::CONTROL => {
                             Some(Msg::QuitImmediately)
                         }
@@ -59,13 +52,7 @@ pub fn get_event_handling_msg(model: &Model, event: Event) -> Option<Msg> {
                     },
                     Pane::Diff => match key_event.code {
                         KeyCode::Tab | KeyCode::BackTab => Some(Msg::GoToPane(Pane::ChangesList)),
-                        KeyCode::Char(' ') => {
-                            if model.watching {
-                                Some(Msg::PauseWatching)
-                            } else {
-                                Some(Msg::ResumeWatching)
-                            }
-                        }
+                        KeyCode::Char(' ') => Some(Msg::ToggleWatching),
                         KeyCode::Char('r') if key_event.modifiers == KeyModifiers::CONTROL => {
                             Some(Msg::ResetList)
                         }

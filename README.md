@@ -14,16 +14,16 @@ outputs them as they happen.
 Todo
 ---
 
-- [ ] Add TUI
-    - [x] Add basic TUI
-    - [ ] Scrollable diff section
-    - [ ] Help page
-    - [ ] More detailed diffs
-    - [x] Allow following changes
-    - [ ] Errors are shown to the user wherever possible
-        - [ ] Errors listening to fs events
-    - [ ] Consistent colors
-    - [x] Stop/resume listening for changes
+- [x] Add basic TUI
+- [ ] Scrollable diff section
+- [ ] Help page
+- [ ] More detailed diffs
+- [x] Allow following changes
+- [ ] Errors are shown to the user wherever possible
+    - [ ] Errors listening to fs events
+- [ ] Consistent colors
+- [x] Stop/resume listening for changes
+- [x] Play sound when a change occurs
 - [ ] Add CLI argument parsing
     - [ ] Add flag to pre-populate cache at startup
 - [ ] Consider `.git/index`

@@ -21,6 +21,7 @@ pub async fn watch_for_changes(
     let root = tokio::fs::canonicalize(".").await?;
     let gitignore = get_ignore(&root)?;
 
+    // TODO: maybe this should live in the TUI's model
     let mut cache: HashMap<String, String> = HashMap::new();
 
     let (tx, mut rx) = channel(EVENT_CHANNEL_BUFFER);

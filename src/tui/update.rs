@@ -16,18 +16,8 @@ pub fn update(model: &mut Model, msg: Msg) -> Vec<Cmd> {
             model.active_pane = pane;
         }
         Msg::GoToPreviousListItem => model.select_previous_list_item(),
-        Msg::PauseWatching => {
-            model.pause_watching();
-        }
         Msg::QuitImmediately => model.running_state = RunningState::Done,
         Msg::ResetList => model.reset_list(),
-        Msg::ResumeWatching => {
-            model.regenerate_cancellation_token();
-            cmds.push(Cmd::WatchForChanges((
-                model.changes_tx.clone(),
-                model.get_cancellation_token(),
-            )));
-        }
         Msg::TerminalResize(width, height) => {
             model.terminal_dimensions = TerminalDimensions { width, height };
             model.terminal_too_small =
@@ -35,6 +25,17 @@ pub fn update(model: &mut Model, msg: Msg) -> Vec<Cmd> {
         }
         Msg::ToggleFollowChanges => {
             model.follow_changes = !model.follow_changes;
+        }
+        Msg::ToggleWatching => {
+            if model.watching {
+                model.pause_watching();
+            } else {
+                model.regenerate_cancellation_token();
+                cmds.push(Cmd::WatchForChanges((
+                    model.changes_tx.clone(),
+                    model.get_cancellation_token(),
+                )));
+            }
         }
         // internal
         Msg::ChangeReceived(change) => model.add_change(change),
