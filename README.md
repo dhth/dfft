@@ -16,9 +16,13 @@ Todo
 
 - [x] Add basic TUI
 - [ ] Scrollable diff section
-- [ ] Help page
-- [ ] More detailed diffs
+- [x] Help page
+- [x] More detailed diffs
 - [x] Allow following changes
+- [ ] Keymaps for moving around the list from diff pane
+- [ ] Follow mode shouldn't do anything if the user is in the diff pane
+- [ ] Show contents for new file
+- [ ] [bug] error when "G" is pressed
 - [ ] Errors are shown to the user wherever possible
     - [ ] Errors listening to fs events
 - [ ] Consistent colors
@@ -26,5 +30,5 @@ Todo
 - [x] Play sound when a change occurs
 - [ ] Add CLI argument parsing
     - [ ] Add flag to pre-populate cache at startup
-- [ ] Consider `.git/index`
 - [x] Consider `dfft` specific ignore file
+- [ ] Consider `.git/info/exclude`

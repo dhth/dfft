@@ -1,4 +1,3 @@
-mod diff;
 mod helpers;
 mod watch;
 

@@ -1,18 +1,5 @@
-#[derive(Clone, Debug)]
-pub struct Change {
-    pub file_path: String,
-    pub kind: ChangeKind,
-}
+mod change;
+mod diff;
 
-#[derive(Clone, Debug)]
-pub enum ChangeKind {
-    Created(Result<(), String>),
-    Modified(Result<ModifiedResult, String>),
-    Removed,
-}
-
-#[derive(Clone, Debug)]
-pub enum ModifiedResult {
-    InitialSnapshot,
-    Diff(Option<String>),
-}
+pub use change::*;
+pub use diff::*;

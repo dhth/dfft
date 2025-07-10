@@ -1,7 +1,7 @@
 use super::common::*;
 use super::model::{MessageKind, Model};
-use crate::domain::{ChangeKind, ModifiedResult};
-use ratatui::style::Color;
+use crate::domain::{ChangeKind, Diff, DiffOperation, ModifiedResult};
+use ratatui::style::{Color, Modifier};
 use ratatui::{
     Frame,
     layout::{Alignment, Constraint, Layout, Rect},
@@ -14,7 +14,7 @@ const PANE_TITLE_FG_COLOR: Color = Color::from_u32(0x151515);
 const PRIMARY_COLOR: Color = Color::from_u32(0xa6d189);
 const INACTIVE_PANE_TITLE_BG_COLOR: Color = Color::from_u32(0x737994);
 const INACTIVE_PANE_BORDER_COLOR: Color = Color::from_u32(0x737994);
-const INACTIVE_PANE_SELECTED_COLOR: Color = Color::from_u32(0xfabd2f);
+const INACTIVE_PANE_SELECTED_COLOR: Color = Color::from_u32(0xe5c890);
 const INFO_MESSAGE_COLOR: Color = Color::from_u32(0x83a598);
 const ERROR_MESSAGE_COLOR: Color = Color::from_u32(0xfb4934);
 const WATCHING_COLOR: Color = Color::from_u32(0xbabbf1);
@@ -23,6 +23,10 @@ const WATCHING_LABEL: &str = " [watching]";
 const PAUSED_LABEL: &str = " [ paused ]";
 const FOLLOWING_CHANGES_COLOR: Color = Color::from_u32(0xca9ee6);
 const HELP_COLOR: Color = Color::from_u32(0x8caaee);
+const DIFF_DELETED_COLOR: Color = Color::from_u32(0xf7768e);
+const DIFF_INSERT_COLOR: Color = Color::from_u32(0x9ece6a);
+const DIM_COLOR: Color = Color::Gray;
+
 const TITLE: &str = " dfft ";
 const BANNER_LARGE: &str = r#"
 
@@ -94,12 +98,12 @@ fn render_main_view(model: &mut Model, frame: &mut Frame) {
         ])
         .split(frame.area());
 
-    render_diff(model, frame, main_rect[0]);
-    render_changes_list(model, frame, main_rect[1]);
+    render_diff_pane(model, frame, main_rect[0]);
+    render_changes_list_pane(model, frame, main_rect[1]);
     render_status_line(model, frame, main_rect[2]);
 }
 
-fn render_diff(model: &Model, frame: &mut Frame, rect: Rect) {
+fn render_diff_pane(model: &Model, frame: &mut Frame, rect: Rect) {
     let (border_color, title_color, _) = if model.active_pane == Pane::Diff {
         (PRIMARY_COLOR, PRIMARY_COLOR, PRIMARY_COLOR)
     } else {
@@ -129,7 +133,7 @@ fn render_diff(model: &Model, frame: &mut Frame, rect: Rect) {
                             )]
                         }
                         ModifiedResult::Diff(None) => vec![Line::raw("nothing changed")],
-                        ModifiedResult::Diff(Some(d)) => get_colored_diff(d),
+                        ModifiedResult::Diff(Some(diff)) => get_diff_lines(diff),
                     },
                     ChangeKind::Modified(Err(e)) => {
                         vec![Line::raw(format!("error reading file contents: {e}"))]
@@ -148,7 +152,6 @@ fn render_diff(model: &Model, frame: &mut Frame, rect: Rect) {
                         .padding(Padding::new(1, 0, 1, 0)),
                 )
                 .style(Style::new().white().on_black())
-                .wrap(Wrap { trim: false })
                 .alignment(Alignment::Left)
         }
         None => Paragraph::new(if model.terminal_dimensions.height >= 30 {
@@ -164,14 +167,13 @@ fn render_diff(model: &Model, frame: &mut Frame, rect: Rect) {
                 .padding(Padding::new(1, 0, 1, 0)),
         )
         .style(Style::new().fg(PRIMARY_COLOR))
-        .wrap(Wrap { trim: false })
         .alignment(Alignment::Center),
     };
 
     frame.render_widget(&details, rect);
 }
 
-fn render_changes_list(model: &mut Model, frame: &mut Frame, rect: Rect) {
+fn render_changes_list_pane(model: &mut Model, frame: &mut Frame, rect: Rect) {
     let items: Vec<ListItem> = model.changes.items.iter().map(ListItem::from).collect();
 
     let title = if items.is_empty() {
@@ -303,21 +305,52 @@ fn render_status_line(model: &Model, frame: &mut Frame, rect: Rect) {
     frame.render_widget(&status_bar, rect);
 }
 
-fn get_colored_diff<'a>(diff: &'a str) -> Vec<Line<'a>> {
-    let mut lines = vec![];
-    for line in diff.lines() {
-        if line.is_empty() {
-            continue;
+// inspired by https://github.com/mitsuhiko/similar/blob/main/examples/terminal-inline.rs
+fn get_diff_lines(diff: &Diff) -> Vec<Line<'static>> {
+    let mut lines = Vec::new();
+
+    for (idx, hunk) in diff.hunks.iter().enumerate() {
+        if idx > 0 {
+            lines.push(Line::from(vec![Span::styled(
+                format!("{:-^80}", "-"),
+                Style::new().fg(DIM_COLOR),
+            )]));
         }
 
-        if line.starts_with("@@") {
-            lines.push(Line::raw(line).blue());
-        } else if line.starts_with("-") {
-            lines.push(Line::raw(line).fg(DIFF_REMOVED_COLOR));
-        } else if line.starts_with("+") {
-            lines.push(Line::raw(line).fg(ADDED_COLOR));
-        } else {
-            lines.push(Line::raw(line).gray());
+        for diff_line in &hunk.lines {
+            let sign = diff_line.kind.sign();
+            let style = match diff_line.kind {
+                DiffOperation::Delete => Style::new().fg(DIFF_DELETED_COLOR),
+                DiffOperation::Insert => Style::new().fg(DIFF_INSERT_COLOR),
+                DiffOperation::Equal => Style::new().fg(DIM_COLOR),
+            };
+
+            let old_line = diff_line
+                .old_line_num
+                .map(|n| format!("{:<4}", n + 1))
+                .unwrap_or_else(|| "    ".to_string());
+
+            let new_line = diff_line
+                .new_line_num
+                .map(|n| format!("{:<4}", n + 1))
+                .unwrap_or_else(|| "    ".to_string());
+
+            let mut line_spans = vec![
+                Span::styled(old_line, Style::new().fg(DIM_COLOR)),
+                Span::styled(new_line, Style::new().fg(DIM_COLOR)),
+                Span::styled(format!(" |{sign}"), style.add_modifier(Modifier::BOLD)),
+            ];
+
+            for inline_change in &diff_line.inline_changes {
+                let final_style = if inline_change.emphasized {
+                    style.add_modifier(Modifier::UNDERLINED)
+                } else {
+                    style
+                };
+                line_spans.push(Span::styled(inline_change.value.clone(), final_style));
+            }
+
+            lines.push(Line::from(line_spans));
         }
     }
 
@@ -326,7 +359,7 @@ fn get_colored_diff<'a>(diff: &'a str) -> Vec<Line<'a>> {
 
 #[cfg(test)]
 mod tests {
-    use crate::domain::{Change, ChangeKind, ModifiedResult};
+    use crate::domain::{Change, ChangeKind, Diff, ModifiedResult};
     use crate::tui::model::UserMsg;
     use crate::tui::{msg::Msg, update::update};
 
@@ -728,7 +761,20 @@ mod tests {
         let (mut terminal, terminal_dimensions) = get_test_terminal();
         let mut model = Model::new(terminal_dimensions, true, false);
 
-        let diff = "@@ -1,3 +1,4 @@\n line1\n-old line\n+new line\n line3".to_string();
+        let diff = Diff::new(
+            "
+line 1
+line 2
+line 3
+",
+            "
+line 1 (changed)
+new line
+line 2
+(prefix) line 3 (changed)
+",
+        )
+        .expect("should generate diff");
         let change = Change {
             file_path: "modified_file.txt".to_string(),
             kind: ChangeKind::Modified(Ok(ModifiedResult::Diff(Some(diff)))),
@@ -742,12 +788,87 @@ mod tests {
         assert_snapshot!(terminal.backend(), @r#"
         "┌ diff ────────────────────────────────────────────────────────────────────────┐"
         "│                                                                              │"
-        "│ @@ -1,3 +1,4 @@                                                              │"
-        "│  line1                                                                       │"
-        "│ -old line                                                                    │"
-        "│ +new line                                                                    │"
-        "│  line3                                                                       │"
+        "│ 1   1    |                                                                   │"
+        "│ 2        |-line 1                                                            │"
+        "│     2    |+line 1 (changed)                                                  │"
+        "│     3    |+new line                                                          │"
+        "│ 3   4    | line 2                                                            │"
+        "│ 4        |-line 3                                                            │"
+        "│     5    |+(prefix) line 3 (changed)                                         │"
         "│                                                                              │"
+        "└──────────────────────────────────────────────────────────────────────────────┘"
+        "┌ changes (1) ─────────────────────────────────────────────────────────────────┐"
+        "│                                                                              │"
+        "│>  modified  modified_file.txt                                                │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "└──────────────────────────────────────────────────────────────────────────────┘"
+        " dfft  [watching]                                                               "
+        "#);
+    }
+
+    #[test]
+    fn diff_pane_renders_diff_with_several_hunks_correctly() {
+        // GIVEN
+        let (mut terminal, terminal_dimensions) = get_test_terminal_with_dims(80, 30);
+        let mut model = Model::new(terminal_dimensions, true, false);
+
+        let diff = Diff::new(
+            "
+line 1
+line 2
+line 3
+line 4
+line 5
+line 6
+line 7
+line 8
+line 9
+",
+            "
+line 1 (changed)
+line 2
+line 3
+line 4
+line 5
+line 6
+line 7
+line 8
+(prefix) line 9 (changed)
+",
+        )
+        .expect("should generate diff");
+        let change = Change {
+            file_path: "modified_file.txt".to_string(),
+            kind: ChangeKind::Modified(Ok(ModifiedResult::Diff(Some(diff)))),
+        };
+        update(&mut model, Msg::ChangeReceived(change));
+
+        // WHEN
+        terminal.draw(|f| view(&mut model, f)).unwrap();
+
+        // THEN
+        assert_snapshot!(terminal.backend(), @r#"
+        "┌ diff ────────────────────────────────────────────────────────────────────────┐"
+        "│                                                                              │"
+        "│ 1   1    |                                                                   │"
+        "│ 2        |-line 1                                                            │"
+        "│     2    |+line 1 (changed)                                                  │"
+        "│ 3   3    | line 2                                                            │"
+        "│ 4   4    | line 3                                                            │"
+        "│ 5   5    | line 4                                                            │"
+        "│ -----------------------------------------------------------------------------│"
+        "│ 7   7    | line 6                                                            │"
+        "│ 8   8    | line 7                                                            │"
+        "│ 9   9    | line 8                                                            │"
+        "│ 10       |-line 9                                                            │"
+        "│     10   |+(prefix) line 9 (changed)                                         │"
         "│                                                                              │"
         "│                                                                              │"
         "└──────────────────────────────────────────────────────────────────────────────┘"
@@ -1093,11 +1214,11 @@ mod tests {
         "│                                                                              │"
         "│                                                                              │"
         "│                                                                              │"
-        "│                                                                              │"
         "│                                     dfft                                     │"
         "│                                     ‾‾‾‾                                     │"
         "│                                                                              │"
         "│              see changes to files in a directory as they happen              │"
+        "│                                                                              │"
         "│                                                                              │"
         "└──────────────────────────────────────────────────────────────────────────────┘"
         "┌ changes ─────────────────────────────────────────────────────────────────────┐"
@@ -1132,11 +1253,11 @@ mod tests {
         "│                                                                              │"
         "│                                                                              │"
         "│                                                                              │"
-        "│                                                                              │"
         "│                                     dfft                                     │"
         "│                                     ‾‾‾‾                                     │"
         "│                                                                              │"
         "│              see changes to files in a directory as they happen              │"
+        "│                                                                              │"
         "│                                                                              │"
         "└──────────────────────────────────────────────────────────────────────────────┘"
         "┌ changes ─────────────────────────────────────────────────────────────────────┐"
@@ -1171,11 +1292,11 @@ mod tests {
         "│                                                                              │"
         "│                                                                              │"
         "│                                                                              │"
-        "│                                                                              │"
         "│                                     dfft                                     │"
         "│                                     ‾‾‾‾                                     │"
         "│                                                                              │"
         "│              see changes to files in a directory as they happen              │"
+        "│                                                                              │"
         "│                                                                              │"
         "└──────────────────────────────────────────────────────────────────────────────┘"
         "┌ changes ─────────────────────────────────────────────────────────────────────┐"
@@ -1210,11 +1331,11 @@ mod tests {
         "│                                                                              │"
         "│                                                                              │"
         "│                                                                              │"
-        "│                                                                              │"
         "│                                     dfft                                     │"
         "│                                     ‾‾‾‾                                     │"
         "│                                                                              │"
         "│              see changes to files in a directory as they happen              │"
+        "│                                                                              │"
         "│                                                                              │"
         "└──────────────────────────────────────────────────────────────────────────────┘"
         "┌ changes ─────────────────────────────────────────────────────────────────────┐"
@@ -1250,11 +1371,11 @@ mod tests {
         "│                                                                              │"
         "│                                                                              │"
         "│                                                                              │"
-        "│                                                                              │"
         "│                                     dfft                                     │"
         "│                                     ‾‾‾‾                                     │"
         "│                                                                              │"
         "│              see changes to files in a directory as they happen              │"
+        "│                                                                              │"
         "│                                                                              │"
         "└──────────────────────────────────────────────────────────────────────────────┘"
         "┌ changes ─────────────────────────────────────────────────────────────────────┐"
@@ -1279,63 +1400,16 @@ mod tests {
         "│                                                                              │"
         "│                                                                              │"
         "│                                                                              │"
-        "│                                                                              │"
         "│                                     dfft                                     │"
         "│                                     ‾‾‾‾                                     │"
         "│                                                                              │"
         "│              see changes to files in a directory as they happen              │"
         "│                                                                              │"
+        "│                                                                              │"
         "└──────────────────────────────────────────────────────────────────────────────┘"
         "┌ changes ─────────────────────────────────────────────────────────────────────┐"
         "│                                                                              │"
         "│ changes will appear here                                                     │"
-        "│                                                                              │"
-        "│                                                                              │"
-        "│                                                                              │"
-        "│                                                                              │"
-        "│                                                                              │"
-        "│                                                                              │"
-        "│                                                                              │"
-        "│                                                                              │"
-        "└──────────────────────────────────────────────────────────────────────────────┘"
-        " dfft  [watching]                                                               "
-        "#);
-    }
-
-    #[test]
-    fn handles_malformed_diff_format() {
-        // GIVEN
-        let (mut terminal, terminal_dimensions) = get_test_terminal();
-        let mut model = Model::new(terminal_dimensions, true, false);
-        model.active_pane = Pane::Diff;
-
-        let change = Change {
-            file_path: "malformed.txt".to_string(),
-            kind: ChangeKind::Modified(Ok(ModifiedResult::Diff(Some(
-                "not a real diff".to_string(),
-            )))),
-        };
-        update(&mut model, Msg::ChangeReceived(change));
-
-        // WHEN
-        terminal.draw(|f| view(&mut model, f)).unwrap();
-
-        // THEN
-        assert_snapshot!(terminal.backend(), @r#"
-        "┌ diff ────────────────────────────────────────────────────────────────────────┐"
-        "│                                                                              │"
-        "│ not a real diff                                                              │"
-        "│                                                                              │"
-        "│                                                                              │"
-        "│                                                                              │"
-        "│                                                                              │"
-        "│                                                                              │"
-        "│                                                                              │"
-        "│                                                                              │"
-        "└──────────────────────────────────────────────────────────────────────────────┘"
-        "┌ changes (1) ─────────────────────────────────────────────────────────────────┐"
-        "│                                                                              │"
-        "│>  modified  malformed.txt                                                    │"
         "│                                                                              │"
         "│                                                                              │"
         "│                                                                              │"
