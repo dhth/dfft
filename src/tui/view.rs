@@ -1411,7 +1411,7 @@ mod tests {
         // THEN
         for i in 1..=3 {
             let change = Change {
-                file_path: format!("file-{}.txt", i),
+                file_path: format!("file-{i}.txt"),
                 kind: ChangeKind::Created(Ok(())),
             };
             update(&mut model, Msg::ChangeReceived(change));
