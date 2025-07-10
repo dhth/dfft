@@ -24,7 +24,7 @@ const PAUSED_LABEL: &str = " [ paused ]";
 const FOLLOWING_CHANGES_COLOR: Color = Color::from_u32(0xca9ee6);
 const HELP_COLOR: Color = Color::from_u32(0x8caaee);
 const TITLE: &str = " dfft ";
-const BANNER: &str = r#"
+const BANNER_LARGE: &str = r#"
 
 
      888  .d888  .d888 888    
@@ -39,6 +39,14 @@ Y88b 888 888    888    Y88b.
 
 see changes to files in a directory as they happen
 ‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾
+"#;
+
+const BANNER_SMALL: &str = r#"
+                 
+dfft
+‾‾‾‾
+
+see changes to files in a directory as they happen
 "#;
 
 pub fn view(model: &mut Model, frame: &mut Frame) {
@@ -143,17 +151,21 @@ fn render_diff(model: &Model, frame: &mut Frame, rect: Rect) {
                 .wrap(Wrap { trim: false })
                 .alignment(Alignment::Left)
         }
-        None => Paragraph::new(BANNER)
-            .block(
-                Block::bordered()
-                    .border_style(Style::default().fg(border_color))
-                    .title_style(Style::new().bold().bg(title_color).fg(PANE_TITLE_FG_COLOR))
-                    .title(title)
-                    .padding(Padding::new(1, 0, 1, 0)),
-            )
-            .style(Style::new().fg(PRIMARY_COLOR))
-            .wrap(Wrap { trim: false })
-            .alignment(Alignment::Center),
+        None => Paragraph::new(if model.terminal_dimensions.height >= 30 {
+            BANNER_LARGE
+        } else {
+            BANNER_SMALL
+        })
+        .block(
+            Block::bordered()
+                .border_style(Style::default().fg(border_color))
+                .title_style(Style::new().bold().bg(title_color).fg(PANE_TITLE_FG_COLOR))
+                .title(title)
+                .padding(Padding::new(1, 0, 1, 0)),
+        )
+        .style(Style::new().fg(PRIMARY_COLOR))
+        .wrap(Wrap { trim: false })
+        .alignment(Alignment::Center),
     };
 
     frame.render_widget(&details, rect);
@@ -314,6 +326,8 @@ fn get_colored_diff<'a>(diff: &'a str) -> Vec<Line<'a>> {
 
 #[cfg(test)]
 mod tests {
+    use crate::domain::{Change, ChangeKind, ModifiedResult};
+    use crate::tui::model::UserMsg;
     use crate::tui::{msg::Msg, update::update};
 
     use super::*;
@@ -321,10 +335,20 @@ mod tests {
     use ratatui::{Terminal, backend::TestBackend};
 
     fn get_test_terminal() -> (Terminal<TestBackend>, TerminalDimensions) {
-        let terminal = Terminal::new(TestBackend::new(MIN_TERMINAL_WIDTH, MIN_TERMINAL_HEIGHT))
+        let terminal =
+            Terminal::new(TestBackend::new(80, 24)).expect("terminal should've been created");
+        let terminal_dimensions = TerminalDimensions::from((80, 24));
+
+        (terminal, terminal_dimensions)
+    }
+
+    fn get_test_terminal_with_dims(
+        width: u16,
+        height: u16,
+    ) -> (Terminal<TestBackend>, TerminalDimensions) {
+        let terminal = Terminal::new(TestBackend::new(width, height))
             .expect("terminal should've been created");
-        let terminal_dimensions =
-            TerminalDimensions::from((MIN_TERMINAL_WIDTH, MIN_TERMINAL_HEIGHT));
+        let terminal_dimensions = TerminalDimensions::from((width, height));
 
         (terminal, terminal_dimensions)
     }
@@ -367,7 +391,7 @@ mod tests {
         "│ Diff Pane                                                                    │"
         "│     Tab                  switch to changes list pane                         │"
         "└──────────────────────────────────────────────────────────────────────────────┘"
-        " dfft  [watching] [following changes]                                           "
+        " dfft  [watching]                                                               "
         "#);
     }
 
@@ -410,7 +434,7 @@ mod tests {
         "│     <c-r>                reset list                                          │"
         "│                                                                              │"
         "└──────────────────────────────────────────────────────────────────────────────┘"
-        " dfft  [watching] [following changes]                                           "
+        " dfft  [watching]                                                               "
         "#);
     }
 
@@ -453,7 +477,7 @@ mod tests {
         "│     j / ↓                go down                                             │"
         "│     k / ↑                go up                                               │"
         "└──────────────────────────────────────────────────────────────────────────────┘"
-        " dfft  [watching] [following changes]                                           "
+        " dfft  [watching]                                                               "
         "#);
     }
 
@@ -498,7 +522,1011 @@ mod tests {
         "│ Diff Pane                                                                    │"
         "│     Tab                  switch to changes list pane                         │"
         "└──────────────────────────────────────────────────────────────────────────────┘"
+        " dfft  [watching]                                                               "
+        "#);
+    }
+
+    #[test]
+    fn terminal_too_small_view_is_shown_when_width_too_small() {
+        // GIVEN
+        let (mut terminal, terminal_dimensions) = get_test_terminal_with_dims(60, 24);
+        let mut model = Model::new(terminal_dimensions, true, false);
+
+        // WHEN
+        terminal.draw(|f| view(&mut model, f)).unwrap();
+
+        // THEN
+        assert_snapshot!(terminal.backend(), @r#"
+        "┌──────────────────────────────────────────────────────────┐"
+        "│                                                          │"
+        "│                 Terminal size too small:                 │"
+        "│                   Width = 60 Height = 24                 │"
+        "│                                                          │"
+        "│                Minimum dimensions needed:                │"
+        "│                   Width = 80 Height = 24                 │"
+        "│                                                          │"
+        "│             Press (q/<ctrl+c>/<esc> to exit)             │"
+        "│                                                          │"
+        "│                                                          │"
+        "│                                                          │"
+        "│                                                          │"
+        "│                                                          │"
+        "│                                                          │"
+        "│                                                          │"
+        "│                                                          │"
+        "│                                                          │"
+        "│                                                          │"
+        "│                                                          │"
+        "│                                                          │"
+        "│                                                          │"
+        "│                                                          │"
+        "└──────────────────────────────────────────────────────────┘"
+        "#);
+    }
+
+    #[test]
+    fn terminal_too_small_view_is_shown_when_height_too_small() {
+        // GIVEN
+        let (mut terminal, terminal_dimensions) = get_test_terminal_with_dims(80, 20);
+        let mut model = Model::new(terminal_dimensions, true, false);
+
+        // WHEN
+        terminal.draw(|f| view(&mut model, f)).unwrap();
+
+        // THEN
+        assert_snapshot!(terminal.backend(), @r#"
+        "┌──────────────────────────────────────────────────────────────────────────────┐"
+        "│                                                                              │"
+        "│                           Terminal size too small:                           │"
+        "│                             Width = 80 Height = 20                           │"
+        "│                                                                              │"
+        "│                          Minimum dimensions needed:                          │"
+        "│                             Width = 80 Height = 24                           │"
+        "│                                                                              │"
+        "│                       Press (q/<ctrl+c>/<esc> to exit)                       │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "└──────────────────────────────────────────────────────────────────────────────┘"
+        "#);
+    }
+
+    #[test]
+    fn terminal_too_small_view_is_shown_when_both_dimensions_small() {
+        // GIVEN
+        let (mut terminal, terminal_dimensions) = get_test_terminal_with_dims(40, 20);
+        let mut model = Model::new(terminal_dimensions, true, false);
+
+        // WHEN
+        terminal.draw(|f| view(&mut model, f)).unwrap();
+
+        // THEN
+        assert_snapshot!(terminal.backend(), @r#"
+        "┌──────────────────────────────────────┐"
+        "│                                      │"
+        "│       Terminal size too small:       │"
+        "│         Width = 40 Height = 20       │"
+        "│                                      │"
+        "│      Minimum dimensions needed:      │"
+        "│         Width = 80 Height = 24       │"
+        "│                                      │"
+        "│   Press (q/<ctrl+c>/<esc> to exit)   │"
+        "│                                      │"
+        "│                                      │"
+        "│                                      │"
+        "│                                      │"
+        "│                                      │"
+        "│                                      │"
+        "│                                      │"
+        "│                                      │"
+        "│                                      │"
+        "│                                      │"
+        "└──────────────────────────────────────┘"
+        "#);
+    }
+
+    #[test]
+    fn main_view_renders_banner_when_no_changes_present() {
+        // GIVEN
+        let (mut terminal, terminal_dimensions) = get_test_terminal_with_dims(100, 32);
+        let mut model = Model::new(terminal_dimensions, true, false);
+
+        // WHEN
+        terminal.draw(|f| view(&mut model, f)).unwrap();
+
+        // THEN
+        assert_snapshot!(terminal.backend(), @r#"
+        "┌ diff ────────────────────────────────────────────────────────────────────────────────────────────┐"
+        "│                                                                                                  │"
+        "│                                                                                                  │"
+        "│                                                                                                  │"
+        "│                                                                                                  │"
+        "│                                       888  .d888  .d888 888                                      │"
+        "│                                       888 d88P"  d88P"  888                                      │"
+        "│                                       888 888    888    888                                      │"
+        "│                                   .d88888 888888 888888 888888                                   │"
+        "│                                  d88" 888 888    888    888                                      │"
+        "│                                  888  888 888    888    888                                      │"
+        "│                                  Y88b 888 888    888    Y88b.                                    │"
+        "│                                    "Y88888 888    888     "Y888                                  │"
+        "│                                                                                                  │"
+        "│                                                                                                  │"
+        "│                        see changes to files in a directory as they happen                        │"
+        "│                        ‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾                        │"
+        "│                                                                                                  │"
+        "└──────────────────────────────────────────────────────────────────────────────────────────────────┘"
+        "┌ changes ─────────────────────────────────────────────────────────────────────────────────────────┐"
+        "│                                                                                                  │"
+        "│ changes will appear here                                                                         │"
+        "│                                                                                                  │"
+        "│                                                                                                  │"
+        "│                                                                                                  │"
+        "│                                                                                                  │"
+        "│                                                                                                  │"
+        "│                                                                                                  │"
+        "│                                                                                                  │"
+        "│                                                                                                  │"
+        "└──────────────────────────────────────────────────────────────────────────────────────────────────┘"
+        " dfft  [watching]                                                                                   "
+        "#);
+    }
+
+    #[test]
+    fn main_view_renders_created_file_change() {
+        // GIVEN
+        let (mut terminal, terminal_dimensions) = get_test_terminal();
+        let mut model = Model::new(terminal_dimensions, true, false);
+
+        let change = Change {
+            file_path: "new_file.txt".to_string(),
+            kind: ChangeKind::Created(Ok(())),
+        };
+        update(&mut model, Msg::ChangeReceived(change));
+
+        // WHEN
+        terminal.draw(|f| view(&mut model, f)).unwrap();
+
+        // THEN
+        assert_snapshot!(terminal.backend(), @r#"
+        "┌ diff ────────────────────────────────────────────────────────────────────────┐"
+        "│                                                                              │"
+        "│ created                                                                      │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "└──────────────────────────────────────────────────────────────────────────────┘"
+        "┌ changes (1) ─────────────────────────────────────────────────────────────────┐"
+        "│                                                                              │"
+        "│>  created   new_file.txt                                                     │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "└──────────────────────────────────────────────────────────────────────────────┘"
+        " dfft  [watching]                                                               "
+        "#);
+    }
+
+    #[test]
+    fn main_view_renders_modified_file_with_diff() {
+        // GIVEN
+        let (mut terminal, terminal_dimensions) = get_test_terminal();
+        let mut model = Model::new(terminal_dimensions, true, false);
+
+        let diff = "@@ -1,3 +1,4 @@\n line1\n-old line\n+new line\n line3".to_string();
+        let change = Change {
+            file_path: "modified_file.txt".to_string(),
+            kind: ChangeKind::Modified(Ok(ModifiedResult::Diff(Some(diff)))),
+        };
+        update(&mut model, Msg::ChangeReceived(change));
+
+        // WHEN
+        terminal.draw(|f| view(&mut model, f)).unwrap();
+
+        // THEN
+        assert_snapshot!(terminal.backend(), @r#"
+        "┌ diff ────────────────────────────────────────────────────────────────────────┐"
+        "│                                                                              │"
+        "│ @@ -1,3 +1,4 @@                                                              │"
+        "│  line1                                                                       │"
+        "│ -old line                                                                    │"
+        "│ +new line                                                                    │"
+        "│  line3                                                                       │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "└──────────────────────────────────────────────────────────────────────────────┘"
+        "┌ changes (1) ─────────────────────────────────────────────────────────────────┐"
+        "│                                                                              │"
+        "│>  modified  modified_file.txt                                                │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "└──────────────────────────────────────────────────────────────────────────────┘"
+        " dfft  [watching]                                                               "
+        "#);
+    }
+
+    #[test]
+    fn main_view_renders_removed_file_change() {
+        // GIVEN
+        let (mut terminal, terminal_dimensions) = get_test_terminal();
+        let mut model = Model::new(terminal_dimensions, true, false);
+
+        let change = Change {
+            file_path: "deleted_file.txt".to_string(),
+            kind: ChangeKind::Removed,
+        };
+        update(&mut model, Msg::ChangeReceived(change));
+
+        // WHEN
+        terminal.draw(|f| view(&mut model, f)).unwrap();
+
+        // THEN
+        assert_snapshot!(terminal.backend(), @r#"
+        "┌ diff ────────────────────────────────────────────────────────────────────────┐"
+        "│                                                                              │"
+        "│ file removed                                                                 │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "└──────────────────────────────────────────────────────────────────────────────┘"
+        "┌ changes (1) ─────────────────────────────────────────────────────────────────┐"
+        "│                                                                              │"
+        "│>  removed   deleted_file.txt                                                 │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "└──────────────────────────────────────────────────────────────────────────────┘"
+        " dfft  [watching]                                                               "
+        "#);
+    }
+
+    #[test]
+    fn main_view_renders_created_file_with_error() {
+        // GIVEN
+        let (mut terminal, terminal_dimensions) = get_test_terminal();
+        let mut model = Model::new(terminal_dimensions, true, false);
+
+        let change = Change {
+            file_path: "error_file.txt".to_string(),
+            kind: ChangeKind::Created(Err("Permission denied".to_string())),
+        };
+        update(&mut model, Msg::ChangeReceived(change));
+
+        // WHEN
+        terminal.draw(|f| view(&mut model, f)).unwrap();
+
+        // THEN
+        assert_snapshot!(terminal.backend(), @r#"
+        "┌ diff ────────────────────────────────────────────────────────────────────────┐"
+        "│                                                                              │"
+        "│ error reading file contents: Permission denied                               │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "└──────────────────────────────────────────────────────────────────────────────┘"
+        "┌ changes (1) ─────────────────────────────────────────────────────────────────┐"
+        "│                                                                              │"
+        "│>   error    error_file.txt                                                   │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "└──────────────────────────────────────────────────────────────────────────────┘"
+        " dfft  [watching]                                                               "
+        "#);
+    }
+
+    #[test]
+    fn main_view_renders_modified_file_with_error() {
+        // GIVEN
+        let (mut terminal, terminal_dimensions) = get_test_terminal();
+        let mut model = Model::new(terminal_dimensions, true, false);
+
+        let change = Change {
+            file_path: "error_modified.txt".to_string(),
+            kind: ChangeKind::Modified(Err("File not found".to_string())),
+        };
+        update(&mut model, Msg::ChangeReceived(change));
+
+        // WHEN
+        terminal.draw(|f| view(&mut model, f)).unwrap();
+
+        // THEN
+        assert_snapshot!(terminal.backend(), @r#"
+        "┌ diff ────────────────────────────────────────────────────────────────────────┐"
+        "│                                                                              │"
+        "│ error reading file contents: File not found                                  │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "└──────────────────────────────────────────────────────────────────────────────┘"
+        "┌ changes (1) ─────────────────────────────────────────────────────────────────┐"
+        "│                                                                              │"
+        "│>   error    error_modified.txt                                               │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "└──────────────────────────────────────────────────────────────────────────────┘"
+        " dfft  [watching]                                                               "
+        "#);
+    }
+
+    #[test]
+    fn main_view_renders_initial_snapshot_change() {
+        // GIVEN
+        let (mut terminal, terminal_dimensions) = get_test_terminal();
+        let mut model = Model::new(terminal_dimensions, true, false);
+
+        let change = Change {
+            file_path: "snapshot_file.txt".to_string(),
+            kind: ChangeKind::Modified(Ok(ModifiedResult::InitialSnapshot)),
+        };
+        update(&mut model, Msg::ChangeReceived(change));
+
+        // WHEN
+        terminal.draw(|f| view(&mut model, f)).unwrap();
+
+        // THEN
+        assert_snapshot!(terminal.backend(), @r#"
+        "┌ diff ────────────────────────────────────────────────────────────────────────┐"
+        "│                                                                              │"
+        "│ initial snapshot captured; diffs will be available from now onwards          │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "└──────────────────────────────────────────────────────────────────────────────┘"
+        "┌ changes (1) ─────────────────────────────────────────────────────────────────┐"
+        "│                                                                              │"
+        "│>  modified  snapshot_file.txt                                                │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "└──────────────────────────────────────────────────────────────────────────────┘"
+        " dfft  [watching]                                                               "
+        "#);
+    }
+
+    #[test]
+    fn main_view_renders_modified_file_with_no_diff() {
+        // GIVEN
+        let (mut terminal, terminal_dimensions) = get_test_terminal();
+        let mut model = Model::new(terminal_dimensions, true, false);
+
+        let change = Change {
+            file_path: "no_diff_file.txt".to_string(),
+            kind: ChangeKind::Modified(Ok(ModifiedResult::Diff(None))),
+        };
+        update(&mut model, Msg::ChangeReceived(change));
+
+        // WHEN
+        terminal.draw(|f| view(&mut model, f)).unwrap();
+
+        // THEN
+        assert_snapshot!(terminal.backend(), @r#"
+        "┌ diff ────────────────────────────────────────────────────────────────────────┐"
+        "│                                                                              │"
+        "│ nothing changed                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "└──────────────────────────────────────────────────────────────────────────────┘"
+        "┌ changes (1) ─────────────────────────────────────────────────────────────────┐"
+        "│                                                                              │"
+        "│>  modified  no_diff_file.txt                                                 │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "└──────────────────────────────────────────────────────────────────────────────┘"
+        " dfft  [watching]                                                               "
+        "#);
+    }
+
+    #[test]
+    fn changes_list_shows_item_count_in_title() {
+        // GIVEN
+        let (mut terminal, terminal_dimensions) = get_test_terminal();
+        let mut model = Model::new(terminal_dimensions, true, false);
+
+        for i in 0..3 {
+            let change = Change {
+                file_path: format!("file{i}.txt"),
+                kind: ChangeKind::Created(Ok(())),
+            };
+            update(&mut model, Msg::ChangeReceived(change));
+        }
+
+        // WHEN
+        terminal.draw(|f| view(&mut model, f)).unwrap();
+
+        // THEN
+        assert_snapshot!(terminal.backend(), @r#"
+        "┌ diff ────────────────────────────────────────────────────────────────────────┐"
+        "│                                                                              │"
+        "│ created                                                                      │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "└──────────────────────────────────────────────────────────────────────────────┘"
+        "┌ changes (3) ─────────────────────────────────────────────────────────────────┐"
+        "│                                                                              │"
+        "│>  created   file0.txt                                                        │"
+        "│   created   file1.txt                                                        │"
+        "│   created   file2.txt                                                        │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "└──────────────────────────────────────────────────────────────────────────────┘"
+        " dfft  [watching]                                                               "
+        "#);
+    }
+
+    #[test]
+    fn changes_list_handles_long_file_paths() {
+        // GIVEN
+        let (mut terminal, terminal_dimensions) = get_test_terminal();
+        let mut model = Model::new(terminal_dimensions, true, false);
+
+        let change = Change {
+            file_path: "very/long/path/to/a/file/that/exceeds/normal/length/limits/file.txt"
+                .to_string(),
+            kind: ChangeKind::Created(Ok(())),
+        };
+        update(&mut model, Msg::ChangeReceived(change));
+
+        // WHEN
+        terminal.draw(|f| view(&mut model, f)).unwrap();
+
+        // THEN
+        assert_snapshot!(terminal.backend(), @r#"
+        "┌ diff ────────────────────────────────────────────────────────────────────────┐"
+        "│                                                                              │"
+        "│ created                                                                      │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "└──────────────────────────────────────────────────────────────────────────────┘"
+        "┌ changes (1) ─────────────────────────────────────────────────────────────────┐"
+        "│                                                                              │"
+        "│>  created   very/long/path/to/a/file/that/exceeds/normal/length/limits/file.t│"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "└──────────────────────────────────────────────────────────────────────────────┘"
+        " dfft  [watching]                                                               "
+        "#);
+    }
+
+    #[test]
+    fn status_line_shows_paused_status() {
+        // GIVEN
+        let (mut terminal, terminal_dimensions) = get_test_terminal();
+        let mut model = Model::new(terminal_dimensions, false, false);
+
+        // WHEN
+        terminal.draw(|f| view(&mut model, f)).unwrap();
+
+        // THEN
+        assert_snapshot!(terminal.backend(), @r#"
+        "┌ diff ────────────────────────────────────────────────────────────────────────┐"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                     dfft                                     │"
+        "│                                     ‾‾‾‾                                     │"
+        "│                                                                              │"
+        "│              see changes to files in a directory as they happen              │"
+        "│                                                                              │"
+        "└──────────────────────────────────────────────────────────────────────────────┘"
+        "┌ changes ─────────────────────────────────────────────────────────────────────┐"
+        "│                                                                              │"
+        "│ changes will appear here                                                     │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "└──────────────────────────────────────────────────────────────────────────────┘"
+        " dfft  [ paused ]                                                               "
+        "#);
+    }
+
+    #[test]
+    fn status_line_shows_following_changes_indicator() {
+        // GIVEN
+        let (mut terminal, terminal_dimensions) = get_test_terminal();
+        let mut model = Model::new(terminal_dimensions, true, false);
+        model.follow_changes = true;
+
+        // WHEN
+        terminal.draw(|f| view(&mut model, f)).unwrap();
+
+        // THEN
+        assert_snapshot!(terminal.backend(), @r#"
+        "┌ diff ────────────────────────────────────────────────────────────────────────┐"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                     dfft                                     │"
+        "│                                     ‾‾‾‾                                     │"
+        "│                                                                              │"
+        "│              see changes to files in a directory as they happen              │"
+        "│                                                                              │"
+        "└──────────────────────────────────────────────────────────────────────────────┘"
+        "┌ changes ─────────────────────────────────────────────────────────────────────┐"
+        "│                                                                              │"
+        "│ changes will appear here                                                     │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "└──────────────────────────────────────────────────────────────────────────────┘"
         " dfft  [watching] [following changes]                                           "
+        "#);
+    }
+
+    #[test]
+    fn status_line_shows_info_message() {
+        // GIVEN
+        let (mut terminal, terminal_dimensions) = get_test_terminal();
+        let mut model = Model::new(terminal_dimensions, true, false);
+        model.user_msg = Some(UserMsg::info("Test info message"));
+
+        // WHEN
+        terminal.draw(|f| view(&mut model, f)).unwrap();
+
+        // THEN
+        assert_snapshot!(terminal.backend(), @r#"
+        "┌ diff ────────────────────────────────────────────────────────────────────────┐"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                     dfft                                     │"
+        "│                                     ‾‾‾‾                                     │"
+        "│                                                                              │"
+        "│              see changes to files in a directory as they happen              │"
+        "│                                                                              │"
+        "└──────────────────────────────────────────────────────────────────────────────┘"
+        "┌ changes ─────────────────────────────────────────────────────────────────────┐"
+        "│                                                                              │"
+        "│ changes will appear here                                                     │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "└──────────────────────────────────────────────────────────────────────────────┘"
+        " dfft  Test info message [watching]                                             "
+        "#);
+    }
+
+    #[test]
+    fn status_line_shows_error_message() {
+        // GIVEN
+        let (mut terminal, terminal_dimensions) = get_test_terminal();
+        let mut model = Model::new(terminal_dimensions, true, false);
+        model.user_msg = Some(UserMsg::error("Test error message"));
+
+        // WHEN
+        terminal.draw(|f| view(&mut model, f)).unwrap();
+
+        // THEN
+        assert_snapshot!(terminal.backend(), @r#"
+        "┌ diff ────────────────────────────────────────────────────────────────────────┐"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                     dfft                                     │"
+        "│                                     ‾‾‾‾                                     │"
+        "│                                                                              │"
+        "│              see changes to files in a directory as they happen              │"
+        "│                                                                              │"
+        "└──────────────────────────────────────────────────────────────────────────────┘"
+        "┌ changes ─────────────────────────────────────────────────────────────────────┐"
+        "│                                                                              │"
+        "│ changes will appear here                                                     │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "└──────────────────────────────────────────────────────────────────────────────┘"
+        " dfft  Test error message [watching]                                            "
+        "#);
+    }
+
+    #[test]
+    fn info_message_disappears_after_its_frame_budget_expires() {
+        // GIVEN
+        let (mut terminal, terminal_dimensions) = get_test_terminal();
+        let mut model = Model::new(terminal_dimensions, true, false);
+        model.user_msg =
+            Some(UserMsg::info("This will disappear after 2 renders").with_frames_left(1));
+
+        // WHEN
+        // THEN
+        update(&mut model, Msg::GoDown);
+        terminal.draw(|f| view(&mut model, f)).unwrap();
+        assert_snapshot!(terminal.backend(), @r#"
+        "┌ diff ────────────────────────────────────────────────────────────────────────┐"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                     dfft                                     │"
+        "│                                     ‾‾‾‾                                     │"
+        "│                                                                              │"
+        "│              see changes to files in a directory as they happen              │"
+        "│                                                                              │"
+        "└──────────────────────────────────────────────────────────────────────────────┘"
+        "┌ changes ─────────────────────────────────────────────────────────────────────┐"
+        "│                                                                              │"
+        "│ changes will appear here                                                     │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "└──────────────────────────────────────────────────────────────────────────────┘"
+        " dfft  This will disappear after 2 renders [watching]                           "
+        "#);
+
+        update(&mut model, Msg::GoDown);
+        terminal.draw(|f| view(&mut model, f)).unwrap();
+        assert_snapshot!(terminal.backend(), @r#"
+        "┌ diff ────────────────────────────────────────────────────────────────────────┐"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                     dfft                                     │"
+        "│                                     ‾‾‾‾                                     │"
+        "│                                                                              │"
+        "│              see changes to files in a directory as they happen              │"
+        "│                                                                              │"
+        "└──────────────────────────────────────────────────────────────────────────────┘"
+        "┌ changes ─────────────────────────────────────────────────────────────────────┐"
+        "│                                                                              │"
+        "│ changes will appear here                                                     │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "└──────────────────────────────────────────────────────────────────────────────┘"
+        " dfft  [watching]                                                               "
+        "#);
+    }
+
+    #[test]
+    fn handles_malformed_diff_format() {
+        // GIVEN
+        let (mut terminal, terminal_dimensions) = get_test_terminal();
+        let mut model = Model::new(terminal_dimensions, true, false);
+        model.active_pane = Pane::Diff;
+
+        let change = Change {
+            file_path: "malformed.txt".to_string(),
+            kind: ChangeKind::Modified(Ok(ModifiedResult::Diff(Some(
+                "not a real diff".to_string(),
+            )))),
+        };
+        update(&mut model, Msg::ChangeReceived(change));
+
+        // WHEN
+        terminal.draw(|f| view(&mut model, f)).unwrap();
+
+        // THEN
+        assert_snapshot!(terminal.backend(), @r#"
+        "┌ diff ────────────────────────────────────────────────────────────────────────┐"
+        "│                                                                              │"
+        "│ not a real diff                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "└──────────────────────────────────────────────────────────────────────────────┘"
+        "┌ changes (1) ─────────────────────────────────────────────────────────────────┐"
+        "│                                                                              │"
+        "│>  modified  malformed.txt                                                    │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "└──────────────────────────────────────────────────────────────────────────────┘"
+        " dfft  [watching]                                                               "
+        "#);
+    }
+
+    #[test]
+    fn cursor_moves_automatically_when_following_enabled() {
+        // GIVEN
+        let (mut terminal, terminal_dimensions) = get_test_terminal();
+        let mut model = Model::new(terminal_dimensions, true, false);
+        model.follow_changes = true;
+
+        let change = Change {
+            file_path: "first.txt".to_string(),
+            kind: ChangeKind::Created(Ok(())),
+        };
+        update(&mut model, Msg::ChangeReceived(change));
+
+        let change = Change {
+            file_path: "this-should-be-selected.txt".to_string(),
+            kind: ChangeKind::Created(Ok(())),
+        };
+        update(&mut model, Msg::ChangeReceived(change));
+
+        // WHEN
+        terminal.draw(|f| view(&mut model, f)).unwrap();
+
+        // THEN
+        assert_snapshot!(terminal.backend(), @r#"
+        "┌ diff ────────────────────────────────────────────────────────────────────────┐"
+        "│                                                                              │"
+        "│ created                                                                      │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "└──────────────────────────────────────────────────────────────────────────────┘"
+        "┌ changes (2) ─────────────────────────────────────────────────────────────────┐"
+        "│                                                                              │"
+        "│   created   first.txt                                                        │"
+        "│>  created   this-should-be-selected.txt                                      │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "└──────────────────────────────────────────────────────────────────────────────┘"
+        " dfft  [watching] [following changes]                                           "
+        "#);
+    }
+
+    #[test]
+    fn cursor_moves_to_the_end_when_following_is_turned_on_after_a_while() {
+        // GIVEN
+        let (mut terminal, terminal_dimensions) = get_test_terminal();
+        let mut model = Model::new(terminal_dimensions, true, false);
+        model.follow_changes = false;
+
+        // WHEN
+        // THEN
+        for i in 1..=3 {
+            let change = Change {
+                file_path: format!("file-{i}.txt"),
+                kind: ChangeKind::Created(Ok(())),
+            };
+            update(&mut model, Msg::ChangeReceived(change));
+        }
+        terminal.draw(|f| view(&mut model, f)).unwrap();
+        assert_snapshot!(terminal.backend(), @r#"
+        "┌ diff ────────────────────────────────────────────────────────────────────────┐"
+        "│                                                                              │"
+        "│ created                                                                      │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "└──────────────────────────────────────────────────────────────────────────────┘"
+        "┌ changes (3) ─────────────────────────────────────────────────────────────────┐"
+        "│                                                                              │"
+        "│>  created   file-1.txt                                                       │"
+        "│   created   file-2.txt                                                       │"
+        "│   created   file-3.txt                                                       │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "└──────────────────────────────────────────────────────────────────────────────┘"
+        " dfft  [watching]                                                               "
+        "#);
+
+        model.follow_changes = true;
+        let change = Change {
+            file_path: "this-should-be-selected.txt".to_string(),
+            kind: ChangeKind::Created(Ok(())),
+        };
+        update(&mut model, Msg::ChangeReceived(change));
+        terminal.draw(|f| view(&mut model, f)).unwrap();
+        assert_snapshot!(terminal.backend(), @r#"
+        "┌ diff ────────────────────────────────────────────────────────────────────────┐"
+        "│                                                                              │"
+        "│ created                                                                      │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "└──────────────────────────────────────────────────────────────────────────────┘"
+        "┌ changes (4) ─────────────────────────────────────────────────────────────────┐"
+        "│                                                                              │"
+        "│   created   file-1.txt                                                       │"
+        "│   created   file-2.txt                                                       │"
+        "│   created   file-3.txt                                                       │"
+        "│>  created   this-should-be-selected.txt                                      │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "└──────────────────────────────────────────────────────────────────────────────┘"
+        " dfft  [watching] [following changes]                                           "
+        "#);
+    }
+
+    #[test]
+    fn cursor_doesnt_move_by_itself_when_following_disabled() {
+        // GIVEN
+        let (mut terminal, terminal_dimensions) = get_test_terminal();
+        let mut model = Model::new(terminal_dimensions, true, false);
+        model.follow_changes = false;
+
+        let change = Change {
+            file_path: "this-will-still-be-selected.txt".to_string(),
+            kind: ChangeKind::Created(Ok(())),
+        };
+        update(&mut model, Msg::ChangeReceived(change));
+
+        let change = Change {
+            file_path: "second.txt".to_string(),
+            kind: ChangeKind::Created(Ok(())),
+        };
+        update(&mut model, Msg::ChangeReceived(change));
+
+        // WHEN
+        terminal.draw(|f| view(&mut model, f)).unwrap();
+
+        // THEN
+        assert_snapshot!(terminal.backend(), @r#"
+        "┌ diff ────────────────────────────────────────────────────────────────────────┐"
+        "│                                                                              │"
+        "│ created                                                                      │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "└──────────────────────────────────────────────────────────────────────────────┘"
+        "┌ changes (2) ─────────────────────────────────────────────────────────────────┐"
+        "│                                                                              │"
+        "│>  created   this-will-still-be-selected.txt                                  │"
+        "│   created   second.txt                                                       │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "└──────────────────────────────────────────────────────────────────────────────┘"
+        " dfft  [watching]                                                               "
         "#);
     }
 }
