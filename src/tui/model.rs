@@ -163,7 +163,7 @@ impl Model {
             active_pane: Pane::ChangesList,
             watching,
             changes: Changes::new(),
-            follow_changes: true,
+            follow_changes: false,
             last_active_pane: None,
             running_state: RunningState::Running,
             user_msg: None,
