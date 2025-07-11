@@ -1,6 +1,5 @@
-use super::diff::get_unified_diff;
 use super::get_ignore;
-use crate::domain::{Change, ChangeKind, ModifiedResult};
+use crate::domain::{Change, ChangeKind, Diff, ModifiedResult};
 use anyhow::Context;
 use notify::EventKind;
 use notify::RecursiveMode;
@@ -95,7 +94,7 @@ pub async fn watch_for_changes(
                                                 );
                                                 match was_held {
                                                     Some(old) => {
-                                                        if let Some(diff) = get_unified_diff(&old, &contents) {
+                                                        if let Some(diff) = Diff::new(&old, &contents) {
                                                             Change {
                                                                 file_path,
                                                                 kind: ChangeKind::Modified(Ok(
