@@ -1,3 +1,5 @@
+use crate::utils::num_digits;
+use std::cmp::max;
 use std::fmt::Display;
 
 use similar::ChangeTag;
@@ -91,7 +93,28 @@ impl Diff {
             hunks.push(DiffHunk { lines });
         }
 
+        if hunks.is_empty() {
+            return None;
+        }
+
         Some(Diff { hunks })
+    }
+
+    pub fn line_num_padding(&self) -> usize {
+        let largest_line_num = self
+            .hunks
+            .iter()
+            .flat_map(|hunk| hunk.lines.iter())
+            .map(|diff_line| {
+                max(
+                    diff_line.old_line_num.unwrap_or_default(),
+                    diff_line.new_line_num.unwrap_or_default(),
+                )
+            })
+            .max()
+            .unwrap_or_default();
+
+        max(num_digits(largest_line_num) + 2, 4)
     }
 }
 
@@ -100,6 +123,8 @@ impl Display for Diff {
         if self.hunks.is_empty() {
             return Ok(());
         }
+
+        let line_number_padding = self.line_num_padding();
 
         let mut lines = Vec::new();
 
@@ -112,15 +137,15 @@ impl Display for Diff {
                 let sign = diff_line.kind.sign();
                 let old_line = diff_line
                     .old_line_num
-                    .map(|n| format!("{:<4}", n + 1))
-                    .unwrap_or_else(|| "    ".to_string());
+                    .map(|n| format!("{:<padding$}", n + 1, padding = line_number_padding))
+                    .unwrap_or_else(|| " ".repeat(line_number_padding));
 
                 let new_line = diff_line
                     .new_line_num
-                    .map(|n| format!("{:<4}", n + 1))
-                    .unwrap_or_else(|| "    ".to_string());
+                    .map(|n| format!("{:<padding$}", n + 1, padding = line_number_padding))
+                    .unwrap_or_else(|| " ".repeat(line_number_padding));
 
-                let mut line_spans = vec![old_line, new_line, format!(" |{sign}")];
+                let mut line_spans = vec![old_line, new_line, format!("|{sign}")];
 
                 for inline_change in &diff_line.inline_changes {
                     if inline_change.emphasized {
@@ -164,13 +189,13 @@ line 2
         // WHEN
         // THEN
         assert_snapshot!(diff, @r"
-        1   1    | 
-        2        |-line 1
-            2    |+line 1⸢ (changed)⸣
-            3    |+⸢new line⸣
-        3   4    | line 2
-        4        |-line 3
-            5    |+⸢(prefix) ⸣line 3⸢ ( changed)⸣
+        1   1   | 
+        2       |-line 1
+            2   |+line 1⸢ (changed)⸣
+            3   |+⸢new line⸣
+        3   4   | line 2
+        4       |-line 3
+            5   |+⸢(prefix) ⸣line 3⸢ ( changed)⸣
         ");
     }
 
@@ -206,28 +231,82 @@ line 8
         // WHEN
         // THEN
         assert_snapshot!(diff, @r"
-        1   1    | 
-        2        |-line 1
-            2    |+line 1⸢ (changed)⸣
-        3   3    | line 2
-        4   4    | line 3
-        5   5    | line 4
+        1   1   | 
+        2       |-line 1
+            2   |+line 1⸢ (changed)⸣
+        3   3   | line 2
+        4   4   | line 3
+        5   5   | line 4
         --------------------------------------------------------------------------------
-        7   7    | line 6
-        8   8    | line 7
-        9   9    | line 8
-        10       |-line 9
-            10   |+⸢(prefix) ⸣line 9⸢ (changed)⸣
+        7   7   | line 6
+        8   8   | line 7
+        9   9   | line 8
+        10      |-line 9
+            10  |+⸢(prefix) ⸣line 9⸢ (changed)⸣
+        ");
+    }
+
+    #[test]
+    fn diff_adjusts_padding_for_line_numbers_accordinly() {
+        // GIVEN
+        let mut lines = (1..=10001).map(|n| format!("line {n}")).collect::<Vec<_>>();
+        let old = lines.join("\n");
+
+        lines[8] = "line 9 (modified)".to_string();
+        lines[9] = "line 10 (modified)".to_string();
+
+        lines[998] = "line 999 (modified)".to_string();
+        lines[999] = "line 1000 (modified)".to_string();
+
+        lines[9998] = "line 9999 (modified)".to_string();
+        lines[9999] = "line 10000 (modified)".to_string();
+
+        let new = lines.join("\n");
+        let diff = Diff::new(&old, &new).expect("diff should've been created");
+
+        // WHEN
+        // THEN
+        assert_snapshot!(diff, @r"
+        6      6      | line 6
+        7      7      | line 7
+        8      8      | line 8
+        9             |-line 9
+        10            |-line 10
+               9      |+line 9⸢ (modified)⸣
+               10     |+line 10⸢ (modified)⸣
+        11     11     | line 11
+        12     12     | line 12
+        13     13     | line 13
+        --------------------------------------------------------------------------------
+        996    996    | line 996
+        997    997    | line 997
+        998    998    | line 998
+        999           |-line 999
+        1000          |-line 1000
+               999    |+line 999⸢ (modified)⸣
+               1000   |+line 1000⸢ (modified)⸣
+        1001   1001   | line 1001
+        1002   1002   | line 1002
+        1003   1003   | line 1003
+        --------------------------------------------------------------------------------
+        9996   9996   | line 9996
+        9997   9997   | line 9997
+        9998   9998   | line 9998
+        9999          |-line 9999
+        10000         |-line 10000
+               9999   |+line 9999⸢ (modified)⸣
+               10000  |+line 10000⸢ (modified)⸣
+        10001  10001  | line 10001
         ");
     }
 
     #[test]
     fn creating_a_diff_with_no_changes_works() {
         // GIVEN
-        let diff = Diff::new("text", "text").expect("diff should've been created");
+        let diff = Diff::new("text", "text");
 
         // WHEN
         // THEN
-        assert_snapshot!(diff, @r"");
+        assert!(diff.is_none());
     }
 }

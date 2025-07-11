@@ -309,6 +309,8 @@ fn render_status_line(model: &Model, frame: &mut Frame, rect: Rect) {
 fn get_diff_lines(diff: &Diff) -> Vec<Line<'static>> {
     let mut lines = Vec::new();
 
+    let line_number_padding = diff.line_num_padding();
+
     for (idx, hunk) in diff.hunks.iter().enumerate() {
         if idx > 0 {
             lines.push(Line::from(vec![Span::styled(
@@ -327,18 +329,18 @@ fn get_diff_lines(diff: &Diff) -> Vec<Line<'static>> {
 
             let old_line = diff_line
                 .old_line_num
-                .map(|n| format!("{:<4}", n + 1))
-                .unwrap_or_else(|| "    ".to_string());
+                .map(|n| format!("{:<padding$}", n + 1, padding = line_number_padding))
+                .unwrap_or_else(|| " ".repeat(line_number_padding));
 
             let new_line = diff_line
                 .new_line_num
-                .map(|n| format!("{:<4}", n + 1))
-                .unwrap_or_else(|| "    ".to_string());
+                .map(|n| format!("{:<padding$}", n + 1, padding = line_number_padding))
+                .unwrap_or_else(|| " ".repeat(line_number_padding));
 
             let mut line_spans = vec![
                 Span::styled(old_line, Style::new().fg(DIM_COLOR)),
                 Span::styled(new_line, Style::new().fg(DIM_COLOR)),
-                Span::styled(format!(" |{sign}"), style.add_modifier(Modifier::BOLD)),
+                Span::styled(format!("|{sign}"), style.add_modifier(Modifier::BOLD)),
             ];
 
             for inline_change in &diff_line.inline_changes {
@@ -440,7 +442,9 @@ mod tests {
         }
 
         // WHEN
-        terminal.draw(|f| view(&mut model, f)).unwrap();
+        terminal
+            .draw(|f| view(&mut model, f))
+            .expect("frame should've been drawn");
 
         // THEN
         assert_snapshot!(terminal.backend(), @r#"
@@ -483,7 +487,9 @@ mod tests {
         }
 
         // WHEN
-        terminal.draw(|f| view(&mut model, f)).unwrap();
+        terminal
+            .draw(|f| view(&mut model, f))
+            .expect("frame should've been drawn");
 
         // THEN
         assert_snapshot!(terminal.backend(), @r#"
@@ -566,7 +572,9 @@ mod tests {
         let mut model = Model::new(terminal_dimensions, true, false);
 
         // WHEN
-        terminal.draw(|f| view(&mut model, f)).unwrap();
+        terminal
+            .draw(|f| view(&mut model, f))
+            .expect("frame should've been drawn");
 
         // THEN
         assert_snapshot!(terminal.backend(), @r#"
@@ -604,7 +612,9 @@ mod tests {
         let mut model = Model::new(terminal_dimensions, true, false);
 
         // WHEN
-        terminal.draw(|f| view(&mut model, f)).unwrap();
+        terminal
+            .draw(|f| view(&mut model, f))
+            .expect("frame should've been drawn");
 
         // THEN
         assert_snapshot!(terminal.backend(), @r#"
@@ -638,7 +648,9 @@ mod tests {
         let mut model = Model::new(terminal_dimensions, true, false);
 
         // WHEN
-        terminal.draw(|f| view(&mut model, f)).unwrap();
+        terminal
+            .draw(|f| view(&mut model, f))
+            .expect("frame should've been drawn");
 
         // THEN
         assert_snapshot!(terminal.backend(), @r#"
@@ -672,7 +684,9 @@ mod tests {
         let mut model = Model::new(terminal_dimensions, true, false);
 
         // WHEN
-        terminal.draw(|f| view(&mut model, f)).unwrap();
+        terminal
+            .draw(|f| view(&mut model, f))
+            .expect("frame should've been drawn");
 
         // THEN
         assert_snapshot!(terminal.backend(), @r#"
@@ -724,7 +738,9 @@ mod tests {
         update(&mut model, Msg::ChangeReceived(change));
 
         // WHEN
-        terminal.draw(|f| view(&mut model, f)).unwrap();
+        terminal
+            .draw(|f| view(&mut model, f))
+            .expect("frame should've been drawn");
 
         // THEN
         assert_snapshot!(terminal.backend(), @r#"
@@ -774,7 +790,7 @@ line 2
 (prefix) line 3 (changed)
 ",
         )
-        .expect("should generate diff");
+        .expect("diff should've been generated");
         let change = Change {
             file_path: "modified_file.txt".to_string(),
             kind: ChangeKind::Modified(Ok(ModifiedResult::Diff(Some(diff)))),
@@ -782,19 +798,21 @@ line 2
         update(&mut model, Msg::ChangeReceived(change));
 
         // WHEN
-        terminal.draw(|f| view(&mut model, f)).unwrap();
+        terminal
+            .draw(|f| view(&mut model, f))
+            .expect("frame should've been drawn");
 
         // THEN
         assert_snapshot!(terminal.backend(), @r#"
         "┌ diff ────────────────────────────────────────────────────────────────────────┐"
         "│                                                                              │"
-        "│ 1   1    |                                                                   │"
-        "│ 2        |-line 1                                                            │"
-        "│     2    |+line 1 (changed)                                                  │"
-        "│     3    |+new line                                                          │"
-        "│ 3   4    | line 2                                                            │"
-        "│ 4        |-line 3                                                            │"
-        "│     5    |+(prefix) line 3 (changed)                                         │"
+        "│ 1   1   |                                                                    │"
+        "│ 2       |-line 1                                                             │"
+        "│     2   |+line 1 (changed)                                                   │"
+        "│     3   |+new line                                                           │"
+        "│ 3   4   | line 2                                                             │"
+        "│ 4       |-line 3                                                             │"
+        "│     5   |+(prefix) line 3 (changed)                                          │"
         "│                                                                              │"
         "└──────────────────────────────────────────────────────────────────────────────┘"
         "┌ changes (1) ─────────────────────────────────────────────────────────────────┐"
@@ -816,34 +834,22 @@ line 2
     #[test]
     fn diff_pane_renders_diff_with_several_hunks_correctly() {
         // GIVEN
-        let (mut terminal, terminal_dimensions) = get_test_terminal_with_dims(80, 30);
+        let (mut terminal, terminal_dimensions) = get_test_terminal_with_dims(80, 34);
         let mut model = Model::new(terminal_dimensions, true, false);
 
-        let diff = Diff::new(
-            "
-line 1
-line 2
-line 3
-line 4
-line 5
-line 6
-line 7
-line 8
-line 9
-",
-            "
-line 1 (changed)
-line 2
-line 3
-line 4
-line 5
-line 6
-line 7
-line 8
-(prefix) line 9 (changed)
-",
-        )
-        .expect("should generate diff");
+        let mut lines = (1..=10001).map(|n| format!("line {n}")).collect::<Vec<_>>();
+        let old = lines.join("\n");
+
+        lines[8] = "line 9 (modified)".to_string();
+        lines[9] = "line 10 (modified)".to_string();
+
+        lines[9998] = "line 9999 (modified)".to_string();
+        lines[9999] = "line 10000 (modified)".to_string();
+
+        let new = lines.join("\n");
+
+        let diff = Diff::new(&old, &new).expect("diff should've been created");
+
         let change = Change {
             file_path: "modified_file.txt".to_string(),
             kind: ChangeKind::Modified(Ok(ModifiedResult::Diff(Some(diff)))),
@@ -851,26 +857,32 @@ line 8
         update(&mut model, Msg::ChangeReceived(change));
 
         // WHEN
-        terminal.draw(|f| view(&mut model, f)).unwrap();
+        terminal
+            .draw(|f| view(&mut model, f))
+            .expect("frame should've been drawn");
 
         // THEN
         assert_snapshot!(terminal.backend(), @r#"
         "┌ diff ────────────────────────────────────────────────────────────────────────┐"
         "│                                                                              │"
-        "│ 1   1    |                                                                   │"
-        "│ 2        |-line 1                                                            │"
-        "│     2    |+line 1 (changed)                                                  │"
-        "│ 3   3    | line 2                                                            │"
-        "│ 4   4    | line 3                                                            │"
-        "│ 5   5    | line 4                                                            │"
+        "│ 6      6      | line 6                                                       │"
+        "│ 7      7      | line 7                                                       │"
+        "│ 8      8      | line 8                                                       │"
+        "│ 9             |-line 9                                                       │"
+        "│ 10            |-line 10                                                      │"
+        "│        9      |+line 9 (modified)                                            │"
+        "│        10     |+line 10 (modified)                                           │"
+        "│ 11     11     | line 11                                                      │"
+        "│ 12     12     | line 12                                                      │"
+        "│ 13     13     | line 13                                                      │"
         "│ -----------------------------------------------------------------------------│"
-        "│ 7   7    | line 6                                                            │"
-        "│ 8   8    | line 7                                                            │"
-        "│ 9   9    | line 8                                                            │"
-        "│ 10       |-line 9                                                            │"
-        "│     10   |+(prefix) line 9 (changed)                                         │"
-        "│                                                                              │"
-        "│                                                                              │"
+        "│ 9996   9996   | line 9996                                                    │"
+        "│ 9997   9997   | line 9997                                                    │"
+        "│ 9998   9998   | line 9998                                                    │"
+        "│ 9999          |-line 9999                                                    │"
+        "│ 10000         |-line 10000                                                   │"
+        "│        9999   |+line 9999 (modified)                                         │"
+        "│        10000  |+line 10000 (modified)                                        │"
         "└──────────────────────────────────────────────────────────────────────────────┘"
         "┌ changes (1) ─────────────────────────────────────────────────────────────────┐"
         "│                                                                              │"
@@ -901,7 +913,9 @@ line 8
         update(&mut model, Msg::ChangeReceived(change));
 
         // WHEN
-        terminal.draw(|f| view(&mut model, f)).unwrap();
+        terminal
+            .draw(|f| view(&mut model, f))
+            .expect("frame should've been drawn");
 
         // THEN
         assert_snapshot!(terminal.backend(), @r#"
@@ -945,7 +959,9 @@ line 8
         update(&mut model, Msg::ChangeReceived(change));
 
         // WHEN
-        terminal.draw(|f| view(&mut model, f)).unwrap();
+        terminal
+            .draw(|f| view(&mut model, f))
+            .expect("frame should've been drawn");
 
         // THEN
         assert_snapshot!(terminal.backend(), @r#"
@@ -989,7 +1005,9 @@ line 8
         update(&mut model, Msg::ChangeReceived(change));
 
         // WHEN
-        terminal.draw(|f| view(&mut model, f)).unwrap();
+        terminal
+            .draw(|f| view(&mut model, f))
+            .expect("frame should've been drawn");
 
         // THEN
         assert_snapshot!(terminal.backend(), @r#"
@@ -1033,7 +1051,9 @@ line 8
         update(&mut model, Msg::ChangeReceived(change));
 
         // WHEN
-        terminal.draw(|f| view(&mut model, f)).unwrap();
+        terminal
+            .draw(|f| view(&mut model, f))
+            .expect("frame should've been drawn");
 
         // THEN
         assert_snapshot!(terminal.backend(), @r#"
@@ -1077,7 +1097,9 @@ line 8
         update(&mut model, Msg::ChangeReceived(change));
 
         // WHEN
-        terminal.draw(|f| view(&mut model, f)).unwrap();
+        terminal
+            .draw(|f| view(&mut model, f))
+            .expect("frame should've been drawn");
 
         // THEN
         assert_snapshot!(terminal.backend(), @r#"
@@ -1123,7 +1145,9 @@ line 8
         }
 
         // WHEN
-        terminal.draw(|f| view(&mut model, f)).unwrap();
+        terminal
+            .draw(|f| view(&mut model, f))
+            .expect("frame should've been drawn");
 
         // THEN
         assert_snapshot!(terminal.backend(), @r#"
@@ -1168,7 +1192,9 @@ line 8
         update(&mut model, Msg::ChangeReceived(change));
 
         // WHEN
-        terminal.draw(|f| view(&mut model, f)).unwrap();
+        terminal
+            .draw(|f| view(&mut model, f))
+            .expect("frame should've been drawn");
 
         // THEN
         assert_snapshot!(terminal.backend(), @r#"
@@ -1206,7 +1232,9 @@ line 8
         let mut model = Model::new(terminal_dimensions, false, false);
 
         // WHEN
-        terminal.draw(|f| view(&mut model, f)).unwrap();
+        terminal
+            .draw(|f| view(&mut model, f))
+            .expect("frame should've been drawn");
 
         // THEN
         assert_snapshot!(terminal.backend(), @r#"
@@ -1245,7 +1273,9 @@ line 8
         model.follow_changes = true;
 
         // WHEN
-        terminal.draw(|f| view(&mut model, f)).unwrap();
+        terminal
+            .draw(|f| view(&mut model, f))
+            .expect("frame should've been drawn");
 
         // THEN
         assert_snapshot!(terminal.backend(), @r#"
@@ -1284,7 +1314,9 @@ line 8
         model.user_msg = Some(UserMsg::info("Test info message"));
 
         // WHEN
-        terminal.draw(|f| view(&mut model, f)).unwrap();
+        terminal
+            .draw(|f| view(&mut model, f))
+            .expect("frame should've been drawn");
 
         // THEN
         assert_snapshot!(terminal.backend(), @r#"
@@ -1323,7 +1355,9 @@ line 8
         model.user_msg = Some(UserMsg::error("Test error message"));
 
         // WHEN
-        terminal.draw(|f| view(&mut model, f)).unwrap();
+        terminal
+            .draw(|f| view(&mut model, f))
+            .expect("frame should've been drawn");
 
         // THEN
         assert_snapshot!(terminal.backend(), @r#"
@@ -1365,7 +1399,9 @@ line 8
         // WHEN
         // THEN
         update(&mut model, Msg::GoDown);
-        terminal.draw(|f| view(&mut model, f)).unwrap();
+        terminal
+            .draw(|f| view(&mut model, f))
+            .expect("frame should've been drawn");
         assert_snapshot!(terminal.backend(), @r#"
         "┌ diff ────────────────────────────────────────────────────────────────────────┐"
         "│                                                                              │"
@@ -1394,7 +1430,9 @@ line 8
         "#);
 
         update(&mut model, Msg::GoDown);
-        terminal.draw(|f| view(&mut model, f)).unwrap();
+        terminal
+            .draw(|f| view(&mut model, f))
+            .expect("frame should've been drawn");
         assert_snapshot!(terminal.backend(), @r#"
         "┌ diff ────────────────────────────────────────────────────────────────────────┐"
         "│                                                                              │"
@@ -1443,7 +1481,9 @@ line 8
         update(&mut model, Msg::ChangeReceived(change));
 
         // WHEN
-        terminal.draw(|f| view(&mut model, f)).unwrap();
+        terminal
+            .draw(|f| view(&mut model, f))
+            .expect("frame should've been drawn");
 
         // THEN
         assert_snapshot!(terminal.backend(), @r#"
@@ -1490,7 +1530,9 @@ line 8
             };
             update(&mut model, Msg::ChangeReceived(change));
         }
-        terminal.draw(|f| view(&mut model, f)).unwrap();
+        terminal
+            .draw(|f| view(&mut model, f))
+            .expect("frame should've been drawn");
         assert_snapshot!(terminal.backend(), @r#"
         "┌ diff ────────────────────────────────────────────────────────────────────────┐"
         "│                                                                              │"
@@ -1524,7 +1566,9 @@ line 8
             kind: ChangeKind::Created(Ok(())),
         };
         update(&mut model, Msg::ChangeReceived(change));
-        terminal.draw(|f| view(&mut model, f)).unwrap();
+        terminal
+            .draw(|f| view(&mut model, f))
+            .expect("frame should've been drawn");
         assert_snapshot!(terminal.backend(), @r#"
         "┌ diff ────────────────────────────────────────────────────────────────────────┐"
         "│                                                                              │"
@@ -1573,7 +1617,9 @@ line 8
         update(&mut model, Msg::ChangeReceived(change));
 
         // WHEN
-        terminal.draw(|f| view(&mut model, f)).unwrap();
+        terminal
+            .draw(|f| view(&mut model, f))
+            .expect("frame should've been drawn");
 
         // THEN
         assert_snapshot!(terminal.backend(), @r#"

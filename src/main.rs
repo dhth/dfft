@@ -1,6 +1,7 @@
 mod changes;
 mod domain;
 mod tui;
+mod utils;
 use tracing_subscriber::EnvFilter;
 
 #[tokio::main]
