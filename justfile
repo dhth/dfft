@@ -28,7 +28,7 @@ cov:
   cargo llvm-cov
 
 deny:
-  cargo deny check
+  cargo deny check --hide-inclusion-graph
 
 expand:
   cargo expand
