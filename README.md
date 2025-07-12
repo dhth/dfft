@@ -28,6 +28,6 @@ Todo
 - [x] Stop/resume listening for changes
 - [x] Play sound when a change occurs
 - [x] Allow pre-populating snapshots at startup
-- [ ] Show number of snapshots in memory
+- [x] Show number of snapshots in memory
 - [x] Consider `dfft` specific ignore file
 - [ ] Consider `.git/info/exclude`

@@ -1,9 +1,8 @@
 use super::diff::Diff;
 
 pub enum WatchUpdate {
-    PrepopulationBegan,
     ChangeReceived(Change),
-    PrepopulationEnded(usize),
+    PrepopulationFinished,
     ErrorOccurred(String),
 }
 

@@ -41,6 +41,7 @@ pub fn update(model: &mut Model, msg: Msg) -> Vec<Cmd> {
                 model.regenerate_cancellation_token();
                 cmds.push(Cmd::WatchForChanges {
                     root: model.root.clone(),
+                    cache: model.cache(),
                     sender: model.watch_updates_tx.clone(),
                     cancellation_token: model.get_cancellation_token(),
                     prepopulate_cache: false,
@@ -49,12 +50,8 @@ pub fn update(model: &mut Model, msg: Msg) -> Vec<Cmd> {
         }
         // internal
         Msg::ChangeReceived(change) => model.add_change(change),
-        Msg::PrepopulationBegan => {
-            model.user_msg = Some(UserMsg::info("snapshotting files..."));
-        }
-        Msg::PrepopulationEnded(i) => {
-            model.user_msg = Some(UserMsg::info(format!("snapshotted {i} files")));
-        }
+        // this is just to trigger a render of TUI
+        Msg::PrepopulationFinished => {}
         Msg::WatchingFailed(e) => {
             model.watching = false;
             model.user_msg = Some(UserMsg::error(format!("watching for changes failed: {e}")));

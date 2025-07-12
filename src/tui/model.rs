@@ -1,13 +1,14 @@
 use super::common::*;
-use crate::domain::{Change, ChangeKind, Modification, WatchUpdate};
+use crate::domain::{Change, ChangeKind, FileCache, Modification, WatchUpdate};
 use ratatui::{
     style::{Style, Stylize},
     text::{Line, Span},
     widgets::{ListItem, ListState},
 };
 use std::path::PathBuf;
-use tokio::sync::mpsc;
+use std::sync::Arc;
 use tokio::sync::mpsc::{Receiver, Sender};
+use tokio::sync::{RwLock, mpsc};
 use tokio_util::sync::CancellationToken;
 
 const USER_MESSAGE_DEFAULT_FRAMES: u16 = 4;
@@ -134,6 +135,7 @@ impl From<&ChangeItem> for ListItem<'_> {
 
 pub struct Model {
     pub root: PathBuf,
+    cache: Arc<RwLock<FileCache>>,
     pub active_pane: Pane,
     pub watching: bool,
     pub changes: Changes,
@@ -170,6 +172,7 @@ impl Model {
 
         let mut model = Model {
             root,
+            cache: Arc::new(RwLock::new(FileCache::new())),
             active_pane: Pane::Diff,
             watching,
             changes: Changes::new(),
@@ -450,5 +453,13 @@ impl Model {
         };
 
         self.max_diff_scroll_available = max_scroll;
+    }
+
+    pub(super) fn cache(&self) -> Arc<RwLock<FileCache>> {
+        self.cache.clone()
+    }
+
+    pub(super) fn snapshots_in_memory(&self) -> Option<usize> {
+        self.cache.try_read().ok().map(|c| c.len())
     }
 }

@@ -11,6 +11,8 @@ Diff Pane
     k                    select previous change
     J / ↓                scroll diff down
     K / ↑                scroll diff up
+    g                    select first change
+    G                    select last change
     <space>              toggle watching
     <c-r>                reset list
     f                    toggle following changes

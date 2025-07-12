@@ -20,8 +20,7 @@ pub enum Msg {
     ToggleWatching,
     // internal
     ChangeReceived(Change),
-    PrepopulationBegan,
-    PrepopulationEnded(usize),
+    PrepopulationFinished,
     WatchingFailed(String),
 }
 
@@ -60,6 +59,8 @@ pub fn get_event_handling_msg(model: &Model, event: Event) -> Option<Msg> {
                     Pane::Diff => match key_event.code {
                         KeyCode::Char('j') => Some(Msg::SelectNext),
                         KeyCode::Char('k') => Some(Msg::SelectPrevious),
+                        KeyCode::Char('g') => Some(Msg::SelectFirst),
+                        KeyCode::Char('G') => Some(Msg::SelectLast),
                         KeyCode::Char('J') | KeyCode::Down => Some(Msg::ScrollDown),
                         KeyCode::Char('K') | KeyCode::Up => Some(Msg::ScrollUp),
                         KeyCode::Tab | KeyCode::BackTab => Some(Msg::GoToPane(Pane::Changes)),
