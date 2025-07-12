@@ -1,17 +1,19 @@
 mod changes;
 mod domain;
+mod log;
 mod tui;
 mod utils;
-use tracing_subscriber::EnvFilter;
+use anyhow::Context;
+use log::setup_logging;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    tracing_subscriber::fmt()
-        .with_env_filter(EnvFilter::from_default_env())
-        .with_writer(std::io::stderr)
-        .init();
+    setup_logging().context("couldn't set up logging")?;
 
-    tui::run().await?;
+    let root = tokio::fs::canonicalize(".")
+        .await
+        .context("couldn't determine directory path")?;
+    tui::run(root).await?;
 
     Ok(())
 }

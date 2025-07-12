@@ -5,6 +5,7 @@ use crate::tui::common::Pane;
 use crate::tui::model::{Model, UserMsg};
 use insta::assert_snapshot;
 use ratatui::{Terminal, backend::TestBackend};
+use std::path::PathBuf;
 
 fn get_test_terminal() -> (Terminal<TestBackend>, TerminalDimensions) {
     let terminal =
@@ -30,7 +31,7 @@ fn rendering_help_pane_works() {
     // GIVEN
     let (mut terminal, terminal_dimensions) = get_test_terminal_with_dims(80, 40);
 
-    let mut model = Model::new(terminal_dimensions, true, false);
+    let mut model = Model::new(PathBuf::new(), terminal_dimensions, true, false);
     update(&mut model, Msg::GoToPane(Pane::Help));
 
     // WHEN
@@ -40,47 +41,47 @@ fn rendering_help_pane_works() {
 
     // THEN
     assert_snapshot!(terminal.backend(), @r#"
-        "┌ help ────────────────────────────────────────────────────────────────────────┐"
-        "│                                                                              │"
-        "│ Keymaps                                                                      │"
-        "│ ---                                                                          │"
-        "│                                                                              │"
-        "│ General                                                                      │"
-        "│     ?                    show/hide help view                                 │"
-        "│     Esc / q              go back/exit                                        │"
-        "│     <ctrl+c>             exit immediately                                    │"
-        "│                                                                              │"
-        "│ Diff Pane                                                                    │"
-        "│     Tab/<S-Tab>/J/K      switch to changes pane                              │"
-        "│     j / ↓                scroll down                                         │"
-        "│     k / ↑                scroll up                                           │"
-        "│     l/→                  select next change                                  │"
-        "│     h/←                  select previous change                              │"
-        "│     <space>              toggle watching                                     │"
-        "│     <c-r>                reset list                                          │"
-        "│     f                    toggle following changes                            │"
-        "│                                                                              │"
-        "│ Changes Pane                                                                 │"
-        "│     j / ↓                select next change                                  │"
-        "│     k / ↑                select previous change                              │"
-        "│     g                    select first change                                 │"
-        "│     G                    select last change                                  │"
-        "│     f                    toggle following changes                            │"
-        "│     <c-r>                reset list                                          │"
-        "│     <space>              toggle watching                                     │"
-        "│     Tab/<S-Tab>/J/K      switch to diff pane                                 │"
-        "│                                                                              │"
-        "│ Help Pane                                                                    │"
-        "│     j / ↓                scroll down                                         │"
-        "│     k / ↑                scroll up                                           │"
-        "│                                                                              │"
-        "│                                                                              │"
-        "│                                                                              │"
-        "│                                                                              │"
-        "│                                                                              │"
-        "└──────────────────────────────────────────────────────────────────────────────┘"
-        " dfft  [watching]                                                               "
-        "#);
+    "┌ help ────────────────────────────────────────────────────────────────────────┐"
+    "│                                                                              │"
+    "│ Keymaps                                                                      │"
+    "│ ---                                                                          │"
+    "│                                                                              │"
+    "│ General                                                                      │"
+    "│     ?                    show/hide help view                                 │"
+    "│     Esc / q              go back/exit                                        │"
+    "│     <ctrl+c>             exit immediately                                    │"
+    "│                                                                              │"
+    "│ Diff Pane                                                                    │"
+    "│     j                    select next change                                  │"
+    "│     k                    select previous change                              │"
+    "│     J / ↓                scroll diff down                                    │"
+    "│     K / ↑                scroll diff up                                      │"
+    "│     <space>              toggle watching                                     │"
+    "│     <c-r>                reset list                                          │"
+    "│     f                    toggle following changes                            │"
+    "│     Tab/<S-Tab>          switch to changes pane                              │"
+    "│                                                                              │"
+    "│ Changes Pane                                                                 │"
+    "│     j / ↓                select next change                                  │"
+    "│     k / ↑                select previous change                              │"
+    "│     g                    select first change                                 │"
+    "│     G                    select last change                                  │"
+    "│     J                    scroll diff down (if applicable)                    │"
+    "│     K                    scroll diff up (if applicable)                      │"
+    "│     f                    toggle following changes                            │"
+    "│     <c-r>                reset list                                          │"
+    "│     <space>              toggle watching                                     │"
+    "│     Tab/<S-Tab>          switch to diff pane                                 │"
+    "│                                                                              │"
+    "│ Help Pane                                                                    │"
+    "│     j / ↓                scroll down                                         │"
+    "│     k / ↑                scroll up                                           │"
+    "│                                                                              │"
+    "│                                                                              │"
+    "│                                                                              │"
+    "└──────────────────────────────────────────────────────────────────────────────┘"
+    " dfft  [watching]                                                               "
+    "#);
 }
 
 #[test]
@@ -88,7 +89,7 @@ fn scrolling_help_pane_works() {
     // GIVEN
     let (mut terminal, terminal_dimensions) = get_test_terminal();
 
-    let mut model = Model::new(terminal_dimensions, true, false);
+    let mut model = Model::new(PathBuf::new(), terminal_dimensions, true, false);
     update(&mut model, Msg::GoToPane(Pane::Help));
 
     for _ in 1..=4 {
@@ -102,31 +103,31 @@ fn scrolling_help_pane_works() {
 
     // THEN
     assert_snapshot!(terminal.backend(), @r#"
-        "┌ help ────────────────────────────────────────────────────────────────────────┐"
-        "│                                                                              │"
-        "│     ?                    show/hide help view                                 │"
-        "│     Esc / q              go back/exit                                        │"
-        "│     <ctrl+c>             exit immediately                                    │"
-        "│                                                                              │"
-        "│ Diff Pane                                                                    │"
-        "│     Tab/<S-Tab>/J/K      switch to changes pane                              │"
-        "│     j / ↓                scroll down                                         │"
-        "│     k / ↑                scroll up                                           │"
-        "│     l/→                  select next change                                  │"
-        "│     h/←                  select previous change                              │"
-        "│     <space>              toggle watching                                     │"
-        "│     <c-r>                reset list                                          │"
-        "│     f                    toggle following changes                            │"
-        "│                                                                              │"
-        "│ Changes Pane                                                                 │"
-        "│     j / ↓                select next change                                  │"
-        "│     k / ↑                select previous change                              │"
-        "│     g                    select first change                                 │"
-        "│     G                    select last change                                  │"
-        "│     f                    toggle following changes                            │"
-        "└──────────────────────────────────────────────────────────────────────────────┘"
-        " dfft  [watching]                                                               "
-        "#);
+    "┌ help ────────────────────────────────────────────────────────────────────────┐"
+    "│                                                                              │"
+    "│     ?                    show/hide help view                                 │"
+    "│     Esc / q              go back/exit                                        │"
+    "│     <ctrl+c>             exit immediately                                    │"
+    "│                                                                              │"
+    "│ Diff Pane                                                                    │"
+    "│     j                    select next change                                  │"
+    "│     k                    select previous change                              │"
+    "│     J / ↓                scroll diff down                                    │"
+    "│     K / ↑                scroll diff up                                      │"
+    "│     <space>              toggle watching                                     │"
+    "│     <c-r>                reset list                                          │"
+    "│     f                    toggle following changes                            │"
+    "│     Tab/<S-Tab>          switch to changes pane                              │"
+    "│                                                                              │"
+    "│ Changes Pane                                                                 │"
+    "│     j / ↓                select next change                                  │"
+    "│     k / ↑                select previous change                              │"
+    "│     g                    select first change                                 │"
+    "│     G                    select last change                                  │"
+    "│     J                    scroll diff down (if applicable)                    │"
+    "└──────────────────────────────────────────────────────────────────────────────┘"
+    " dfft  [watching]                                                               "
+    "#);
 }
 
 #[test]
@@ -134,7 +135,7 @@ fn help_pane_doesnt_scroll_beyond_lower_limit() {
     // GIVEN
     let (mut terminal, terminal_dimensions) = get_test_terminal();
 
-    let mut model = Model::new(terminal_dimensions, true, false);
+    let mut model = Model::new(PathBuf::new(), terminal_dimensions, true, false);
     update(&mut model, Msg::GoToPane(Pane::Help));
 
     for _ in 1..=20 {
@@ -148,31 +149,31 @@ fn help_pane_doesnt_scroll_beyond_lower_limit() {
 
     // THEN
     assert_snapshot!(terminal.backend(), @r#"
-        "┌ help ────────────────────────────────────────────────────────────────────────┐"
-        "│                                                                              │"
-        "│     k / ↑                scroll up                                           │"
-        "│     l/→                  select next change                                  │"
-        "│     h/←                  select previous change                              │"
-        "│     <space>              toggle watching                                     │"
-        "│     <c-r>                reset list                                          │"
-        "│     f                    toggle following changes                            │"
-        "│                                                                              │"
-        "│ Changes Pane                                                                 │"
-        "│     j / ↓                select next change                                  │"
-        "│     k / ↑                select previous change                              │"
-        "│     g                    select first change                                 │"
-        "│     G                    select last change                                  │"
-        "│     f                    toggle following changes                            │"
-        "│     <c-r>                reset list                                          │"
-        "│     <space>              toggle watching                                     │"
-        "│     Tab/<S-Tab>/J/K      switch to diff pane                                 │"
-        "│                                                                              │"
-        "│ Help Pane                                                                    │"
-        "│     j / ↓                scroll down                                         │"
-        "│     k / ↑                scroll up                                           │"
-        "└──────────────────────────────────────────────────────────────────────────────┘"
-        " dfft  [watching]                                                               "
-        "#);
+    "┌ help ────────────────────────────────────────────────────────────────────────┐"
+    "│                                                                              │"
+    "│     <space>              toggle watching                                     │"
+    "│     <c-r>                reset list                                          │"
+    "│     f                    toggle following changes                            │"
+    "│     Tab/<S-Tab>          switch to changes pane                              │"
+    "│                                                                              │"
+    "│ Changes Pane                                                                 │"
+    "│     j / ↓                select next change                                  │"
+    "│     k / ↑                select previous change                              │"
+    "│     g                    select first change                                 │"
+    "│     G                    select last change                                  │"
+    "│     J                    scroll diff down (if applicable)                    │"
+    "│     K                    scroll diff up (if applicable)                      │"
+    "│     f                    toggle following changes                            │"
+    "│     <c-r>                reset list                                          │"
+    "│     <space>              toggle watching                                     │"
+    "│     Tab/<S-Tab>          switch to diff pane                                 │"
+    "│                                                                              │"
+    "│ Help Pane                                                                    │"
+    "│     j / ↓                scroll down                                         │"
+    "│     k / ↑                scroll up                                           │"
+    "└──────────────────────────────────────────────────────────────────────────────┘"
+    " dfft  [watching]                                                               "
+    "#);
 }
 
 #[test]
@@ -180,7 +181,7 @@ fn help_pane_doesnt_scroll_above_upper_limit() {
     // GIVEN
     let (mut terminal, terminal_dimensions) = get_test_terminal();
 
-    let mut model = Model::new(terminal_dimensions, true, false);
+    let mut model = Model::new(PathBuf::new(), terminal_dimensions, true, false);
     update(&mut model, Msg::GoToPane(Pane::Help));
 
     for _ in 1..=3 {
@@ -194,38 +195,38 @@ fn help_pane_doesnt_scroll_above_upper_limit() {
 
     // THEN
     assert_snapshot!(terminal.backend(), @r#"
-        "┌ help ────────────────────────────────────────────────────────────────────────┐"
-        "│                                                                              │"
-        "│ Keymaps                                                                      │"
-        "│ ---                                                                          │"
-        "│                                                                              │"
-        "│ General                                                                      │"
-        "│     ?                    show/hide help view                                 │"
-        "│     Esc / q              go back/exit                                        │"
-        "│     <ctrl+c>             exit immediately                                    │"
-        "│                                                                              │"
-        "│ Diff Pane                                                                    │"
-        "│     Tab/<S-Tab>/J/K      switch to changes pane                              │"
-        "│     j / ↓                scroll down                                         │"
-        "│     k / ↑                scroll up                                           │"
-        "│     l/→                  select next change                                  │"
-        "│     h/←                  select previous change                              │"
-        "│     <space>              toggle watching                                     │"
-        "│     <c-r>                reset list                                          │"
-        "│     f                    toggle following changes                            │"
-        "│                                                                              │"
-        "│ Changes Pane                                                                 │"
-        "│     j / ↓                select next change                                  │"
-        "└──────────────────────────────────────────────────────────────────────────────┘"
-        " dfft  [watching]                                                               "
-        "#);
+    "┌ help ────────────────────────────────────────────────────────────────────────┐"
+    "│                                                                              │"
+    "│ Keymaps                                                                      │"
+    "│ ---                                                                          │"
+    "│                                                                              │"
+    "│ General                                                                      │"
+    "│     ?                    show/hide help view                                 │"
+    "│     Esc / q              go back/exit                                        │"
+    "│     <ctrl+c>             exit immediately                                    │"
+    "│                                                                              │"
+    "│ Diff Pane                                                                    │"
+    "│     j                    select next change                                  │"
+    "│     k                    select previous change                              │"
+    "│     J / ↓                scroll diff down                                    │"
+    "│     K / ↑                scroll diff up                                      │"
+    "│     <space>              toggle watching                                     │"
+    "│     <c-r>                reset list                                          │"
+    "│     f                    toggle following changes                            │"
+    "│     Tab/<S-Tab>          switch to changes pane                              │"
+    "│                                                                              │"
+    "│ Changes Pane                                                                 │"
+    "│     j / ↓                select next change                                  │"
+    "└──────────────────────────────────────────────────────────────────────────────┘"
+    " dfft  [watching]                                                               "
+    "#);
 }
 
 #[test]
 fn terminal_too_small_view_is_shown_when_width_too_small() {
     // GIVEN
     let (mut terminal, terminal_dimensions) = get_test_terminal_with_dims(60, 24);
-    let mut model = Model::new(terminal_dimensions, true, false);
+    let mut model = Model::new(PathBuf::new(), terminal_dimensions, true, false);
 
     // WHEN
     terminal
@@ -265,7 +266,7 @@ fn terminal_too_small_view_is_shown_when_width_too_small() {
 fn terminal_too_small_view_is_shown_when_height_too_small() {
     // GIVEN
     let (mut terminal, terminal_dimensions) = get_test_terminal_with_dims(80, 20);
-    let mut model = Model::new(terminal_dimensions, true, false);
+    let mut model = Model::new(PathBuf::new(), terminal_dimensions, true, false);
 
     // WHEN
     terminal
@@ -301,7 +302,7 @@ fn terminal_too_small_view_is_shown_when_height_too_small() {
 fn terminal_too_small_view_is_shown_when_both_dimensions_small() {
     // GIVEN
     let (mut terminal, terminal_dimensions) = get_test_terminal_with_dims(40, 20);
-    let mut model = Model::new(terminal_dimensions, true, false);
+    let mut model = Model::new(PathBuf::new(), terminal_dimensions, true, false);
 
     // WHEN
     terminal
@@ -337,7 +338,7 @@ fn terminal_too_small_view_is_shown_when_both_dimensions_small() {
 fn main_view_renders_banner_when_no_changes_present() {
     // GIVEN
     let (mut terminal, terminal_dimensions) = get_test_terminal_with_dims(100, 42);
-    let mut model = Model::new(terminal_dimensions, true, false);
+    let mut model = Model::new(PathBuf::new(), terminal_dimensions, true, false);
 
     // WHEN
     terminal
@@ -395,7 +396,7 @@ fn main_view_renders_banner_when_no_changes_present() {
 fn main_view_renders_created_file_change() {
     // GIVEN
     let (mut terminal, terminal_dimensions) = get_test_terminal();
-    let mut model = Model::new(terminal_dimensions, true, false);
+    let mut model = Model::new(PathBuf::new(), terminal_dimensions, true, false);
 
     let change = Change {
         file_path: "new_file.txt".to_string(),
@@ -441,7 +442,7 @@ fn main_view_renders_created_file_change() {
 fn main_view_renders_modified_file_with_diff() {
     // GIVEN
     let (mut terminal, terminal_dimensions) = get_test_terminal();
-    let mut model = Model::new(terminal_dimensions, true, false);
+    let mut model = Model::new(PathBuf::new(), terminal_dimensions, true, false);
 
     let diff = Diff::new(
         "
@@ -501,7 +502,7 @@ line 2
 fn diff_pane_renders_diff_with_several_hunks_correctly() {
     // GIVEN
     let (mut terminal, terminal_dimensions) = get_test_terminal_with_dims(80, 34);
-    let mut model = Model::new(terminal_dimensions, true, false);
+    let mut model = Model::new(PathBuf::new(), terminal_dimensions, true, false);
 
     let mut lines = (1..=10001).map(|n| format!("line {n}")).collect::<Vec<_>>();
     let old = lines.join("\n");
@@ -570,7 +571,7 @@ fn diff_pane_renders_diff_with_several_hunks_correctly() {
 fn scrolling_diff_works() {
     // GIVEN
     let (mut terminal, terminal_dimensions) = get_test_terminal();
-    let mut model = Model::new(terminal_dimensions, true, false);
+    let mut model = Model::new(PathBuf::new(), terminal_dimensions, true, false);
     update(&mut model, Msg::GoToPane(Pane::Diff));
 
     let mut lines = (1..=30).map(|n| format!("line {n}")).collect::<Vec<_>>();
@@ -662,7 +663,7 @@ fn scrolling_diff_works() {
 fn diff_scrolling_is_reset_when_follow_mode_is_on() {
     // GIVEN
     let (mut terminal, terminal_dimensions) = get_test_terminal();
-    let mut model = Model::new(terminal_dimensions, true, false);
+    let mut model = Model::new(PathBuf::new(), terminal_dimensions, true, false);
     update(&mut model, Msg::GoToPane(Pane::Diff));
     update(&mut model, Msg::ToggleFollowChanges);
 
@@ -766,7 +767,7 @@ fn diff_scrolling_is_reset_when_follow_mode_is_on() {
 fn diff_scrolling_is_reset_when_another_change_is_selected() {
     // GIVEN
     let (mut terminal, terminal_dimensions) = get_test_terminal();
-    let mut model = Model::new(terminal_dimensions, true, false);
+    let mut model = Model::new(PathBuf::new(), terminal_dimensions, true, false);
     update(&mut model, Msg::GoToPane(Pane::Diff));
 
     let mut lines = (1..=50).map(|n| format!("line {n}")).collect::<Vec<_>>();
@@ -871,7 +872,7 @@ fn diff_scrolling_is_reset_when_another_change_is_selected() {
 fn max_diff_scroll_is_reset_when_change_list_is_reset() {
     // GIVEN
     let (mut terminal, terminal_dimensions) = get_test_terminal();
-    let mut model = Model::new(terminal_dimensions, true, false);
+    let mut model = Model::new(PathBuf::new(), terminal_dimensions, true, false);
     update(&mut model, Msg::GoToPane(Pane::Diff));
 
     let mut lines = (1..=50).map(|n| format!("line {n}")).collect::<Vec<_>>();
@@ -973,7 +974,7 @@ fn max_diff_scroll_is_reset_when_change_list_is_reset() {
 fn main_view_renders_removed_file_change() {
     // GIVEN
     let (mut terminal, terminal_dimensions) = get_test_terminal();
-    let mut model = Model::new(terminal_dimensions, true, false);
+    let mut model = Model::new(PathBuf::new(), terminal_dimensions, true, false);
 
     let change = Change {
         file_path: "deleted_file.txt".to_string(),
@@ -1019,7 +1020,7 @@ fn main_view_renders_removed_file_change() {
 fn main_view_renders_created_file_with_error() {
     // GIVEN
     let (mut terminal, terminal_dimensions) = get_test_terminal();
-    let mut model = Model::new(terminal_dimensions, true, false);
+    let mut model = Model::new(PathBuf::new(), terminal_dimensions, true, false);
 
     let change = Change {
         file_path: "error_file.txt".to_string(),
@@ -1065,7 +1066,7 @@ fn main_view_renders_created_file_with_error() {
 fn main_view_renders_modified_file_with_error() {
     // GIVEN
     let (mut terminal, terminal_dimensions) = get_test_terminal();
-    let mut model = Model::new(terminal_dimensions, true, false);
+    let mut model = Model::new(PathBuf::new(), terminal_dimensions, true, false);
 
     let change = Change {
         file_path: "error_modified.txt".to_string(),
@@ -1111,7 +1112,7 @@ fn main_view_renders_modified_file_with_error() {
 fn main_view_renders_initial_snapshot_change() {
     // GIVEN
     let (mut terminal, terminal_dimensions) = get_test_terminal();
-    let mut model = Model::new(terminal_dimensions, true, false);
+    let mut model = Model::new(PathBuf::new(), terminal_dimensions, true, false);
 
     let change = Change {
         file_path: "snapshot_file.txt".to_string(),
@@ -1157,7 +1158,7 @@ fn main_view_renders_initial_snapshot_change() {
 fn main_view_renders_modified_file_with_no_diff() {
     // GIVEN
     let (mut terminal, terminal_dimensions) = get_test_terminal();
-    let mut model = Model::new(terminal_dimensions, true, false);
+    let mut model = Model::new(PathBuf::new(), terminal_dimensions, true, false);
 
     let change = Change {
         file_path: "no_diff_file.txt".to_string(),
@@ -1203,7 +1204,7 @@ fn main_view_renders_modified_file_with_no_diff() {
 fn changes_list_shows_item_count_in_title() {
     // GIVEN
     let (mut terminal, terminal_dimensions) = get_test_terminal();
-    let mut model = Model::new(terminal_dimensions, true, false);
+    let mut model = Model::new(PathBuf::new(), terminal_dimensions, true, false);
 
     for i in 0..3 {
         let change = Change {
@@ -1251,7 +1252,7 @@ fn changes_list_shows_item_count_in_title() {
 fn changes_list_handles_long_file_paths() {
     // GIVEN
     let (mut terminal, terminal_dimensions) = get_test_terminal();
-    let mut model = Model::new(terminal_dimensions, true, false);
+    let mut model = Model::new(PathBuf::new(), terminal_dimensions, true, false);
 
     let change = Change {
         file_path: "very/long/path/to/a/file/that/exceeds/normal/length/limits/file.txt"
@@ -1298,7 +1299,7 @@ fn changes_list_handles_long_file_paths() {
 fn status_line_shows_paused_status() {
     // GIVEN
     let (mut terminal, terminal_dimensions) = get_test_terminal();
-    let mut model = Model::new(terminal_dimensions, false, false);
+    let mut model = Model::new(PathBuf::new(), terminal_dimensions, false, false);
 
     // WHEN
     terminal
@@ -1338,7 +1339,7 @@ fn status_line_shows_paused_status() {
 fn status_line_shows_following_changes_indicator() {
     // GIVEN
     let (mut terminal, terminal_dimensions) = get_test_terminal();
-    let mut model = Model::new(terminal_dimensions, true, false);
+    let mut model = Model::new(PathBuf::new(), terminal_dimensions, true, false);
     update(&mut model, Msg::ToggleFollowChanges);
 
     // WHEN
@@ -1379,7 +1380,7 @@ fn status_line_shows_following_changes_indicator() {
 fn status_line_shows_info_message() {
     // GIVEN
     let (mut terminal, terminal_dimensions) = get_test_terminal();
-    let mut model = Model::new(terminal_dimensions, true, false);
+    let mut model = Model::new(PathBuf::new(), terminal_dimensions, true, false);
     model.user_msg = Some(UserMsg::info("Test info message"));
 
     // WHEN
@@ -1389,38 +1390,38 @@ fn status_line_shows_info_message() {
 
     // THEN
     assert_snapshot!(terminal.backend(), @r#"
-        "┌ diff ────────────────────────────────────────────────────────────────────────┐"
-        "│                                                                              │"
-        "│                                                                              │"
-        "│                                                                              │"
-        "│                                     dfft                                     │"
-        "│                                     ‾‾‾‾                                     │"
-        "│                                                                              │"
-        "│              see changes to files in a directory as they happen              │"
-        "│                                                                              │"
-        "│                                                                              │"
-        "└──────────────────────────────────────────────────────────────────────────────┘"
-        "┌ changes ─────────────────────────────────────────────────────────────────────┐"
-        "│                                                                              │"
-        "│ changes will appear here                                                     │"
-        "│                                                                              │"
-        "│                                                                              │"
-        "│                                                                              │"
-        "│                                                                              │"
-        "│                                                                              │"
-        "│                                                                              │"
-        "│                                                                              │"
-        "│                                                                              │"
-        "└──────────────────────────────────────────────────────────────────────────────┘"
-        " dfft  Test info message [watching]                                             "
-        "#);
+    "┌ diff ────────────────────────────────────────────────────────────────────────┐"
+    "│                                                                              │"
+    "│                                                                              │"
+    "│                                                                              │"
+    "│                                     dfft                                     │"
+    "│                                     ‾‾‾‾                                     │"
+    "│                                                                              │"
+    "│              see changes to files in a directory as they happen              │"
+    "│                                                                              │"
+    "│                                                                              │"
+    "└──────────────────────────────────────────────────────────────────────────────┘"
+    "┌ changes ─────────────────────────────────────────────────────────────────────┐"
+    "│                                                                              │"
+    "│ changes will appear here                                                     │"
+    "│                                                                              │"
+    "│                                                                              │"
+    "│                                                                              │"
+    "│                                                                              │"
+    "│                                                                              │"
+    "│                                                                              │"
+    "│                                                                              │"
+    "│                                                                              │"
+    "└──────────────────────────────────────────────────────────────────────────────┘"
+    " dfft  [watching] Test info message                                             "
+    "#);
 }
 
 #[test]
 fn status_line_shows_error_message() {
     // GIVEN
     let (mut terminal, terminal_dimensions) = get_test_terminal();
-    let mut model = Model::new(terminal_dimensions, true, false);
+    let mut model = Model::new(PathBuf::new(), terminal_dimensions, true, false);
     model.user_msg = Some(UserMsg::error("Test error message"));
 
     // WHEN
@@ -1430,38 +1431,38 @@ fn status_line_shows_error_message() {
 
     // THEN
     assert_snapshot!(terminal.backend(), @r#"
-        "┌ diff ────────────────────────────────────────────────────────────────────────┐"
-        "│                                                                              │"
-        "│                                                                              │"
-        "│                                                                              │"
-        "│                                     dfft                                     │"
-        "│                                     ‾‾‾‾                                     │"
-        "│                                                                              │"
-        "│              see changes to files in a directory as they happen              │"
-        "│                                                                              │"
-        "│                                                                              │"
-        "└──────────────────────────────────────────────────────────────────────────────┘"
-        "┌ changes ─────────────────────────────────────────────────────────────────────┐"
-        "│                                                                              │"
-        "│ changes will appear here                                                     │"
-        "│                                                                              │"
-        "│                                                                              │"
-        "│                                                                              │"
-        "│                                                                              │"
-        "│                                                                              │"
-        "│                                                                              │"
-        "│                                                                              │"
-        "│                                                                              │"
-        "└──────────────────────────────────────────────────────────────────────────────┘"
-        " dfft  Test error message [watching]                                            "
-        "#);
+    "┌ diff ────────────────────────────────────────────────────────────────────────┐"
+    "│                                                                              │"
+    "│                                                                              │"
+    "│                                                                              │"
+    "│                                     dfft                                     │"
+    "│                                     ‾‾‾‾                                     │"
+    "│                                                                              │"
+    "│              see changes to files in a directory as they happen              │"
+    "│                                                                              │"
+    "│                                                                              │"
+    "└──────────────────────────────────────────────────────────────────────────────┘"
+    "┌ changes ─────────────────────────────────────────────────────────────────────┐"
+    "│                                                                              │"
+    "│ changes will appear here                                                     │"
+    "│                                                                              │"
+    "│                                                                              │"
+    "│                                                                              │"
+    "│                                                                              │"
+    "│                                                                              │"
+    "│                                                                              │"
+    "│                                                                              │"
+    "│                                                                              │"
+    "└──────────────────────────────────────────────────────────────────────────────┘"
+    " dfft  [watching] Test error message                                            "
+    "#);
 }
 
 #[test]
 fn info_message_disappears_after_its_frame_budget_expires() {
     // GIVEN
     let (mut terminal, terminal_dimensions) = get_test_terminal();
-    let mut model = Model::new(terminal_dimensions, true, false);
+    let mut model = Model::new(PathBuf::new(), terminal_dimensions, true, false);
     model.user_msg = Some(UserMsg::info("This will disappear after 2 renders").with_frames_left(1));
 
     // WHEN
@@ -1471,31 +1472,31 @@ fn info_message_disappears_after_its_frame_budget_expires() {
         .draw(|f| view(&mut model, f))
         .expect("frame should've been drawn");
     assert_snapshot!(terminal.backend(), @r#"
-        "┌ diff ────────────────────────────────────────────────────────────────────────┐"
-        "│                                                                              │"
-        "│                                                                              │"
-        "│                                                                              │"
-        "│                                     dfft                                     │"
-        "│                                     ‾‾‾‾                                     │"
-        "│                                                                              │"
-        "│              see changes to files in a directory as they happen              │"
-        "│                                                                              │"
-        "│                                                                              │"
-        "└──────────────────────────────────────────────────────────────────────────────┘"
-        "┌ changes ─────────────────────────────────────────────────────────────────────┐"
-        "│                                                                              │"
-        "│ changes will appear here                                                     │"
-        "│                                                                              │"
-        "│                                                                              │"
-        "│                                                                              │"
-        "│                                                                              │"
-        "│                                                                              │"
-        "│                                                                              │"
-        "│                                                                              │"
-        "│                                                                              │"
-        "└──────────────────────────────────────────────────────────────────────────────┘"
-        " dfft  This will disappear after 2 renders [watching]                           "
-        "#);
+    "┌ diff ────────────────────────────────────────────────────────────────────────┐"
+    "│                                                                              │"
+    "│                                                                              │"
+    "│                                                                              │"
+    "│                                     dfft                                     │"
+    "│                                     ‾‾‾‾                                     │"
+    "│                                                                              │"
+    "│              see changes to files in a directory as they happen              │"
+    "│                                                                              │"
+    "│                                                                              │"
+    "└──────────────────────────────────────────────────────────────────────────────┘"
+    "┌ changes ─────────────────────────────────────────────────────────────────────┐"
+    "│                                                                              │"
+    "│ changes will appear here                                                     │"
+    "│                                                                              │"
+    "│                                                                              │"
+    "│                                                                              │"
+    "│                                                                              │"
+    "│                                                                              │"
+    "│                                                                              │"
+    "│                                                                              │"
+    "│                                                                              │"
+    "└──────────────────────────────────────────────────────────────────────────────┘"
+    " dfft  [watching] This will disappear after 2 renders                           "
+    "#);
 
     update(&mut model, Msg::SelectNext);
     terminal
@@ -1533,7 +1534,7 @@ fn info_message_disappears_after_its_frame_budget_expires() {
 fn cursor_moves_automatically_when_following_enabled() {
     // GIVEN
     let (mut terminal, terminal_dimensions) = get_test_terminal();
-    let mut model = Model::new(terminal_dimensions, true, false);
+    let mut model = Model::new(PathBuf::new(), terminal_dimensions, true, false);
     update(&mut model, Msg::ToggleFollowChanges);
 
     let change = Change {
@@ -1586,7 +1587,7 @@ fn cursor_moves_automatically_when_following_enabled() {
 fn cursor_moves_to_the_end_when_following_is_turned_on_after_a_while() {
     // GIVEN
     let (mut terminal, terminal_dimensions) = get_test_terminal();
-    let mut model = Model::new(terminal_dimensions, true, false);
+    let mut model = Model::new(PathBuf::new(), terminal_dimensions, true, false);
 
     // WHEN
     // THEN
@@ -1668,7 +1669,7 @@ fn cursor_moves_to_the_end_when_following_is_turned_on_after_a_while() {
 fn cursor_doesnt_move_by_itself_when_following_disabled() {
     // GIVEN
     let (mut terminal, terminal_dimensions) = get_test_terminal();
-    let mut model = Model::new(terminal_dimensions, true, false);
+    let mut model = Model::new(PathBuf::new(), terminal_dimensions, true, false);
 
     let change = Change {
         file_path: "this-will-still-be-selected.txt".to_string(),

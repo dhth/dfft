@@ -1,3 +1,4 @@
+use super::consts::EXTENSIONS_TO_IGNORE;
 use anyhow::Context;
 use ignore::gitignore::Gitignore;
 use ignore::gitignore::GitignoreBuilder;
@@ -5,6 +6,7 @@ use std::path::{Path, PathBuf};
 
 const GITIGNORE_PATH: &str = ".gitignore";
 const DFFTIGNORE_PATH: &str = ".dfftignore";
+const MAX_FILE_SIZE: u64 = 1024 * 1024; // 1MB
 
 pub(super) fn get_ignore<P>(root: P) -> anyhow::Result<Option<Gitignore>>
 where
@@ -40,4 +42,49 @@ where
             .build()
             .context("couldn't set up a matcher for ignoring files")?,
     ))
+}
+
+pub(super) fn is_file_to_be_ignored<P>(path: P, gitignore: &Option<Gitignore>) -> bool
+where
+    P: AsRef<Path>,
+{
+    if gitignore
+        .as_ref()
+        .is_some_and(|g| g.matched_path_or_any_parents(&path, false).is_ignore())
+    {
+        return true;
+    }
+
+    // other reasons for ignoring files
+    if is_file_too_large(&path, MAX_FILE_SIZE).unwrap_or(true) {
+        return true;
+    }
+
+    if is_extension_to_be_ignored(&path).unwrap_or(true) {
+        return true;
+    }
+
+    false
+}
+
+fn is_extension_to_be_ignored<P>(path: P) -> anyhow::Result<bool>
+where
+    P: AsRef<Path>,
+{
+    if let Some(ext) = path.as_ref().extension() {
+        let ext = ext.to_string_lossy().to_lowercase();
+        Ok(EXTENSIONS_TO_IGNORE.contains(&ext.as_str()))
+    } else {
+        Ok(false)
+    }
+}
+
+fn is_file_too_large<P>(path: P, max_size: u64) -> anyhow::Result<bool>
+where
+    P: AsRef<Path>,
+{
+    match std::fs::metadata(path) {
+        Ok(metadata) => Ok(metadata.len() > max_size),
+        Err(_) => Ok(true),
+    }
 }

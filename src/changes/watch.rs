@@ -1,11 +1,14 @@
-use super::get_ignore;
-use crate::domain::{Change, ChangeKind, Diff, Modification};
+use super::helpers::{get_ignore, is_file_to_be_ignored};
+use crate::domain::{Change, ChangeKind, Diff, Modification, WatchUpdate};
 use anyhow::Context;
+use ignore::{Walk, gitignore::Gitignore};
 use notify::EventKind;
 use notify::RecursiveMode;
 use notify::event::{CreateKind, DataChange, ModifyKind, RemoveKind};
 use notify_debouncer_full::new_debouncer;
 use std::collections::HashMap;
+use std::path::Path;
+use std::path::PathBuf;
 use std::time::Duration;
 use tokio::sync::mpsc::{Sender, channel};
 use tokio_util::sync::CancellationToken;
@@ -14,14 +17,29 @@ use tracing::debug;
 const EVENT_CHANNEL_BUFFER: usize = 100;
 
 pub async fn watch_for_changes(
-    event_tx: Sender<Change>,
+    root: PathBuf,
+    updates_tx: Sender<WatchUpdate>,
     cancellation_token: CancellationToken,
+    prepopulate_cache: bool,
 ) -> anyhow::Result<()> {
-    let root = tokio::fs::canonicalize(".").await?;
     let gitignore = get_ignore(&root)?;
 
     // TODO: maybe this should live in the TUI's model
     let mut cache: HashMap<String, String> = HashMap::new();
+
+    if prepopulate_cache {
+        let _ = updates_tx.try_send(WatchUpdate::PrepopulationBegan);
+        match populate_cache(&mut cache, &gitignore, &root, 2000).await {
+            Ok(count) => {
+                debug!("prepopulated cache with {} files", count);
+                let _ = updates_tx.try_send(WatchUpdate::PrepopulationEnded(count));
+            }
+            Err(e) => {
+                debug!("prepopulation failed: {}, continuing without cache", e);
+                let _ = updates_tx.try_send(WatchUpdate::ErrorOccurred(e.to_string()));
+            }
+        }
+    }
 
     let (tx, mut rx) = channel(EVENT_CHANNEL_BUFFER);
 
@@ -53,11 +71,10 @@ pub async fn watch_for_changes(
                             match event.kind {
                                 EventKind::Create(CreateKind::File) => {
                                     for f in &event.paths {
-                                        if gitignore.as_ref().is_some_and(|g| {
-                                            g.matched_path_or_any_parents(f, false).is_ignore()
-                                        }) {
+                                        if is_file_to_be_ignored(f, &gitignore) {
                                             continue;
                                         }
+
                                         let file_path = f.strip_prefix(&root).unwrap_or(f).to_string_lossy().to_string();
 
                                         let change = match tokio::fs::read_to_string(f).await {
@@ -74,14 +91,12 @@ pub async fn watch_for_changes(
                                             },
                                         };
 
-                                        let _ = event_tx.send(change).await;
+                                        let _ = updates_tx.send(WatchUpdate::ChangeReceived(change)).await;
                                     }
                                 }
                                 EventKind::Modify(ModifyKind::Data(DataChange::Content)) => {
                                     for f in &event.paths {
-                                        if gitignore.as_ref().is_some_and(|g| {
-                                            g.matched_path_or_any_parents(f, false).is_ignore()
-                                        }) {
+                                        if is_file_to_be_ignored(f, &gitignore) {
                                             continue;
                                         }
 
@@ -123,14 +138,12 @@ pub async fn watch_for_changes(
                                                 kind: ChangeKind::Modified(Err(e.to_string())),
                                             },
                                         };
-                                        let _ = event_tx.send(change).await;
+                                        let _ = updates_tx.send(WatchUpdate::ChangeReceived(change)).await;
                                     }
                                 }
                                 EventKind::Remove(RemoveKind::File) => {
                                     for f in &event.paths {
-                                        if gitignore.as_ref().is_some_and(|g| {
-                                            g.matched_path_or_any_parents(f, false).is_ignore()
-                                        }) {
+                                        if is_file_to_be_ignored(f, &gitignore) {
                                             continue;
                                         }
 
@@ -141,7 +154,7 @@ pub async fn watch_for_changes(
                                             kind: ChangeKind::Removed,
                                         };
 
-                                        let _ = event_tx.send(change).await;
+                                        let _ = updates_tx.send(WatchUpdate::ChangeReceived(change)).await;
                                     }
                                 }
                                 _ => {}
@@ -157,4 +170,59 @@ pub async fn watch_for_changes(
 
     debug!("exiting change watcher");
     Ok(())
+}
+
+async fn populate_cache<P>(
+    cache: &mut HashMap<String, String>,
+    gitignore: &Option<Gitignore>,
+    root: P,
+    max_files: usize,
+) -> anyhow::Result<usize>
+where
+    P: AsRef<Path>,
+{
+    let mut file_count = 0;
+
+    // TODO: build this Walk with the same ignore paths as super::helpers::get_ignore
+    for result in Walk::new(root) {
+        if file_count >= max_files {
+            debug!("prepopulate threshold exceeded");
+            break;
+        }
+
+        let entry = match result {
+            Ok(entry) => entry,
+            Err(_) => continue,
+        };
+
+        let path = entry.path();
+
+        if path.is_dir() {
+            continue;
+        }
+
+        if let Some(ignore) = gitignore {
+            if ignore.matched_path_or_any_parents(path, false).is_ignore() {
+                debug!("ignored: {:?}", path);
+                continue;
+            }
+        }
+
+        if is_file_to_be_ignored(path, gitignore) {
+            continue;
+        }
+
+        match tokio::fs::read_to_string(path).await {
+            Ok(content) => {
+                // TODO: putting the full path here is kind of a waste
+                let cache_key = path.to_string_lossy().to_string();
+                cache.insert(cache_key, content);
+                file_count += 1;
+                debug!("added to cache: {:?}", path);
+            }
+            Err(_) => continue,
+        }
+    }
+
+    Ok(file_count)
 }

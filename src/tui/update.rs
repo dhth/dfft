@@ -39,14 +39,22 @@ pub fn update(model: &mut Model, msg: Msg) -> Vec<Cmd> {
                 model.pause_watching();
             } else {
                 model.regenerate_cancellation_token();
-                cmds.push(Cmd::WatchForChanges((
-                    model.changes_tx.clone(),
-                    model.get_cancellation_token(),
-                )));
+                cmds.push(Cmd::WatchForChanges {
+                    root: model.root.clone(),
+                    sender: model.watch_updates_tx.clone(),
+                    cancellation_token: model.get_cancellation_token(),
+                    prepopulate_cache: false,
+                });
             }
         }
         // internal
         Msg::ChangeReceived(change) => model.add_change(change),
+        Msg::PrepopulationBegan => {
+            model.user_msg = Some(UserMsg::info("snapshotting files..."));
+        }
+        Msg::PrepopulationEnded(i) => {
+            model.user_msg = Some(UserMsg::info(format!("snapshotted {i} files")));
+        }
         Msg::WatchingFailed(e) => {
             model.watching = false;
             model.user_msg = Some(UserMsg::error(format!("watching for changes failed: {e}")));

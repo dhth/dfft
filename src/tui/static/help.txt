@@ -7,24 +7,26 @@ General
     <ctrl+c>             exit immediately
 
 Diff Pane
-    Tab/<S-Tab>/J/K      switch to changes pane
-    j / ↓                scroll down
-    k / ↑                scroll up
-    l/→                  select next change
-    h/←                  select previous change
+    j                    select next change
+    k                    select previous change
+    J / ↓                scroll diff down
+    K / ↑                scroll diff up
     <space>              toggle watching
     <c-r>                reset list
     f                    toggle following changes
+    Tab/<S-Tab>          switch to changes pane
 
 Changes Pane
     j / ↓                select next change
     k / ↑                select previous change
     g                    select first change
     G                    select last change
+    J                    scroll diff down (if applicable)
+    K                    scroll diff up (if applicable)
     f                    toggle following changes
     <c-r>                reset list
     <space>              toggle watching
-    Tab/<S-Tab>/J/K      switch to diff pane
+    Tab/<S-Tab>          switch to diff pane
 
 Help Pane
     j / ↓                scroll down
