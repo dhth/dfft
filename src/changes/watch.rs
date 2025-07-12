@@ -30,8 +30,8 @@ pub async fn watch_for_changes(
 
     if prepopulate_cache {
         match populate_cache(&mut cache, &gitignore, &root, 2000).await {
-            Ok(count) => debug!("Prepopulated cache with {} files", count),
-            Err(e) => debug!("Prepopulation failed: {}, continuing without cache", e),
+            Ok(count) => debug!("prepopulated cache with {} files", count),
+            Err(e) => debug!("prepopulation failed: {}, continuing without cache", e),
         }
     }
 
