@@ -91,7 +91,7 @@ impl AppTui {
                     let msg = match watch_update {
                         WatchUpdate::ChangeReceived(change) => Msg::ChangeReceived(change),
                         WatchUpdate::PrepopulationFinished => Msg::PrepopulationFinished,
-                        WatchUpdate::ErrorOccurred(e) => Msg::WatchingFailed(e),
+                        WatchUpdate::PrepopulationError(e) => Msg::PrepopulationFailed(e),
                     };
                     let _ = self.event_tx.try_send(msg);
                 }

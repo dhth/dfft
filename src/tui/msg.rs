@@ -20,8 +20,8 @@ pub enum Msg {
     ToggleWatching,
     // internal
     ChangeReceived(Change),
+    PrepopulationFailed(String),
     PrepopulationFinished,
-    WatchingFailed(String),
 }
 
 pub fn get_event_handling_msg(model: &Model, event: Event) -> Option<Msg> {

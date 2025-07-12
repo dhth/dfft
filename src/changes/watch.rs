@@ -35,7 +35,7 @@ pub async fn watch_for_changes(
             }
             Err(e) => {
                 debug!("prepopulation failed: {}, continuing without cache", e);
-                let _ = updates_tx.try_send(WatchUpdate::ErrorOccurred(e.to_string()));
+                let _ = updates_tx.try_send(WatchUpdate::PrepopulationError(e.to_string()));
             }
         }
     }
@@ -69,18 +69,22 @@ pub async fn watch_for_changes(
                         for event in events {
                             match event.kind {
                                 EventKind::Create(CreateKind::File) => {
-                                    for f in &event.paths {
-                                        if is_file_to_be_ignored(f, &gitignore) {
+                                    for path in &event.paths {
+                                        if is_file_to_be_ignored(path, &gitignore) {
                                             continue;
                                         }
 
-                                        let file_path = f.strip_prefix(&root).unwrap_or(f).to_string_lossy().to_string();
+                                        let file_path = path
+                                            .strip_prefix(&root)
+                                            .unwrap_or(path)
+                                            .to_string_lossy()
+                                            .to_string();
 
-                                        let change = match tokio::fs::read_to_string(f).await {
+                                        let change = match tokio::fs::read_to_string(path).await {
                                             Ok(contents) => {
                                                 {
                                                     let mut cache_guard = cache.write().await;
-                                                    cache_guard.insert(&f.to_string_lossy(), contents);
+                                                    cache_guard.insert(&file_path, contents);
                                                 }
                                                 Change {
                                                     file_path,
@@ -97,17 +101,21 @@ pub async fn watch_for_changes(
                                     }
                                 }
                                 EventKind::Modify(ModifyKind::Data(DataChange::Content)) => {
-                                    for f in &event.paths {
-                                        if is_file_to_be_ignored(f, &gitignore) {
+                                    for path in &event.paths {
+                                        if is_file_to_be_ignored(path, &gitignore) {
                                             continue;
                                         }
 
-                                        let file_path = f.strip_prefix(&root).unwrap_or(f).to_string_lossy().to_string();
-                                        let change = match tokio::fs::read_to_string(f).await {
+                                        let file_path = path
+                                            .strip_prefix(&root)
+                                            .unwrap_or(path)
+                                            .to_string_lossy()
+                                            .to_string();
+                                        let change = match tokio::fs::read_to_string(path).await {
                                             Ok(contents) => {
                                                 let was_held = {
                                                     let mut cache_guard = cache.write().await;
-                                                    cache_guard.insert(&f.to_string_lossy(), contents.clone())
+                                                    cache_guard.insert(&file_path, contents.clone())
                                                 };
                                                 match was_held {
                                                     Some(old) => {
@@ -144,16 +152,25 @@ pub async fn watch_for_changes(
                                     }
                                 }
                                 EventKind::Remove(RemoveKind::File) => {
-                                    for f in &event.paths {
-                                        if is_file_to_be_ignored(f, &gitignore) {
+                                    for path in &event.paths {
+                                        if is_file_to_be_ignored(path, &gitignore) {
                                             continue;
                                         }
 
+                                        let file_path = path
+                                            .strip_prefix(&root)
+                                            .unwrap_or(path)
+                                            .to_string_lossy()
+                                            .to_string();
                                         {
                                             let mut cache_guard = cache.write().await;
-                                            cache_guard.remove(f.to_string_lossy().as_ref());
+                                            cache_guard.remove(&file_path);
                                         }
-                                        let file_path = f.strip_prefix(&root).unwrap_or(f).to_string_lossy().to_string();
+                                        let file_path = path
+                                            .strip_prefix(&root)
+                                            .unwrap_or(path)
+                                            .to_string_lossy()
+                                            .to_string();
                                         let change = Change {
                                             file_path,
                                             kind: ChangeKind::Removed,
@@ -189,7 +206,7 @@ where
     let mut file_count = 0;
 
     // TODO: build this Walk with the same ignore paths as super::helpers::get_ignore
-    for result in Walk::new(root) {
+    for result in Walk::new(&root) {
         if file_count >= max_files {
             debug!("prepopulate threshold exceeded");
             break;
@@ -219,13 +236,17 @@ where
 
         match tokio::fs::read_to_string(path).await {
             Ok(contents) => {
-                // TODO: putting the full path here is kind of a waste
+                let file_path = path
+                    .strip_prefix(&root)
+                    .unwrap_or(path)
+                    .to_string_lossy()
+                    .to_string();
                 {
                     let mut cache_guard = cache.write().await;
-                    cache_guard.insert(&path.to_string_lossy(), contents);
+                    cache_guard.insert(&file_path, contents);
                 }
                 file_count += 1;
-                debug!("added to cache: {:?}", path);
+                debug!("added to cache: {:?}", &file_path);
             }
             Err(_) => continue,
         }

@@ -2,8 +2,8 @@ use super::diff::Diff;
 
 pub enum WatchUpdate {
     ChangeReceived(Change),
+    PrepopulationError(String),
     PrepopulationFinished,
-    ErrorOccurred(String),
 }
 
 #[derive(Clone, Debug)]
