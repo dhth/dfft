@@ -5,6 +5,10 @@ use std::path::{Path, PathBuf};
 
 const GITIGNORE_PATH: &str = ".gitignore";
 const DFFTIGNORE_PATH: &str = ".dfftignore";
+const BINARY_EXTENSIONS: [&str; 27] = [
+    "exe", "dll", "so", "dylib", "bin", "obj", "o", "a", "lib", "png", "jpg", "jpeg", "gif", "bmp",
+    "ico", "svg", "mp3", "mp4", "avi", "mov", "wav", "pdf", "zip", "tar", "gz", "bz2", "xz",
+];
 
 pub(super) fn get_ignore<P>(root: P) -> anyhow::Result<Option<Gitignore>>
 where
@@ -40,4 +44,20 @@ where
             .build()
             .context("couldn't set up a matcher for ignoring files")?,
     ))
+}
+
+pub(super) fn is_binary_file(path: &Path) -> anyhow::Result<bool> {
+    if let Some(ext) = path.extension() {
+        let ext = ext.to_string_lossy().to_lowercase();
+        Ok(BINARY_EXTENSIONS.contains(&ext.as_str()))
+    } else {
+        Ok(false)
+    }
+}
+
+pub(super) fn is_file_too_large(path: &Path, max_size: u64) -> anyhow::Result<bool> {
+    match std::fs::metadata(path) {
+        Ok(metadata) => Ok(metadata.len() > max_size),
+        Err(_) => Ok(true),
+    }
 }

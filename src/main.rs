@@ -2,6 +2,7 @@ mod changes;
 mod domain;
 mod tui;
 mod utils;
+use anyhow::Context;
 use tracing_subscriber::EnvFilter;
 
 #[tokio::main]
@@ -11,7 +12,10 @@ async fn main() -> anyhow::Result<()> {
         .with_writer(std::io::stderr)
         .init();
 
-    tui::run().await?;
+    let root = tokio::fs::canonicalize(".")
+        .await
+        .context("couldn't determine directory path")?;
+    tui::run(root).await?;
 
     Ok(())
 }

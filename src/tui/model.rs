@@ -5,6 +5,7 @@ use ratatui::{
     text::{Line, Span},
     widgets::{ListItem, ListState},
 };
+use std::path::PathBuf;
 use tokio::sync::mpsc;
 use tokio::sync::mpsc::{Receiver, Sender};
 use tokio_util::sync::CancellationToken;
@@ -132,6 +133,7 @@ impl From<&ChangeItem> for ListItem<'_> {
 }
 
 pub struct Model {
+    pub root: PathBuf,
     pub active_pane: Pane,
     pub watching: bool,
     pub changes: Changes,
@@ -155,13 +157,19 @@ pub struct Model {
 }
 
 impl Model {
-    pub fn new(terminal_dimensions: TerminalDimensions, watching: bool, debug: bool) -> Self {
+    pub fn new(
+        root: PathBuf,
+        terminal_dimensions: TerminalDimensions,
+        watching: bool,
+        debug: bool,
+    ) -> Self {
         let terminal_too_small = terminal_dimensions.width < MIN_TERMINAL_WIDTH
             || terminal_dimensions.height < MIN_TERMINAL_HEIGHT;
 
         let (changes_tx, changes_rx) = mpsc::channel::<Change>(100);
 
         let mut model = Model {
+            root,
             active_pane: Pane::Changes,
             watching,
             changes: Changes::new(),

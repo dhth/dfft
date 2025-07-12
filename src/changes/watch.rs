@@ -1,27 +1,39 @@
-use super::get_ignore;
+use super::helpers::*;
 use crate::domain::{Change, ChangeKind, Diff, Modification};
 use anyhow::Context;
+use ignore::{Walk, gitignore::Gitignore};
 use notify::EventKind;
 use notify::RecursiveMode;
 use notify::event::{CreateKind, DataChange, ModifyKind, RemoveKind};
 use notify_debouncer_full::new_debouncer;
 use std::collections::HashMap;
+use std::path::Path;
+use std::path::PathBuf;
 use std::time::Duration;
 use tokio::sync::mpsc::{Sender, channel};
 use tokio_util::sync::CancellationToken;
 use tracing::debug;
 
 const EVENT_CHANNEL_BUFFER: usize = 100;
+const MAX_FILE_SIZE: u64 = 1024 * 1024; // 1MB
 
 pub async fn watch_for_changes(
+    root: PathBuf,
     event_tx: Sender<Change>,
     cancellation_token: CancellationToken,
+    prepopulate_cache: bool,
 ) -> anyhow::Result<()> {
-    let root = tokio::fs::canonicalize(".").await?;
     let gitignore = get_ignore(&root)?;
 
     // TODO: maybe this should live in the TUI's model
     let mut cache: HashMap<String, String> = HashMap::new();
+
+    if prepopulate_cache {
+        match populate_cache(&mut cache, &gitignore, &root, 2000).await {
+            Ok(count) => debug!("Prepopulated cache with {} files", count),
+            Err(e) => debug!("Prepopulation failed: {}, continuing without cache", e),
+        }
+    }
 
     let (tx, mut rx) = channel(EVENT_CHANNEL_BUFFER);
 
@@ -157,4 +169,60 @@ pub async fn watch_for_changes(
 
     debug!("exiting change watcher");
     Ok(())
+}
+
+async fn populate_cache<P>(
+    cache: &mut HashMap<String, String>,
+    gitignore: &Option<Gitignore>,
+    root: P,
+    max_files: usize,
+) -> anyhow::Result<usize>
+where
+    P: AsRef<Path>,
+{
+    let mut file_count = 0;
+
+    // TODO: build this Walk with the same ignore paths as super::helpers::get_ignore
+    for result in Walk::new(root) {
+        if file_count >= max_files {
+            debug!("prepopulate threshold exceeded");
+            break;
+        }
+
+        let entry = match result {
+            Ok(entry) => entry,
+            Err(_) => continue,
+        };
+
+        let path = entry.path();
+
+        if path.is_dir() {
+            continue;
+        }
+
+        if let Some(ignore) = gitignore {
+            if ignore.matched_path_or_any_parents(path, false).is_ignore() {
+                debug!("ignored: {:?}", path);
+                continue;
+            }
+        }
+
+        if is_binary_file(path)? || is_file_too_large(path, MAX_FILE_SIZE)? {
+            debug!("ignored binary or large file: {:?}", path);
+            continue;
+        }
+
+        match tokio::fs::read_to_string(path).await {
+            Ok(content) => {
+                // TODO: putting the full path here is kind of a waste
+                let cache_key = path.to_string_lossy().to_string();
+                cache.insert(cache_key, content);
+                file_count += 1;
+                debug!("added to cache: {:?}", path);
+            }
+            Err(_) => continue,
+        }
+    }
+
+    Ok(file_count)
 }

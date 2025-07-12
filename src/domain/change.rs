@@ -1,5 +1,13 @@
 use super::diff::Diff;
 
+#[allow(unused)]
+pub enum WatchUpdate {
+    PrepopulationBegun,
+    ChangeReceived(Change),
+    PrepopulationEnded(usize),
+    ErrorOccurred(String),
+}
+
 #[derive(Clone, Debug)]
 pub struct Change {
     pub file_path: String,

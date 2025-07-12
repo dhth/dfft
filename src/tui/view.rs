@@ -107,7 +107,7 @@ fn render_main_view(model: &mut Model, frame: &mut Frame) {
         .split(frame.area());
 
     render_diff_pane(model, frame, main_rect[0]);
-    render_changes_list_pane(model, frame, main_rect[1]);
+    render_changes_pane(model, frame, main_rect[1]);
     render_status_line(model, frame, main_rect[2]);
 }
 
@@ -184,7 +184,7 @@ fn render_diff_pane(model: &mut Model, frame: &mut Frame, rect: Rect) {
     frame.render_widget(&details, rect);
 }
 
-fn render_changes_list_pane(model: &mut Model, frame: &mut Frame, rect: Rect) {
+fn render_changes_pane(model: &mut Model, frame: &mut Frame, rect: Rect) {
     let items: Vec<ListItem> = model.changes.items.iter().map(ListItem::from).collect();
 
     let title = if items.is_empty() {

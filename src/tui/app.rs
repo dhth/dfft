@@ -8,14 +8,15 @@ use super::view::view;
 use ratatui::Terminal;
 use ratatui::backend::CrosstermBackend;
 use ratatui::crossterm::event::poll;
+use std::path::PathBuf;
 use std::time::Duration;
 use tokio::sync::mpsc;
 use tokio::sync::mpsc::{Receiver, Sender};
 
 const EVENT_POLL_DURATION_MS: u64 = 16;
 
-pub async fn run() -> anyhow::Result<()> {
-    let mut tui = AppTui::new()?;
+pub async fn run(root: PathBuf) -> anyhow::Result<()> {
+    let mut tui = AppTui::new(root)?;
     tui.run().await
 }
 
@@ -27,7 +28,7 @@ struct AppTui {
 }
 
 impl AppTui {
-    pub fn new() -> anyhow::Result<Self> {
+    pub fn new(root: PathBuf) -> anyhow::Result<Self> {
         let terminal = ratatui::try_init()?;
         let (event_tx, event_rx) = mpsc::channel(10);
 
@@ -37,7 +38,7 @@ impl AppTui {
 
         let debug = std::env::var("DFFT_DEBUG").unwrap_or_default().trim() == "1";
 
-        let model = Model::new(terminal_dimensions, true, debug);
+        let model = Model::new(root, terminal_dimensions, true, debug);
 
         Ok(Self {
             terminal,
@@ -56,10 +57,12 @@ impl AppTui {
 
         let mut initial_cmds = vec![];
         let changes_tx = self.model.changes_tx.clone();
-        initial_cmds.push(Cmd::WatchForChanges((
-            changes_tx,
-            self.model.get_cancellation_token(),
-        )));
+        initial_cmds.push(Cmd::WatchForChanges {
+            root: self.model.root.clone(), // TODO: prevent cloning here
+            sender: changes_tx,
+            cancellation_token: self.model.get_cancellation_token(),
+            prepopulate_cache: true,
+        });
 
         for cmd in initial_cmds {
             handle_command(cmd.clone(), self.event_tx.clone()).await;

@@ -39,10 +39,12 @@ pub fn update(model: &mut Model, msg: Msg) -> Vec<Cmd> {
                 model.pause_watching();
             } else {
                 model.regenerate_cancellation_token();
-                cmds.push(Cmd::WatchForChanges((
-                    model.changes_tx.clone(),
-                    model.get_cancellation_token(),
-                )));
+                cmds.push(Cmd::WatchForChanges {
+                    root: model.root.clone(),
+                    sender: model.changes_tx.clone(),
+                    cancellation_token: model.get_cancellation_token(),
+                    prepopulate_cache: false,
+                });
             }
         }
         // internal
