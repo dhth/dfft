@@ -1,6 +1,6 @@
 use super::common::*;
 use super::model::{MessageKind, Model};
-use crate::domain::{ChangeKind, Diff, DiffOperation, ModifiedResult};
+use crate::domain::{ChangeKind, Diff, DiffOperation, Modification};
 use ratatui::style::{Color, Modifier};
 use ratatui::{
     Frame,
@@ -14,7 +14,6 @@ const PANE_TITLE_FG_COLOR: Color = Color::from_u32(0x151515);
 const PRIMARY_COLOR: Color = Color::from_u32(0xa6d189);
 const INACTIVE_PANE_TITLE_BG_COLOR: Color = Color::from_u32(0x737994);
 const INACTIVE_PANE_BORDER_COLOR: Color = Color::from_u32(0x737994);
-const INACTIVE_PANE_SELECTED_COLOR: Color = Color::from_u32(0xe5c890);
 const INFO_MESSAGE_COLOR: Color = Color::from_u32(0x83a598);
 const ERROR_MESSAGE_COLOR: Color = Color::from_u32(0xfb4934);
 const WATCHING_COLOR: Color = Color::from_u32(0xbabbf1);
@@ -23,8 +22,6 @@ const WATCHING_LABEL: &str = " [watching]";
 const PAUSED_LABEL: &str = " [ paused ]";
 const FOLLOWING_CHANGES_COLOR: Color = Color::from_u32(0xca9ee6);
 const HELP_COLOR: Color = Color::from_u32(0x8caaee);
-const DIFF_DELETED_COLOR: Color = Color::from_u32(0xf7768e);
-const DIFF_INSERT_COLOR: Color = Color::from_u32(0x9ece6a);
 const DIM_COLOR: Color = Color::Gray;
 
 const TITLE: &str = " dfft ";
@@ -43,6 +40,17 @@ Y88b 888 888    888    Y88b.
 
 see changes to files in a directory as they happen
 ‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾
+
+In the diff pane:
+- use j/k/↓/↑ to scroll diff
+- use h/l/←/→ to move between changes
+
+In the changes pane:
+- use j/k/↓/↑ to move between changes
+
+Tab/<S-Tab>/J/K to move between panes
+
+Press ? for help
 "#;
 
 const BANNER_SMALL: &str = r#"
@@ -61,7 +69,7 @@ pub fn view(model: &mut Model, frame: &mut Frame) {
 
     match model.active_pane {
         Pane::ChangesList | Pane::Diff => render_main_view(model, frame),
-        Pane::Help => render_help_view(model, frame),
+        Pane::Help => render_help_pane(model, frame),
     }
 }
 
@@ -103,14 +111,14 @@ fn render_main_view(model: &mut Model, frame: &mut Frame) {
     render_status_line(model, frame, main_rect[2]);
 }
 
-fn render_diff_pane(model: &Model, frame: &mut Frame, rect: Rect) {
-    let (border_color, title_color, _) = if model.active_pane == Pane::Diff {
+fn render_diff_pane(model: &mut Model, frame: &mut Frame, rect: Rect) {
+    let (color, border_color, title_color) = if model.active_pane == Pane::Diff {
         (PRIMARY_COLOR, PRIMARY_COLOR, PRIMARY_COLOR)
     } else {
         (
             INACTIVE_PANE_BORDER_COLOR,
+            INACTIVE_PANE_BORDER_COLOR,
             INACTIVE_PANE_TITLE_BG_COLOR,
-            INACTIVE_PANE_SELECTED_COLOR,
         )
     };
 
@@ -127,13 +135,16 @@ fn render_diff_pane(model: &Model, frame: &mut Frame, rect: Rect) {
                         vec![Line::raw(format!("error reading file contents: {e}"))]
                     }
                     ChangeKind::Modified(Ok(result)) => match result {
-                        ModifiedResult::InitialSnapshot => {
+                        Modification::InitialSnapshot => {
                             vec![Line::raw(
                                 "initial snapshot captured; diffs will be available from now onwards",
                             )]
                         }
-                        ModifiedResult::Diff(None) => vec![Line::raw("nothing changed")],
-                        ModifiedResult::Diff(Some(diff)) => get_diff_lines(diff),
+                        Modification::Diff(None) => vec![Line::raw("nothing changed")],
+                        Modification::Diff(Some(diff)) => get_diff_lines(diff)
+                            .into_iter()
+                            .skip(model.diff_scroll)
+                            .collect(),
                     },
                     ChangeKind::Modified(Err(e)) => {
                         vec![Line::raw(format!("error reading file contents: {e}"))]
@@ -166,7 +177,7 @@ fn render_diff_pane(model: &Model, frame: &mut Frame, rect: Rect) {
                 .title(title)
                 .padding(Padding::new(1, 0, 1, 0)),
         )
-        .style(Style::new().fg(PRIMARY_COLOR))
+        .style(Style::new().fg(color))
         .alignment(Alignment::Center),
     };
 
@@ -217,7 +228,7 @@ fn render_changes_list_pane(model: &mut Model, frame: &mut Frame, rect: Rect) {
     frame.render_stateful_widget(list, rect, &mut model.changes.state);
 }
 
-fn render_help_view(model: &Model, frame: &mut Frame) {
+fn render_help_pane(model: &Model, frame: &mut Frame) {
     let rect = Layout::default()
         .direction(ratatui::layout::Direction::Vertical)
         .constraints(vec![Constraint::Fill(1), Constraint::Length(1)])
@@ -322,8 +333,8 @@ fn get_diff_lines(diff: &Diff) -> Vec<Line<'static>> {
         for diff_line in &hunk.lines {
             let sign = diff_line.kind.sign();
             let style = match diff_line.kind {
-                DiffOperation::Delete => Style::new().fg(DIFF_DELETED_COLOR),
-                DiffOperation::Insert => Style::new().fg(DIFF_INSERT_COLOR),
+                DiffOperation::Delete => Style::new().fg(SUBTRACTION_COLOR),
+                DiffOperation::Insert => Style::new().fg(ADDITION_COLOR),
                 DiffOperation::Equal => Style::new().fg(DIM_COLOR),
             };
 
@@ -361,7 +372,7 @@ fn get_diff_lines(diff: &Diff) -> Vec<Line<'static>> {
 
 #[cfg(test)]
 mod tests {
-    use crate::domain::{Change, ChangeKind, Diff, ModifiedResult};
+    use crate::domain::{Change, ChangeKind, Diff, Modification};
     use crate::tui::model::UserMsg;
     use crate::tui::{msg::Msg, update::update};
 
@@ -389,9 +400,9 @@ mod tests {
     }
 
     #[test]
-    fn rendering_help_view_works() {
+    fn rendering_help_pane_works() {
         // GIVEN
-        let (mut terminal, terminal_dimensions) = get_test_terminal();
+        let (mut terminal, terminal_dimensions) = get_test_terminal_with_dims(80, 40);
 
         let mut model = Model::new(terminal_dimensions, true, false);
         model.active_pane = Pane::Help;
@@ -413,32 +424,48 @@ mod tests {
         "│     Esc / q              go back/exit                                        │"
         "│     <ctrl+c>             exit immediately                                    │"
         "│                                                                              │"
-        "│ Changes List Pane                                                            │"
-        "│     j / ↓                go down                                             │"
-        "│     k / ↑                go up                                               │"
-        "│     g                    go to top                                           │"
-        "│     G                    go to the bottom                                    │"
+        "│ Diff Pane                                                                    │"
+        "│     Tab/<S-Tab>/J/K      switch to changes pane                              │"
+        "│     j / ↓                scroll down                                         │"
+        "│     k / ↑                scroll up                                           │"
+        "│     l/→                  select next change                                  │"
+        "│     h/←                  select previous change                              │"
+        "│     <space>              toggle watching                                     │"
+        "│     <c-r>                reset list                                          │"
+        "│     f                    toggle following changes                            │"
+        "│                                                                              │"
+        "│ Changes Pane                                                                 │"
+        "│     j / ↓                select next change                                  │"
+        "│     k / ↑                select previous change                              │"
+        "│     g                    select first change                                 │"
+        "│     G                    select last change                                  │"
         "│     f                    toggle following changes                            │"
         "│     <c-r>                reset list                                          │"
         "│     <space>              toggle watching                                     │"
-        "│     Tab                  switch to diff pane                                 │"
+        "│     Tab/<S-Tab>/J/K      switch to diff pane                                 │"
         "│                                                                              │"
-        "│ Diff Pane                                                                    │"
-        "│     Tab                  switch to changes list pane                         │"
+        "│ Help Pane                                                                    │"
+        "│     j / ↓                scroll down                                         │"
+        "│     k / ↑                scroll up                                           │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
         "└──────────────────────────────────────────────────────────────────────────────┘"
         " dfft  [watching]                                                               "
         "#);
     }
 
     #[test]
-    fn scrolling_help_view_works() {
+    fn scrolling_help_pane_works() {
         // GIVEN
         let (mut terminal, terminal_dimensions) = get_test_terminal();
 
         let mut model = Model::new(terminal_dimensions, true, false);
         model.active_pane = Pane::Help;
-        for _ in 1..=3 {
-            update(&mut model, Msg::GoDown);
+        for _ in 1..=4 {
+            update(&mut model, Msg::ScrollDown);
         }
 
         // WHEN
@@ -450,26 +477,26 @@ mod tests {
         assert_snapshot!(terminal.backend(), @r#"
         "┌ help ────────────────────────────────────────────────────────────────────────┐"
         "│                                                                              │"
-        "│ General                                                                      │"
         "│     ?                    show/hide help view                                 │"
         "│     Esc / q              go back/exit                                        │"
         "│     <ctrl+c>             exit immediately                                    │"
         "│                                                                              │"
-        "│ Changes List Pane                                                            │"
-        "│     j / ↓                go down                                             │"
-        "│     k / ↑                go up                                               │"
-        "│     g                    go to top                                           │"
-        "│     G                    go to the bottom                                    │"
-        "│     f                    toggle following changes                            │"
-        "│     <c-r>                reset list                                          │"
-        "│     <space>              toggle watching                                     │"
-        "│     Tab                  switch to diff pane                                 │"
-        "│                                                                              │"
         "│ Diff Pane                                                                    │"
-        "│     Tab                  switch to changes list pane                         │"
+        "│     Tab/<S-Tab>/J/K      switch to changes pane                              │"
+        "│     j / ↓                scroll down                                         │"
+        "│     k / ↑                scroll up                                           │"
+        "│     l/→                  select next change                                  │"
+        "│     h/←                  select previous change                              │"
         "│     <space>              toggle watching                                     │"
         "│     <c-r>                reset list                                          │"
+        "│     f                    toggle following changes                            │"
         "│                                                                              │"
+        "│ Changes Pane                                                                 │"
+        "│     j / ↓                select next change                                  │"
+        "│     k / ↑                select previous change                              │"
+        "│     g                    select first change                                 │"
+        "│     G                    select last change                                  │"
+        "│     f                    toggle following changes                            │"
         "└──────────────────────────────────────────────────────────────────────────────┘"
         " dfft  [watching]                                                               "
         "#);
@@ -483,7 +510,7 @@ mod tests {
         let mut model = Model::new(terminal_dimensions, true, false);
         model.active_pane = Pane::Help;
         for _ in 1..=20 {
-            update(&mut model, Msg::GoDown);
+            update(&mut model, Msg::ScrollDown);
         }
 
         // WHEN
@@ -495,26 +522,26 @@ mod tests {
         assert_snapshot!(terminal.backend(), @r#"
         "┌ help ────────────────────────────────────────────────────────────────────────┐"
         "│                                                                              │"
-        "│     <ctrl+c>             exit immediately                                    │"
+        "│     k / ↑                scroll up                                           │"
+        "│     l/→                  select next change                                  │"
+        "│     h/←                  select previous change                              │"
+        "│     <space>              toggle watching                                     │"
+        "│     <c-r>                reset list                                          │"
+        "│     f                    toggle following changes                            │"
         "│                                                                              │"
-        "│ Changes List Pane                                                            │"
-        "│     j / ↓                go down                                             │"
-        "│     k / ↑                go up                                               │"
-        "│     g                    go to top                                           │"
-        "│     G                    go to the bottom                                    │"
+        "│ Changes Pane                                                                 │"
+        "│     j / ↓                select next change                                  │"
+        "│     k / ↑                select previous change                              │"
+        "│     g                    select first change                                 │"
+        "│     G                    select last change                                  │"
         "│     f                    toggle following changes                            │"
         "│     <c-r>                reset list                                          │"
         "│     <space>              toggle watching                                     │"
-        "│     Tab                  switch to diff pane                                 │"
-        "│                                                                              │"
-        "│ Diff Pane                                                                    │"
-        "│     Tab                  switch to changes list pane                         │"
-        "│     <space>              toggle watching                                     │"
-        "│     <c-r>                reset list                                          │"
+        "│     Tab/<S-Tab>/J/K      switch to diff pane                                 │"
         "│                                                                              │"
         "│ Help Pane                                                                    │"
-        "│     j / ↓                go down                                             │"
-        "│     k / ↑                go up                                               │"
+        "│     j / ↓                scroll down                                         │"
+        "│     k / ↑                scroll up                                           │"
         "└──────────────────────────────────────────────────────────────────────────────┘"
         " dfft  [watching]                                                               "
         "#);
@@ -528,7 +555,7 @@ mod tests {
         let mut model = Model::new(terminal_dimensions, true, false);
         model.active_pane = Pane::Help;
         for _ in 1..=3 {
-            update(&mut model, Msg::GoUp);
+            update(&mut model, Msg::ScrollUp);
         }
 
         // WHEN
@@ -548,18 +575,18 @@ mod tests {
         "│     Esc / q              go back/exit                                        │"
         "│     <ctrl+c>             exit immediately                                    │"
         "│                                                                              │"
-        "│ Changes List Pane                                                            │"
-        "│     j / ↓                go down                                             │"
-        "│     k / ↑                go up                                               │"
-        "│     g                    go to top                                           │"
-        "│     G                    go to the bottom                                    │"
-        "│     f                    toggle following changes                            │"
-        "│     <c-r>                reset list                                          │"
-        "│     <space>              toggle watching                                     │"
-        "│     Tab                  switch to diff pane                                 │"
-        "│                                                                              │"
         "│ Diff Pane                                                                    │"
-        "│     Tab                  switch to changes list pane                         │"
+        "│     Tab/<S-Tab>/J/K      switch to changes pane                              │"
+        "│     j / ↓                scroll down                                         │"
+        "│     k / ↑                scroll up                                           │"
+        "│     l/→                  select next change                                  │"
+        "│     h/←                  select previous change                              │"
+        "│     <space>              toggle watching                                     │"
+        "│     <c-r>                reset list                                          │"
+        "│     f                    toggle following changes                            │"
+        "│                                                                              │"
+        "│ Changes Pane                                                                 │"
+        "│     j / ↓                select next change                                  │"
         "└──────────────────────────────────────────────────────────────────────────────┘"
         " dfft  [watching]                                                               "
         "#);
@@ -680,7 +707,7 @@ mod tests {
     #[test]
     fn main_view_renders_banner_when_no_changes_present() {
         // GIVEN
-        let (mut terminal, terminal_dimensions) = get_test_terminal_with_dims(100, 32);
+        let (mut terminal, terminal_dimensions) = get_test_terminal_with_dims(100, 42);
         let mut model = Model::new(terminal_dimensions, true, false);
 
         // WHEN
@@ -708,6 +735,16 @@ mod tests {
         "│                        see changes to files in a directory as they happen                        │"
         "│                        ‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾                        │"
         "│                                                                                                  │"
+        "│                                         In the diff pane:                                        │"
+        "│                                   - use j/k/↓/↑ to scroll diff                                   │"
+        "│                               - use h/l/←/→ to move between changes                              │"
+        "│                                                                                                  │"
+        "│                                       In the changes pane:                                       │"
+        "│                               - use j/k/↓/↑ to move between changes                              │"
+        "│                                                                                                  │"
+        "│                               Tab/<S-Tab>/J/K to move between panes                              │"
+        "│                                                                                                  │"
+        "│                                         Press ? for help                                         │"
         "└──────────────────────────────────────────────────────────────────────────────────────────────────┘"
         "┌ changes ─────────────────────────────────────────────────────────────────────────────────────────┐"
         "│                                                                                                  │"
@@ -793,7 +830,7 @@ line 2
         .expect("diff should've been generated");
         let change = Change {
             file_path: "modified_file.txt".to_string(),
-            kind: ChangeKind::Modified(Ok(ModifiedResult::Diff(Some(diff)))),
+            kind: ChangeKind::Modified(Ok(Modification::Diff(Some(diff)))),
         };
         update(&mut model, Msg::ChangeReceived(change));
 
@@ -852,7 +889,7 @@ line 2
 
         let change = Change {
             file_path: "modified_file.txt".to_string(),
-            kind: ChangeKind::Modified(Ok(ModifiedResult::Diff(Some(diff)))),
+            kind: ChangeKind::Modified(Ok(Modification::Diff(Some(diff)))),
         };
         update(&mut model, Msg::ChangeReceived(change));
 
@@ -887,6 +924,405 @@ line 2
         "┌ changes (1) ─────────────────────────────────────────────────────────────────┐"
         "│                                                                              │"
         "│>  modified  modified_file.txt                                                │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "└──────────────────────────────────────────────────────────────────────────────┘"
+        " dfft  [watching]                                                               "
+        "#);
+    }
+
+    #[test]
+    fn scrolling_diff_works() {
+        // GIVEN
+        let (mut terminal, terminal_dimensions) = get_test_terminal();
+        let mut model = Model::new(terminal_dimensions, true, false);
+
+        let mut lines = (1..=30).map(|n| format!("line {n}")).collect::<Vec<_>>();
+        let old = lines.join("\n");
+
+        lines[3] = "line 4 (modified)".to_string();
+        lines[4] = "line 5 (modified)".to_string();
+        lines[23] = "line 24 (modified)".to_string();
+        lines[24] = "line 25 (modified)".to_string();
+
+        let new = lines.join("\n");
+
+        let diff = Diff::new(&old, &new).expect("diff should've been created");
+
+        let change = Change {
+            file_path: "modified_file.txt".to_string(),
+            kind: ChangeKind::Modified(Ok(Modification::Diff(Some(diff)))),
+        };
+        update(&mut model, Msg::ChangeReceived(change));
+        terminal
+            .draw(|f| view(&mut model, f))
+            .expect("frame should've been drawn");
+
+        assert_snapshot!(terminal.backend(), @r#"
+        "┌ diff ────────────────────────────────────────────────────────────────────────┐"
+        "│                                                                              │"
+        "│ 1   1   | line 1                                                             │"
+        "│ 2   2   | line 2                                                             │"
+        "│ 3   3   | line 3                                                             │"
+        "│ 4       |-line 4                                                             │"
+        "│ 5       |-line 5                                                             │"
+        "│     4   |+line 4 (modified)                                                  │"
+        "│     5   |+line 5 (modified)                                                  │"
+        "│ 6   6   | line 6                                                             │"
+        "└──────────────────────────────────────────────────────────────────────────────┘"
+        "┌ changes (1) ─────────────────────────────────────────────────────────────────┐"
+        "│                                                                              │"
+        "│>  modified  modified_file.txt                                                │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "└──────────────────────────────────────────────────────────────────────────────┘"
+        " dfft  [watching]                                                               "
+        "#);
+
+        // WHEN
+        for _ in 1..=3 {
+            update(&mut model, Msg::ScrollDown);
+        }
+        terminal
+            .draw(|f| view(&mut model, f))
+            .expect("frame should've been drawn");
+
+        // THEN
+        assert_snapshot!(terminal.backend(), @r#"
+        "┌ diff ────────────────────────────────────────────────────────────────────────┐"
+        "│                                                                              │"
+        "│ 4       |-line 4                                                             │"
+        "│ 5       |-line 5                                                             │"
+        "│     4   |+line 4 (modified)                                                  │"
+        "│     5   |+line 5 (modified)                                                  │"
+        "│ 6   6   | line 6                                                             │"
+        "│ 7   7   | line 7                                                             │"
+        "│ 8   8   | line 8                                                             │"
+        "│ -----------------------------------------------------------------------------│"
+        "└──────────────────────────────────────────────────────────────────────────────┘"
+        "┌ changes (1) ─────────────────────────────────────────────────────────────────┐"
+        "│                                                                              │"
+        "│>  modified  modified_file.txt                                                │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "└──────────────────────────────────────────────────────────────────────────────┘"
+        " dfft  [watching]                                                               "
+        "#);
+    }
+
+    #[test]
+    fn diff_scrolling_is_reset_when_follow_mode_is_on() {
+        // GIVEN
+        let (mut terminal, terminal_dimensions) = get_test_terminal();
+        let mut model = Model::new(terminal_dimensions, true, false);
+        model.follow_changes = true;
+
+        let mut lines = (1..=50).map(|n| format!("line {n}")).collect::<Vec<_>>();
+        let old = lines.join("\n");
+
+        lines[9] = "line 10 (modified)".to_string();
+        lines[29] = "line 30 (modified)".to_string();
+
+        let new = lines.join("\n");
+
+        let diff = Diff::new(&old, &new).expect("diff should've been created");
+
+        let change = Change {
+            file_path: "modified_file.txt".to_string(),
+            kind: ChangeKind::Modified(Ok(Modification::Diff(Some(diff)))),
+        };
+        update(&mut model, Msg::ChangeReceived(change));
+        for _ in 1..=4 {
+            update(&mut model, Msg::ScrollDown);
+        }
+        terminal
+            .draw(|f| view(&mut model, f))
+            .expect("frame should've been drawn");
+
+        assert_snapshot!(terminal.backend(), @r#"
+        "┌ diff ────────────────────────────────────────────────────────────────────────┐"
+        "│                                                                              │"
+        "│     10  |+line 10 (modified)                                                 │"
+        "│ 11  11  | line 11                                                            │"
+        "│ 12  12  | line 12                                                            │"
+        "│ 13  13  | line 13                                                            │"
+        "│ -----------------------------------------------------------------------------│"
+        "│ 27  27  | line 27                                                            │"
+        "│ 28  28  | line 28                                                            │"
+        "│ 29  29  | line 29                                                            │"
+        "└──────────────────────────────────────────────────────────────────────────────┘"
+        "┌ changes (1) ─────────────────────────────────────────────────────────────────┐"
+        "│                                                                              │"
+        "│>  modified  modified_file.txt                                                │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "└──────────────────────────────────────────────────────────────────────────────┘"
+        " dfft  [watching] [following changes]                                           "
+        "#);
+
+        // WHEN
+        let mut lines = (1..=50).map(|n| format!("line {n}")).collect::<Vec<_>>();
+        let old = lines.join("\n");
+
+        lines[0] = "line 1 (modified)".to_string();
+
+        let new = lines.join("\n");
+        let diff = Diff::new(&old, &new).expect("diff should've been created");
+
+        let change = Change {
+            file_path: "another_modified_file.txt".to_string(),
+            kind: ChangeKind::Modified(Ok(Modification::Diff(Some(diff)))),
+        };
+        update(&mut model, Msg::ChangeReceived(change));
+        terminal
+            .draw(|f| view(&mut model, f))
+            .expect("frame should've been drawn");
+
+        // THEN
+        assert_snapshot!(terminal.backend(), @r#"
+        "┌ diff ────────────────────────────────────────────────────────────────────────┐"
+        "│                                                                              │"
+        "│ 1       |-line 1                                                             │"
+        "│     1   |+line 1 (modified)                                                  │"
+        "│ 2   2   | line 2                                                             │"
+        "│ 3   3   | line 3                                                             │"
+        "│ 4   4   | line 4                                                             │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "└──────────────────────────────────────────────────────────────────────────────┘"
+        "┌ changes (2) ─────────────────────────────────────────────────────────────────┐"
+        "│                                                                              │"
+        "│   modified  modified_file.txt                                                │"
+        "│>  modified  another_modified_file.txt                                        │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "└──────────────────────────────────────────────────────────────────────────────┘"
+        " dfft  [watching] [following changes]                                           "
+        "#);
+    }
+
+    #[test]
+    fn diff_scrolling_is_reset_when_another_change_is_selected() {
+        // GIVEN
+        let (mut terminal, terminal_dimensions) = get_test_terminal();
+        let mut model = Model::new(terminal_dimensions, true, false);
+
+        let mut lines = (1..=50).map(|n| format!("line {n}")).collect::<Vec<_>>();
+        let old = lines.join("\n");
+
+        lines[9] = "line 10 (modified)".to_string();
+        lines[29] = "line 30 (modified)".to_string();
+
+        let new = lines.join("\n");
+
+        let diff = Diff::new(&old, &new).expect("diff should've been created");
+
+        let change = Change {
+            file_path: "modified_file.txt".to_string(),
+            kind: ChangeKind::Modified(Ok(Modification::Diff(Some(diff)))),
+        };
+        update(&mut model, Msg::ChangeReceived(change));
+
+        for _ in 1..=4 {
+            update(&mut model, Msg::ScrollDown);
+        }
+        let mut lines = (1..=50).map(|n| format!("line {n}")).collect::<Vec<_>>();
+        let old = lines.join("\n");
+
+        lines[0] = "line 1 (modified)".to_string();
+
+        let new = lines.join("\n");
+        let diff = Diff::new(&old, &new).expect("diff should've been created");
+
+        let change = Change {
+            file_path: "another_modified_file.txt".to_string(),
+            kind: ChangeKind::Modified(Ok(Modification::Diff(Some(diff)))),
+        };
+        update(&mut model, Msg::ChangeReceived(change));
+        terminal
+            .draw(|f| view(&mut model, f))
+            .expect("frame should've been drawn");
+
+        assert_snapshot!(terminal.backend(), @r#"
+        "┌ diff ────────────────────────────────────────────────────────────────────────┐"
+        "│                                                                              │"
+        "│     10  |+line 10 (modified)                                                 │"
+        "│ 11  11  | line 11                                                            │"
+        "│ 12  12  | line 12                                                            │"
+        "│ 13  13  | line 13                                                            │"
+        "│ -----------------------------------------------------------------------------│"
+        "│ 27  27  | line 27                                                            │"
+        "│ 28  28  | line 28                                                            │"
+        "│ 29  29  | line 29                                                            │"
+        "└──────────────────────────────────────────────────────────────────────────────┘"
+        "┌ changes (2) ─────────────────────────────────────────────────────────────────┐"
+        "│                                                                              │"
+        "│>  modified  modified_file.txt                                                │"
+        "│   modified  another_modified_file.txt                                        │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "└──────────────────────────────────────────────────────────────────────────────┘"
+        " dfft  [watching]                                                               "
+        "#);
+
+        // WHEN
+        update(&mut model, Msg::SelectNext);
+        terminal
+            .draw(|f| view(&mut model, f))
+            .expect("frame should've been drawn");
+
+        // THEN
+        assert_snapshot!(terminal.backend(), @r#"
+        "┌ diff ────────────────────────────────────────────────────────────────────────┐"
+        "│                                                                              │"
+        "│ 1       |-line 1                                                             │"
+        "│     1   |+line 1 (modified)                                                  │"
+        "│ 2   2   | line 2                                                             │"
+        "│ 3   3   | line 3                                                             │"
+        "│ 4   4   | line 4                                                             │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "└──────────────────────────────────────────────────────────────────────────────┘"
+        "┌ changes (2) ─────────────────────────────────────────────────────────────────┐"
+        "│                                                                              │"
+        "│   modified  modified_file.txt                                                │"
+        "│>  modified  another_modified_file.txt                                        │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "└──────────────────────────────────────────────────────────────────────────────┘"
+        " dfft  [watching]                                                               "
+        "#);
+    }
+
+    #[test]
+    fn max_diff_scroll_is_reset_when_change_list_is_reset() {
+        // GIVEN
+        let (mut terminal, terminal_dimensions) = get_test_terminal();
+        let mut model = Model::new(terminal_dimensions, true, false);
+
+        let mut lines = (1..=50).map(|n| format!("line {n}")).collect::<Vec<_>>();
+        let old = lines.join("\n");
+
+        lines[9] = "line 10 (modified)".to_string();
+        lines[29] = "line 30 (modified)".to_string();
+
+        let new = lines.join("\n");
+
+        let diff = Diff::new(&old, &new).expect("diff should've been created");
+
+        let change = Change {
+            file_path: "modified_file.txt".to_string(),
+            kind: ChangeKind::Modified(Ok(Modification::Diff(Some(diff)))),
+        };
+        update(&mut model, Msg::ChangeReceived(change));
+
+        for _ in 1..=4 {
+            update(&mut model, Msg::ScrollDown);
+        }
+        terminal
+            .draw(|f| view(&mut model, f))
+            .expect("frame should've been drawn");
+
+        assert_snapshot!(terminal.backend(), @r#"
+        "┌ diff ────────────────────────────────────────────────────────────────────────┐"
+        "│                                                                              │"
+        "│     10  |+line 10 (modified)                                                 │"
+        "│ 11  11  | line 11                                                            │"
+        "│ 12  12  | line 12                                                            │"
+        "│ 13  13  | line 13                                                            │"
+        "│ -----------------------------------------------------------------------------│"
+        "│ 27  27  | line 27                                                            │"
+        "│ 28  28  | line 28                                                            │"
+        "│ 29  29  | line 29                                                            │"
+        "└──────────────────────────────────────────────────────────────────────────────┘"
+        "┌ changes (1) ─────────────────────────────────────────────────────────────────┐"
+        "│                                                                              │"
+        "│>  modified  modified_file.txt                                                │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "└──────────────────────────────────────────────────────────────────────────────┘"
+        " dfft  [watching]                                                               "
+        "#);
+
+        // WHEN
+        update(&mut model, Msg::ResetList);
+        let diff = Diff::new("old", "new").expect("diff should've been created");
+
+        let change = Change {
+            file_path: "newly_modified_file.txt".to_string(),
+            kind: ChangeKind::Modified(Ok(Modification::Diff(Some(diff)))),
+        };
+        update(&mut model, Msg::ChangeReceived(change));
+        for _ in 1..=4 {
+            update(&mut model, Msg::ScrollDown);
+        }
+        terminal
+            .draw(|f| view(&mut model, f))
+            .expect("frame should've been drawn");
+
+        // THEN
+        assert_snapshot!(terminal.backend(), @r#"
+        "┌ diff ────────────────────────────────────────────────────────────────────────┐"
+        "│                                                                              │"
+        "│ 1       |-old                                                                │"
+        "│     1   |+new                                                                │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "│                                                                              │"
+        "└──────────────────────────────────────────────────────────────────────────────┘"
+        "┌ changes (1) ─────────────────────────────────────────────────────────────────┐"
+        "│                                                                              │"
+        "│>  modified  newly_modified_file.txt                                          │"
         "│                                                                              │"
         "│                                                                              │"
         "│                                                                              │"
@@ -1046,7 +1482,7 @@ line 2
 
         let change = Change {
             file_path: "snapshot_file.txt".to_string(),
-            kind: ChangeKind::Modified(Ok(ModifiedResult::InitialSnapshot)),
+            kind: ChangeKind::Modified(Ok(Modification::InitialSnapshot)),
         };
         update(&mut model, Msg::ChangeReceived(change));
 
@@ -1092,7 +1528,7 @@ line 2
 
         let change = Change {
             file_path: "no_diff_file.txt".to_string(),
-            kind: ChangeKind::Modified(Ok(ModifiedResult::Diff(None))),
+            kind: ChangeKind::Modified(Ok(Modification::Diff(None))),
         };
         update(&mut model, Msg::ChangeReceived(change));
 
@@ -1398,7 +1834,7 @@ line 2
 
         // WHEN
         // THEN
-        update(&mut model, Msg::GoDown);
+        update(&mut model, Msg::SelectNext);
         terminal
             .draw(|f| view(&mut model, f))
             .expect("frame should've been drawn");
@@ -1429,7 +1865,7 @@ line 2
         " dfft  This will disappear after 2 renders [watching]                           "
         "#);
 
-        update(&mut model, Msg::GoDown);
+        update(&mut model, Msg::SelectNext);
         terminal
             .draw(|f| view(&mut model, f))
             .expect("frame should've been drawn");

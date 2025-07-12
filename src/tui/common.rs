@@ -2,12 +2,13 @@ use ratatui::style::Color;
 
 pub const MIN_TERMINAL_WIDTH: u16 = 80;
 pub const MIN_TERMINAL_HEIGHT: u16 = 24;
-pub const ADDED_COLOR: Color = Color::from_u32(0x9ece6a);
-pub const MODIFIED_COLOR: Color = Color::from_u32(0xfabd2f);
-pub const ERROR_COLOR: Color = Color::from_u32(0xfb4934);
-pub const DIFF_REMOVED_COLOR: Color = Color::from_u32(0xf7768e);
+pub const ADDITION_COLOR: Color = Color::from_u32(0x9ece6a);
+pub const SUBTRACTION_COLOR: Color = Color::from_u32(0xf7768e);
+pub const MODIFICATION_COLOR: Color = Color::from_u32(0xdf8e1d);
+pub const FILE_ERROR_COLOR: Color = Color::from_u32(0xfb4934);
 
 pub const HELP_CONTENT: &str = include_str!("static/help.txt");
+pub const UNEXPECTED_ERROR_MSG: &str = "an unexpected error occurred";
 
 #[derive(PartialEq, Debug, Clone, Copy)]
 #[allow(dead_code)]

@@ -1,5 +1,5 @@
 use super::common::*;
-use crate::domain::{Change, ChangeKind};
+use crate::domain::{Change, ChangeKind, Modification};
 use ratatui::{
     style::{Style, Stylize},
     text::{Line, Span},
@@ -113,12 +113,12 @@ impl Changes {
 impl From<&ChangeItem> for ListItem<'_> {
     fn from(value: &ChangeItem) -> Self {
         let (label, color) = match value.change.kind {
-            ChangeKind::Created(Ok(_)) => (CREATED_LABEL, ADDED_COLOR),
+            ChangeKind::Created(Ok(_)) => (CREATED_LABEL, ADDITION_COLOR),
 
-            ChangeKind::Created(Err(_)) => (ERROR_LABEL, ERROR_COLOR),
-            ChangeKind::Modified(Ok(_)) => (MODIFIED_LABEL, MODIFIED_COLOR),
-            ChangeKind::Modified(Err(_)) => (ERROR_LABEL, ERROR_COLOR),
-            ChangeKind::Removed => (REMOVED_LABEL, DIFF_REMOVED_COLOR),
+            ChangeKind::Created(Err(_)) => (ERROR_LABEL, FILE_ERROR_COLOR),
+            ChangeKind::Modified(Ok(_)) => (MODIFIED_LABEL, MODIFICATION_COLOR),
+            ChangeKind::Modified(Err(_)) => (ERROR_LABEL, FILE_ERROR_COLOR),
+            ChangeKind::Removed => (REMOVED_LABEL, SUBTRACTION_COLOR),
         };
 
         let line = Line::from(vec![
@@ -150,6 +150,8 @@ pub struct Model {
     pub help_scroll: usize,
     pub help_line_count: usize,
     pub max_help_scroll_available: usize,
+    pub diff_scroll: usize,
+    pub max_diff_scroll_available: usize,
 }
 
 impl Model {
@@ -160,7 +162,7 @@ impl Model {
         let (changes_tx, changes_rx) = mpsc::channel::<Change>(100);
 
         let mut model = Model {
-            active_pane: Pane::ChangesList,
+            active_pane: Pane::Diff,
             watching,
             changes: Changes::new(),
             follow_changes: false,
@@ -178,6 +180,8 @@ impl Model {
             help_scroll: 0,
             help_line_count: HELP_CONTENT.lines().count(),
             max_help_scroll_available: 0,
+            diff_scroll: 0,
+            max_diff_scroll_available: 0,
         };
 
         model.compute_max_help_scroll_available();
@@ -188,8 +192,8 @@ impl Model {
     pub(super) fn go_back_or_quit(&mut self) {
         let active_pane = Some(self.active_pane);
         match self.active_pane {
-            Pane::ChangesList => self.running_state = RunningState::Done,
-            Pane::Diff => self.active_pane = Pane::ChangesList,
+            Pane::ChangesList => self.active_pane = Pane::Diff,
+            Pane::Diff => self.running_state = RunningState::Done,
             Pane::Help => match self.last_active_pane {
                 Some(p) => self.active_pane = p,
                 None => self.active_pane = Pane::ChangesList,
@@ -199,9 +203,9 @@ impl Model {
         self.last_active_pane = active_pane;
     }
 
-    pub(super) fn go_down(&mut self) {
+    pub(super) fn select_next(&mut self) {
         match self.active_pane {
-            Pane::ChangesList => {
+            Pane::ChangesList | Pane::Diff => {
                 if self.changes.state.selected().is_none() {
                     return;
                 }
@@ -213,17 +217,16 @@ impl Model {
                 }
 
                 self.changes.state.select_next();
+                self.compute_max_diff_scroll_available();
+                self.reset_diff_scroll();
             }
-            Pane::Help => {
-                self.scroll_help_down();
-            }
-            Pane::Diff => {}
+            Pane::Help => {}
         }
     }
 
-    pub(super) fn go_up(&mut self) {
+    pub(super) fn select_previous(&mut self) {
         match self.active_pane {
-            Pane::ChangesList => {
+            Pane::ChangesList | Pane::Diff => {
                 if self.changes.state.selected().is_none() {
                     return;
                 }
@@ -235,47 +238,85 @@ impl Model {
                 }
 
                 self.changes.state.select_previous();
+                self.compute_max_diff_scroll_available();
+                self.reset_diff_scroll();
             }
-            Pane::Help => {
-                self.scroll_help_up();
-            }
-            Pane::Diff => {}
+            Pane::Help => {}
         }
     }
 
-    pub(super) fn go_to_top(&mut self) {
-        if self.active_pane == Pane::ChangesList {
-            if self.changes.state.selected().is_none() {
-                return;
-            }
+    pub(super) fn select_first(&mut self) {
+        match self.active_pane {
+            Pane::ChangesList | Pane::Diff => {
+                if self.changes.state.selected().is_none() {
+                    return;
+                }
 
-            if let Some(i) = self.changes.state.selected()
-                && i == 0
-            {
-                return;
-            }
+                if let Some(i) = self.changes.state.selected()
+                    && i == 0
+                {
+                    return;
+                }
 
-            self.changes.state.select_first();
-        };
+                self.changes.state.select_first();
+                self.compute_max_diff_scroll_available();
+                self.reset_diff_scroll();
+            }
+            _ => {}
+        }
     }
-    pub(super) fn go_to_bottom(&mut self) {
-        if self.active_pane == Pane::ChangesList {
-            if self.changes.state.selected().is_none() {
-                return;
-            }
+    pub(super) fn select_last(&mut self) {
+        match self.active_pane {
+            Pane::ChangesList | Pane::Diff => {
+                if self.changes.state.selected().is_none() {
+                    return;
+                }
 
-            if let Some(i) = self.changes.state.selected()
-                && i == self.changes.items.len() - 1
-            {
-                return;
-            }
+                if let Some(i) = self.changes.state.selected()
+                    && i == self.changes.items.len() - 1
+                {
+                    return;
+                }
 
-            self.changes.state.select_last()
+                self.changes.state.select_last();
+                self.compute_max_diff_scroll_available();
+                self.reset_diff_scroll();
+            }
+            _ => {}
+        }
+    }
+
+    pub(super) fn scroll_down(&mut self) {
+        match self.active_pane {
+            Pane::ChangesList => {}
+            Pane::Help => {
+                self.scroll_help_down();
+            }
+            Pane::Diff => {
+                self.scroll_diff_down();
+            }
+        }
+    }
+
+    pub(super) fn scroll_up(&mut self) {
+        match self.active_pane {
+            Pane::ChangesList => {}
+            Pane::Help => {
+                self.scroll_help_up();
+            }
+            Pane::Diff => {
+                self.scroll_diff_up();
+            }
         }
     }
 
     pub(super) fn add_change(&mut self, change: Change) {
         self.changes.append(change, self.follow_changes);
+
+        if self.follow_changes || self.changes.items.len() == 1 {
+            self.reset_diff_scroll();
+            self.compute_max_diff_scroll_available();
+        }
     }
 
     pub(super) fn get_cancellation_token(&self) -> CancellationToken {
@@ -284,6 +325,8 @@ impl Model {
 
     pub(super) fn reset_list(&mut self) {
         self.changes = Changes::new();
+        self.reset_diff_scroll();
+        self.compute_max_diff_scroll_available();
     }
 
     pub(super) fn pause_watching(&mut self) {
@@ -306,6 +349,33 @@ impl Model {
         self.help_scroll = self.help_scroll.saturating_sub(1);
     }
 
+    pub(super) fn scroll_diff_down(&mut self) {
+        if self.changes.state.selected().is_none() {
+            return;
+        }
+
+        if self.diff_scroll < self.max_diff_scroll_available {
+            self.diff_scroll += 1;
+        }
+    }
+
+    pub(super) fn scroll_diff_up(&mut self) {
+        if self.changes.state.selected().is_none() {
+            return;
+        }
+
+        self.diff_scroll = self.diff_scroll.saturating_sub(1);
+    }
+
+    pub(super) fn reset_help_scroll(&mut self) {
+        self.help_scroll = 0;
+    }
+
+    pub(super) fn reset_diff_scroll(&mut self) {
+        self.diff_scroll = 0;
+    }
+
+    // kinda weird that this model method relies on knowledge of the view, but oh well
     pub(super) fn compute_max_help_scroll_available(&mut self) {
         // -help------------------------------
         // |                                 | <- padding top
@@ -341,9 +411,38 @@ impl Model {
         self.max_help_scroll_available = if self.terminal_too_small {
             0
         } else {
-            // 4 => top border + padding top + lower border + status line
+            //      top border + padding top + lower border + status line
+            // 4 => 1          + 1           + 1            + 1
             let available_height = self.terminal_dimensions.height as usize - 4;
             self.help_line_count.saturating_sub(available_height)
         };
+    }
+
+    // kinda weird that this model method relies on knowledge of the view, but oh well
+    pub(super) fn compute_max_diff_scroll_available(&mut self) {
+        let selected_index = self.changes.state.selected();
+        let change_item = selected_index.and_then(|i| self.changes.items.get(i));
+
+        let max_scroll = match change_item {
+            Some(item) => match &item.change.kind {
+                ChangeKind::Modified(Ok(Modification::Diff(Some(diff))))
+                    if !self.terminal_too_small =>
+                {
+                    //       top border + padding top + lower border + changes pane (fixed) + status bar height
+                    // 16 => 1          + 1           + 1            + 12                   + 1
+                    let available_height = self.terminal_dimensions.height as usize - 16;
+                    diff.num_lines().saturating_sub(available_height)
+                }
+                _ => 0,
+            },
+            None => {
+                if selected_index.is_some() {
+                    self.user_msg = Some(UserMsg::error(UNEXPECTED_ERROR_MSG));
+                }
+                0
+            }
+        };
+
+        self.max_diff_scroll_available = max_scroll;
     }
 }

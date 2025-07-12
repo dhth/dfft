@@ -116,6 +116,22 @@ impl Diff {
 
         max(num_digits(largest_line_num) + 2, 4)
     }
+
+    // This method is kinda weird, as the number of lines in a diff is a concern of the "view" side
+    // of things. However, since computing "max available scroll" for the diff pane requires the
+    // knowledge of the number of lines in a diff, this method is needed
+    pub fn num_lines(&self) -> usize {
+        let mut num = 0;
+        for (idx, hunk) in self.hunks.iter().enumerate() {
+            if idx > 0 {
+                num += 1;
+            }
+
+            num += hunk.lines.len();
+        }
+
+        num
+    }
 }
 
 impl Display for Diff {
@@ -197,6 +213,7 @@ line 2
         4       |-line 3
             5   |+⸢(prefix) ⸣line 3⸢ ( changed)⸣
         ");
+        assert_snapshot!(diff.num_lines(), @"7");
     }
 
     #[test]
@@ -244,6 +261,7 @@ line 8
         10      |-line 9
             10  |+⸢(prefix) ⸣line 9⸢ (changed)⸣
         ");
+        assert_snapshot!(diff.num_lines(), @"12");
     }
 
     #[test]
@@ -298,6 +316,7 @@ line 8
                10000  |+line 10000⸢ (modified)⸣
         10001  10001  | line 10001
         ");
+        assert_snapshot!(diff.num_lines(), @"30");
     }
 
     #[test]
