@@ -162,7 +162,7 @@ impl Model {
         let (changes_tx, changes_rx) = mpsc::channel::<Change>(100);
 
         let mut model = Model {
-            active_pane: Pane::Diff,
+            active_pane: Pane::ChangesList,
             watching,
             changes: Changes::new(),
             follow_changes: false,
@@ -192,8 +192,8 @@ impl Model {
     pub(super) fn go_back_or_quit(&mut self) {
         let active_pane = Some(self.active_pane);
         match self.active_pane {
-            Pane::ChangesList => self.active_pane = Pane::Diff,
-            Pane::Diff => self.running_state = RunningState::Done,
+            Pane::ChangesList => self.running_state = RunningState::Done,
+            Pane::Diff => self.active_pane = Pane::ChangesList,
             Pane::Help => match self.last_active_pane {
                 Some(p) => self.active_pane = p,
                 None => self.active_pane = Pane::ChangesList,

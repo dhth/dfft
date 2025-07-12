@@ -942,6 +942,7 @@ line 2
         // GIVEN
         let (mut terminal, terminal_dimensions) = get_test_terminal();
         let mut model = Model::new(terminal_dimensions, true, false);
+        model.active_pane = Pane::Diff;
 
         let mut lines = (1..=30).map(|n| format!("line {n}")).collect::<Vec<_>>();
         let old = lines.join("\n");
@@ -1033,6 +1034,7 @@ line 2
         // GIVEN
         let (mut terminal, terminal_dimensions) = get_test_terminal();
         let mut model = Model::new(terminal_dimensions, true, false);
+        model.active_pane = Pane::Diff;
         model.follow_changes = true;
 
         let mut lines = (1..=50).map(|n| format!("line {n}")).collect::<Vec<_>>();
@@ -1136,6 +1138,7 @@ line 2
         // GIVEN
         let (mut terminal, terminal_dimensions) = get_test_terminal();
         let mut model = Model::new(terminal_dimensions, true, false);
+        model.active_pane = Pane::Diff;
 
         let mut lines = (1..=50).map(|n| format!("line {n}")).collect::<Vec<_>>();
         let old = lines.join("\n");
@@ -1240,6 +1243,7 @@ line 2
         // GIVEN
         let (mut terminal, terminal_dimensions) = get_test_terminal();
         let mut model = Model::new(terminal_dimensions, true, false);
+        model.active_pane = Pane::Diff;
 
         let mut lines = (1..=50).map(|n| format!("line {n}")).collect::<Vec<_>>();
         let old = lines.join("\n");
