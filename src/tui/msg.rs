@@ -35,7 +35,7 @@ pub fn get_event_handling_msg(model: &Model, event: Event) -> Option<Msg> {
             },
             false => match key_event.kind {
                 KeyEventKind::Press => match model.active_pane {
-                    Pane::ChangesList => match key_event.code {
+                    Pane::Changes => match key_event.code {
                         KeyCode::Char('j') | KeyCode::Down => Some(Msg::SelectNext),
                         KeyCode::Char('k') | KeyCode::Up => Some(Msg::SelectPrevious),
                         KeyCode::Char('g') => Some(Msg::SelectFirst),
@@ -64,7 +64,7 @@ pub fn get_event_handling_msg(model: &Model, event: Event) -> Option<Msg> {
                         KeyCode::Tab
                         | KeyCode::BackTab
                         | KeyCode::Char('J')
-                        | KeyCode::Char('K') => Some(Msg::GoToPane(Pane::ChangesList)),
+                        | KeyCode::Char('K') => Some(Msg::GoToPane(Pane::Changes)),
                         KeyCode::Char('f') => Some(Msg::ToggleFollowChanges),
                         KeyCode::Char(' ') => Some(Msg::ToggleWatching),
                         KeyCode::Char('r') if key_event.modifiers == KeyModifiers::CONTROL => {

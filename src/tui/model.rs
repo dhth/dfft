@@ -162,7 +162,7 @@ impl Model {
         let (changes_tx, changes_rx) = mpsc::channel::<Change>(100);
 
         let mut model = Model {
-            active_pane: Pane::ChangesList,
+            active_pane: Pane::Changes,
             watching,
             changes: Changes::new(),
             follow_changes: false,
@@ -192,11 +192,11 @@ impl Model {
     pub(super) fn go_back_or_quit(&mut self) {
         let active_pane = Some(self.active_pane);
         match self.active_pane {
-            Pane::ChangesList => self.running_state = RunningState::Done,
-            Pane::Diff => self.active_pane = Pane::ChangesList,
+            Pane::Changes => self.running_state = RunningState::Done,
+            Pane::Diff => self.active_pane = Pane::Changes,
             Pane::Help => match self.last_active_pane {
                 Some(p) => self.active_pane = p,
-                None => self.active_pane = Pane::ChangesList,
+                None => self.active_pane = Pane::Changes,
             },
         }
 
@@ -205,7 +205,7 @@ impl Model {
 
     pub(super) fn select_next(&mut self) {
         match self.active_pane {
-            Pane::ChangesList | Pane::Diff => {
+            Pane::Changes | Pane::Diff => {
                 if self.changes.state.selected().is_none() {
                     return;
                 }
@@ -226,7 +226,7 @@ impl Model {
 
     pub(super) fn select_previous(&mut self) {
         match self.active_pane {
-            Pane::ChangesList | Pane::Diff => {
+            Pane::Changes | Pane::Diff => {
                 if self.changes.state.selected().is_none() {
                     return;
                 }
@@ -247,7 +247,7 @@ impl Model {
 
     pub(super) fn select_first(&mut self) {
         match self.active_pane {
-            Pane::ChangesList | Pane::Diff => {
+            Pane::Changes | Pane::Diff => {
                 if self.changes.state.selected().is_none() {
                     return;
                 }
@@ -267,7 +267,7 @@ impl Model {
     }
     pub(super) fn select_last(&mut self) {
         match self.active_pane {
-            Pane::ChangesList | Pane::Diff => {
+            Pane::Changes | Pane::Diff => {
                 if self.changes.state.selected().is_none() {
                     return;
                 }
@@ -288,7 +288,7 @@ impl Model {
 
     pub(super) fn scroll_down(&mut self) {
         match self.active_pane {
-            Pane::ChangesList => {}
+            Pane::Changes => {}
             Pane::Help => {
                 self.scroll_help_down();
             }
@@ -300,7 +300,7 @@ impl Model {
 
     pub(super) fn scroll_up(&mut self) {
         match self.active_pane {
-            Pane::ChangesList => {}
+            Pane::Changes => {}
             Pane::Help => {
                 self.scroll_help_up();
             }

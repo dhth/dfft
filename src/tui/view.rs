@@ -68,7 +68,7 @@ pub fn view(model: &mut Model, frame: &mut Frame) {
     }
 
     match model.active_pane {
-        Pane::ChangesList | Pane::Diff => render_main_view(model, frame),
+        Pane::Changes | Pane::Diff => render_main_view(model, frame),
         Pane::Help => render_help_pane(model, frame),
     }
 }
@@ -193,7 +193,7 @@ fn render_changes_list_pane(model: &mut Model, frame: &mut Frame, rect: Rect) {
         format!(" changes ({}) ", items.len())
     };
 
-    let (border_color, title_color) = if model.active_pane == Pane::ChangesList {
+    let (border_color, title_color) = if model.active_pane == Pane::Changes {
         (PRIMARY_COLOR, PRIMARY_COLOR)
     } else {
         (INACTIVE_PANE_BORDER_COLOR, INACTIVE_PANE_TITLE_BG_COLOR)

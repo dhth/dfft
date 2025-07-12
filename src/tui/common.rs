@@ -13,7 +13,7 @@ pub const UNEXPECTED_ERROR_MSG: &str = "an unexpected error occurred";
 #[derive(PartialEq, Debug, Clone, Copy)]
 #[allow(dead_code)]
 pub enum Pane {
-    ChangesList,
+    Changes,
     Diff,
     Help,
 }
@@ -21,7 +21,7 @@ pub enum Pane {
 impl std::fmt::Display for Pane {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Pane::ChangesList => write!(f, "cl"),
+            Pane::Changes => write!(f, "changes"),
             Pane::Diff => write!(f, "diff"),
             Pane::Help => write!(f, "help"),
         }
