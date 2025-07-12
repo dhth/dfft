@@ -27,7 +27,7 @@ Todo
 - [ ] Consistent colors
 - [x] Stop/resume listening for changes
 - [x] Play sound when a change occurs
-- [ ] Add CLI argument parsing
-    - [ ] Add flag to pre-populate cache at startup
+- [x] Allow pre-populating snapshots at startup
+- [ ] Show number of snapshots in memory
 - [x] Consider `dfft` specific ignore file
 - [ ] Consider `.git/info/exclude`

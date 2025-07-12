@@ -267,6 +267,24 @@ fn render_status_line(model: &Model, frame: &mut Frame, rect: Rect) {
             .fg(PANE_TITLE_FG_COLOR),
     )];
 
+    let (watching_label, watching_color) = if model.watching {
+        (WATCHING_LABEL, WATCHING_COLOR)
+    } else {
+        (PAUSED_LABEL, PAUSED_COLOR)
+    };
+
+    status_bar_lines.push(Span::styled(
+        watching_label,
+        Style::default().fg(watching_color).bold(),
+    ));
+
+    if model.follow_changes {
+        status_bar_lines.push(Span::styled(
+            " [following changes]",
+            Style::default().fg(FOLLOWING_CHANGES_COLOR).bold(),
+        ));
+    }
+
     if let Some(msg) = &model.user_msg {
         let span = match msg.kind {
             MessageKind::Info => Span::styled(
@@ -289,24 +307,6 @@ fn render_status_line(model: &Model, frame: &mut Frame, rect: Rect) {
         )));
 
         status_bar_lines.push(Span::from(format!(" [watching: {:?}]", model.watching,)));
-    }
-
-    let (watching_label, watching_color) = if model.watching {
-        (WATCHING_LABEL, WATCHING_COLOR)
-    } else {
-        (PAUSED_LABEL, PAUSED_COLOR)
-    };
-
-    status_bar_lines.push(Span::styled(
-        watching_label,
-        Style::default().fg(watching_color).bold(),
-    ));
-
-    if model.follow_changes {
-        status_bar_lines.push(Span::styled(
-            " [following changes]",
-            Style::default().fg(FOLLOWING_CHANGES_COLOR).bold(),
-        ));
     }
 
     let status_bar_text = Line::from(status_bar_lines);

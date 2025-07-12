@@ -5,6 +5,7 @@ use super::model::*;
 use super::msg::{Msg, get_event_handling_msg};
 use super::update::update;
 use super::view::view;
+use crate::domain::WatchUpdate;
 use ratatui::Terminal;
 use ratatui::backend::CrosstermBackend;
 use ratatui::crossterm::event::poll;
@@ -56,7 +57,7 @@ impl AppTui {
         self.terminal.draw(|f| view(&mut self.model, f))?;
 
         let mut initial_cmds = vec![];
-        let changes_tx = self.model.changes_tx.clone();
+        let changes_tx = self.model.watch_updates_tx.clone();
         initial_cmds.push(Cmd::WatchForChanges {
             root: self.model.root.clone(), // TODO: prevent cloning here
             sender: changes_tx,
@@ -85,8 +86,13 @@ impl AppTui {
                     }
                 }
 
-                Some(change) = self.model.changes_rx.recv() => {
-                    let msg = Msg::ChangeReceived(change);
+                Some(watch_update) = self.model.watch_updates_rx.recv() => {
+                    let msg = match watch_update {
+                        WatchUpdate::PrepopulationBegan => Msg::PrepopulationBegan,
+                        WatchUpdate::ChangeReceived(change) => Msg::ChangeReceived(change),
+                        WatchUpdate::PrepopulationEnded(i) => Msg::PrepopulationEnded(i),
+                        WatchUpdate::ErrorOccurred(e) => Msg::WatchingFailed(e),
+                    };
                     let _ = self.event_tx.try_send(msg);
                 }
 

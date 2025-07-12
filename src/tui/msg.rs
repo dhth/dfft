@@ -20,6 +20,8 @@ pub enum Msg {
     ToggleWatching,
     // internal
     ChangeReceived(Change),
+    PrepopulationBegan,
+    PrepopulationEnded(usize),
     WatchingFailed(String),
 }
 
@@ -38,6 +40,8 @@ pub fn get_event_handling_msg(model: &Model, event: Event) -> Option<Msg> {
                     Pane::Changes => match key_event.code {
                         KeyCode::Char('j') | KeyCode::Down => Some(Msg::SelectNext),
                         KeyCode::Char('k') | KeyCode::Up => Some(Msg::SelectPrevious),
+                        KeyCode::Char('J') => Some(Msg::ScrollDown),
+                        KeyCode::Char('K') => Some(Msg::ScrollUp),
                         KeyCode::Char('g') => Some(Msg::SelectFirst),
                         KeyCode::Char('G') => Some(Msg::SelectLast),
                         KeyCode::Char('f') => Some(Msg::ToggleFollowChanges),
@@ -45,10 +49,7 @@ pub fn get_event_handling_msg(model: &Model, event: Event) -> Option<Msg> {
                             Some(Msg::ResetList)
                         }
                         KeyCode::Esc | KeyCode::Char('q') => Some(Msg::GoBackOrQuit),
-                        KeyCode::Tab
-                        | KeyCode::BackTab
-                        | KeyCode::Char('J')
-                        | KeyCode::Char('K') => Some(Msg::GoToPane(Pane::Diff)),
+                        KeyCode::Tab | KeyCode::BackTab => Some(Msg::GoToPane(Pane::Diff)),
                         KeyCode::Char(' ') => Some(Msg::ToggleWatching),
                         KeyCode::Char('c') if key_event.modifiers == KeyModifiers::CONTROL => {
                             Some(Msg::QuitImmediately)
@@ -57,14 +58,11 @@ pub fn get_event_handling_msg(model: &Model, event: Event) -> Option<Msg> {
                         _ => None,
                     },
                     Pane::Diff => match key_event.code {
-                        KeyCode::Char('j') | KeyCode::Down => Some(Msg::ScrollDown),
-                        KeyCode::Char('k') | KeyCode::Up => Some(Msg::ScrollUp),
-                        KeyCode::Char('l') | KeyCode::Right => Some(Msg::SelectNext),
-                        KeyCode::Char('h') | KeyCode::Left => Some(Msg::SelectPrevious),
-                        KeyCode::Tab
-                        | KeyCode::BackTab
-                        | KeyCode::Char('J')
-                        | KeyCode::Char('K') => Some(Msg::GoToPane(Pane::Changes)),
+                        KeyCode::Char('j') => Some(Msg::SelectNext),
+                        KeyCode::Char('k') => Some(Msg::SelectPrevious),
+                        KeyCode::Char('J') | KeyCode::Down => Some(Msg::ScrollDown),
+                        KeyCode::Char('K') | KeyCode::Up => Some(Msg::ScrollUp),
+                        KeyCode::Tab | KeyCode::BackTab => Some(Msg::GoToPane(Pane::Changes)),
                         KeyCode::Char('f') => Some(Msg::ToggleFollowChanges),
                         KeyCode::Char(' ') => Some(Msg::ToggleWatching),
                         KeyCode::Char('r') if key_event.modifiers == KeyModifiers::CONTROL => {

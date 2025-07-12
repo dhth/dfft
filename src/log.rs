@@ -42,7 +42,7 @@ fn get_log_dir() -> anyhow::Result<PathBuf> {
     // XDG spec suggests using XDG_STATE_HOME for logs
     // https://specifications.freedesktop.org/basedir-spec/latest/#variables
     let log_dir = strategy
-        .state_dir() // this always Some on unix, but adding a fallback regardless
+        .state_dir() // this always returns Some on unix, but adding a fallback regardless
         .map(|d| d.join("dfft"))
         .unwrap_or_else(|| strategy.home_dir().join(".dfft"));
 

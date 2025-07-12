@@ -1,5 +1,5 @@
 use super::common::*;
-use crate::domain::{Change, ChangeKind, Modification};
+use crate::domain::{Change, ChangeKind, Modification, WatchUpdate};
 use ratatui::{
     style::{Style, Stylize},
     text::{Line, Span},
@@ -145,8 +145,8 @@ pub struct Model {
     pub terminal_too_small: bool,
     pub render_counter: u64,
     pub event_counter: u64,
-    pub changes_tx: Sender<Change>,
-    pub changes_rx: Receiver<Change>,
+    pub watch_updates_tx: Sender<WatchUpdate>,
+    pub watch_updates_rx: Receiver<WatchUpdate>,
     cancellation_token: CancellationToken,
     pub debug: bool,
     pub help_scroll: usize,
@@ -166,11 +166,11 @@ impl Model {
         let terminal_too_small = terminal_dimensions.width < MIN_TERMINAL_WIDTH
             || terminal_dimensions.height < MIN_TERMINAL_HEIGHT;
 
-        let (changes_tx, changes_rx) = mpsc::channel::<Change>(100);
+        let (changes_tx, changes_rx) = mpsc::channel::<WatchUpdate>(100);
 
         let mut model = Model {
             root,
-            active_pane: Pane::Changes,
+            active_pane: Pane::Diff,
             watching,
             changes: Changes::new(),
             follow_changes: false,
@@ -181,8 +181,8 @@ impl Model {
             terminal_too_small,
             render_counter: 0,
             event_counter: 0,
-            changes_tx,
-            changes_rx,
+            watch_updates_tx: changes_tx,
+            watch_updates_rx: changes_rx,
             cancellation_token: CancellationToken::new(),
             debug,
             help_scroll: 0,
@@ -200,8 +200,8 @@ impl Model {
     pub(super) fn go_back_or_quit(&mut self) {
         let active_pane = Some(self.active_pane);
         match self.active_pane {
-            Pane::Changes => self.running_state = RunningState::Done,
-            Pane::Diff => self.active_pane = Pane::Changes,
+            Pane::Changes => self.active_pane = Pane::Diff,
+            Pane::Diff => self.running_state = RunningState::Done,
             Pane::Help => match self.last_active_pane {
                 Some(p) => self.active_pane = p,
                 None => self.active_pane = Pane::Changes,
@@ -296,24 +296,22 @@ impl Model {
 
     pub(super) fn scroll_down(&mut self) {
         match self.active_pane {
-            Pane::Changes => {}
+            Pane::Changes | Pane::Diff => {
+                self.scroll_diff_down();
+            }
             Pane::Help => {
                 self.scroll_help_down();
-            }
-            Pane::Diff => {
-                self.scroll_diff_down();
             }
         }
     }
 
     pub(super) fn scroll_up(&mut self) {
         match self.active_pane {
-            Pane::Changes => {}
+            Pane::Changes | Pane::Diff => {
+                self.scroll_diff_up();
+            }
             Pane::Help => {
                 self.scroll_help_up();
-            }
-            Pane::Diff => {
-                self.scroll_diff_up();
             }
         }
     }

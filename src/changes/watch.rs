@@ -1,5 +1,5 @@
-use super::helpers::*;
-use crate::domain::{Change, ChangeKind, Diff, Modification};
+use super::helpers::{get_ignore, is_file_to_be_ignored};
+use crate::domain::{Change, ChangeKind, Diff, Modification, WatchUpdate};
 use anyhow::Context;
 use ignore::{Walk, gitignore::Gitignore};
 use notify::EventKind;
@@ -15,11 +15,10 @@ use tokio_util::sync::CancellationToken;
 use tracing::debug;
 
 const EVENT_CHANNEL_BUFFER: usize = 100;
-const MAX_FILE_SIZE: u64 = 1024 * 1024; // 1MB
 
 pub async fn watch_for_changes(
     root: PathBuf,
-    event_tx: Sender<Change>,
+    updates_tx: Sender<WatchUpdate>,
     cancellation_token: CancellationToken,
     prepopulate_cache: bool,
 ) -> anyhow::Result<()> {
@@ -29,9 +28,16 @@ pub async fn watch_for_changes(
     let mut cache: HashMap<String, String> = HashMap::new();
 
     if prepopulate_cache {
+        let _ = updates_tx.try_send(WatchUpdate::PrepopulationBegan);
         match populate_cache(&mut cache, &gitignore, &root, 2000).await {
-            Ok(count) => debug!("prepopulated cache with {} files", count),
-            Err(e) => debug!("prepopulation failed: {}, continuing without cache", e),
+            Ok(count) => {
+                debug!("prepopulated cache with {} files", count);
+                let _ = updates_tx.try_send(WatchUpdate::PrepopulationEnded(count));
+            }
+            Err(e) => {
+                debug!("prepopulation failed: {}, continuing without cache", e);
+                let _ = updates_tx.try_send(WatchUpdate::ErrorOccurred(e.to_string()));
+            }
         }
     }
 
@@ -65,11 +71,10 @@ pub async fn watch_for_changes(
                             match event.kind {
                                 EventKind::Create(CreateKind::File) => {
                                     for f in &event.paths {
-                                        if gitignore.as_ref().is_some_and(|g| {
-                                            g.matched_path_or_any_parents(f, false).is_ignore()
-                                        }) {
+                                        if is_file_to_be_ignored(f, &gitignore) {
                                             continue;
                                         }
+
                                         let file_path = f.strip_prefix(&root).unwrap_or(f).to_string_lossy().to_string();
 
                                         let change = match tokio::fs::read_to_string(f).await {
@@ -86,14 +91,12 @@ pub async fn watch_for_changes(
                                             },
                                         };
 
-                                        let _ = event_tx.send(change).await;
+                                        let _ = updates_tx.send(WatchUpdate::ChangeReceived(change)).await;
                                     }
                                 }
                                 EventKind::Modify(ModifyKind::Data(DataChange::Content)) => {
                                     for f in &event.paths {
-                                        if gitignore.as_ref().is_some_and(|g| {
-                                            g.matched_path_or_any_parents(f, false).is_ignore()
-                                        }) {
+                                        if is_file_to_be_ignored(f, &gitignore) {
                                             continue;
                                         }
 
@@ -135,14 +138,12 @@ pub async fn watch_for_changes(
                                                 kind: ChangeKind::Modified(Err(e.to_string())),
                                             },
                                         };
-                                        let _ = event_tx.send(change).await;
+                                        let _ = updates_tx.send(WatchUpdate::ChangeReceived(change)).await;
                                     }
                                 }
                                 EventKind::Remove(RemoveKind::File) => {
                                     for f in &event.paths {
-                                        if gitignore.as_ref().is_some_and(|g| {
-                                            g.matched_path_or_any_parents(f, false).is_ignore()
-                                        }) {
+                                        if is_file_to_be_ignored(f, &gitignore) {
                                             continue;
                                         }
 
@@ -153,7 +154,7 @@ pub async fn watch_for_changes(
                                             kind: ChangeKind::Removed,
                                         };
 
-                                        let _ = event_tx.send(change).await;
+                                        let _ = updates_tx.send(WatchUpdate::ChangeReceived(change)).await;
                                     }
                                 }
                                 _ => {}
@@ -207,8 +208,7 @@ where
             }
         }
 
-        if is_binary_file(path)? || is_file_too_large(path, MAX_FILE_SIZE)? {
-            debug!("ignored binary or large file: {:?}", path);
+        if is_file_to_be_ignored(path, gitignore) {
             continue;
         }
 

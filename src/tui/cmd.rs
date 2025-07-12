@@ -1,4 +1,4 @@
-use crate::domain::Change;
+use crate::domain::WatchUpdate;
 use std::path::PathBuf;
 use tokio::sync::mpsc::Sender;
 use tokio_util::sync::CancellationToken;
@@ -8,7 +8,7 @@ use tokio_util::sync::CancellationToken;
 pub(super) enum Cmd {
     WatchForChanges {
         root: PathBuf,
-        sender: Sender<Change>,
+        sender: Sender<WatchUpdate>,
         cancellation_token: CancellationToken,
         prepopulate_cache: bool,
     },
