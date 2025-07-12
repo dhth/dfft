@@ -9,12 +9,12 @@ pub struct Change {
 #[derive(Clone, Debug)]
 pub enum ChangeKind {
     Created(Result<(), String>),
-    Modified(Result<ModifiedResult, String>),
+    Modified(Result<Modification, String>),
     Removed,
 }
 
 #[derive(Clone, Debug)]
-pub enum ModifiedResult {
+pub enum Modification {
     InitialSnapshot,
     Diff(Option<Diff>),
 }

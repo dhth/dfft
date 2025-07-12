@@ -6,13 +6,15 @@ use ratatui::crossterm::event::{Event, KeyCode, KeyEventKind, KeyModifiers};
 pub enum Msg {
     // user actions
     GoBackOrQuit,
-    GoDown,
-    GoToBottom,
     GoToPane(Pane),
-    GoToTop,
-    GoUp,
     QuitImmediately,
     ResetList,
+    ScrollDown,
+    ScrollUp,
+    SelectFirst,
+    SelectLast,
+    SelectNext,
+    SelectPrevious,
     TerminalResize(u16, u16),
     ToggleFollowChanges,
     ToggleWatching,
@@ -33,17 +35,20 @@ pub fn get_event_handling_msg(model: &Model, event: Event) -> Option<Msg> {
             },
             false => match key_event.kind {
                 KeyEventKind::Press => match model.active_pane {
-                    Pane::ChangesList => match key_event.code {
-                        KeyCode::Char('j') | KeyCode::Down => Some(Msg::GoDown),
-                        KeyCode::Char('k') | KeyCode::Up => Some(Msg::GoUp),
-                        KeyCode::Char('g') => Some(Msg::GoToTop),
-                        KeyCode::Char('G') => Some(Msg::GoToBottom),
+                    Pane::Changes => match key_event.code {
+                        KeyCode::Char('j') | KeyCode::Down => Some(Msg::SelectNext),
+                        KeyCode::Char('k') | KeyCode::Up => Some(Msg::SelectPrevious),
+                        KeyCode::Char('g') => Some(Msg::SelectFirst),
+                        KeyCode::Char('G') => Some(Msg::SelectLast),
                         KeyCode::Char('f') => Some(Msg::ToggleFollowChanges),
                         KeyCode::Char('r') if key_event.modifiers == KeyModifiers::CONTROL => {
                             Some(Msg::ResetList)
                         }
                         KeyCode::Esc | KeyCode::Char('q') => Some(Msg::GoBackOrQuit),
-                        KeyCode::Tab | KeyCode::BackTab => Some(Msg::GoToPane(Pane::Diff)),
+                        KeyCode::Tab
+                        | KeyCode::BackTab
+                        | KeyCode::Char('J')
+                        | KeyCode::Char('K') => Some(Msg::GoToPane(Pane::Diff)),
                         KeyCode::Char(' ') => Some(Msg::ToggleWatching),
                         KeyCode::Char('c') if key_event.modifiers == KeyModifiers::CONTROL => {
                             Some(Msg::QuitImmediately)
@@ -52,7 +57,15 @@ pub fn get_event_handling_msg(model: &Model, event: Event) -> Option<Msg> {
                         _ => None,
                     },
                     Pane::Diff => match key_event.code {
-                        KeyCode::Tab | KeyCode::BackTab => Some(Msg::GoToPane(Pane::ChangesList)),
+                        KeyCode::Char('j') | KeyCode::Down => Some(Msg::ScrollDown),
+                        KeyCode::Char('k') | KeyCode::Up => Some(Msg::ScrollUp),
+                        KeyCode::Char('l') | KeyCode::Right => Some(Msg::SelectNext),
+                        KeyCode::Char('h') | KeyCode::Left => Some(Msg::SelectPrevious),
+                        KeyCode::Tab
+                        | KeyCode::BackTab
+                        | KeyCode::Char('J')
+                        | KeyCode::Char('K') => Some(Msg::GoToPane(Pane::Changes)),
+                        KeyCode::Char('f') => Some(Msg::ToggleFollowChanges),
                         KeyCode::Char(' ') => Some(Msg::ToggleWatching),
                         KeyCode::Char('r') if key_event.modifiers == KeyModifiers::CONTROL => {
                             Some(Msg::ResetList)
@@ -65,8 +78,8 @@ pub fn get_event_handling_msg(model: &Model, event: Event) -> Option<Msg> {
                         _ => None,
                     },
                     Pane::Help => match key_event.code {
-                        KeyCode::Char('j') | KeyCode::Down => Some(Msg::GoDown),
-                        KeyCode::Char('k') | KeyCode::Up => Some(Msg::GoUp),
+                        KeyCode::Char('j') | KeyCode::Down => Some(Msg::ScrollDown),
+                        KeyCode::Char('k') | KeyCode::Up => Some(Msg::ScrollUp),
                         KeyCode::Char('?') | KeyCode::Char('q') | KeyCode::Esc => {
                             Some(Msg::GoBackOrQuit)
                         }

@@ -15,12 +15,11 @@ Todo
 ---
 
 - [x] Add basic TUI
-- [ ] Scrollable diff section
+- [x] Scrollable diff section
 - [x] Help page
 - [x] More detailed diffs
 - [x] Allow following changes
-- [ ] Keymaps for moving around the list from diff pane
-- [ ] Follow mode shouldn't do anything if the user is in the diff pane
+- [x] Keymaps for moving around the list from diff pane
 - [ ] Show contents for new file
 - [ ] [bug] error when "G" is pressed
 - [ ] Errors are shown to the user wherever possible

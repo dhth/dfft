@@ -6,21 +6,26 @@ General
     Esc / q              go back/exit
     <ctrl+c>             exit immediately
 
-Changes List Pane
-    j / ↓                go down
-    k / ↑                go up
-    g                    go to top
-    G                    go to the bottom
+Diff Pane
+    Tab/<S-Tab>/J/K      switch to changes pane
+    j / ↓                scroll down
+    k / ↑                scroll up
+    l/→                  select next change
+    h/←                  select previous change
+    <space>              toggle watching
+    <c-r>                reset list
+    f                    toggle following changes
+
+Changes Pane
+    j / ↓                select next change
+    k / ↑                select previous change
+    g                    select first change
+    G                    select last change
     f                    toggle following changes
     <c-r>                reset list
     <space>              toggle watching
-    Tab                  switch to diff pane
-
-Diff Pane
-    Tab                  switch to changes list pane
-    <space>              toggle watching
-    <c-r>                reset list
+    Tab/<S-Tab>/J/K      switch to diff pane
 
 Help Pane
-    j / ↓                go down
-    k / ↑                go up
+    j / ↓                scroll down
+    k / ↑                scroll up

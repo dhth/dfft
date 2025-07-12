@@ -1,5 +1,5 @@
 use super::get_ignore;
-use crate::domain::{Change, ChangeKind, Diff, ModifiedResult};
+use crate::domain::{Change, ChangeKind, Diff, Modification};
 use anyhow::Context;
 use notify::EventKind;
 use notify::RecursiveMode;
@@ -98,14 +98,14 @@ pub async fn watch_for_changes(
                                                             Change {
                                                                 file_path,
                                                                 kind: ChangeKind::Modified(Ok(
-                                                                    ModifiedResult::Diff(Some(diff)),
+                                                                    Modification::Diff(Some(diff)),
                                                                 )),
                                                             }
                                                         } else {
                                                             Change {
                                                                 file_path,
                                                                 kind: ChangeKind::Modified(Ok(
-                                                                    ModifiedResult::Diff(None),
+                                                                    Modification::Diff(None),
                                                                 )),
                                                             }
                                                         }
@@ -113,7 +113,7 @@ pub async fn watch_for_changes(
                                                     None => Change {
                                                         file_path,
                                                         kind: ChangeKind::Modified(Ok(
-                                                            ModifiedResult::InitialSnapshot,
+                                                            Modification::InitialSnapshot,
                                                         )),
                                                     },
                                                 }
