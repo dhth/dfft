@@ -3,13 +3,14 @@ use std::sync::Arc;
 
 #[derive(Debug)]
 pub struct FileCache {
-    pub cache: HashMap<String, Arc<str>>,
+    cache: HashMap<String, Arc<str>>,
 }
 
 impl FileCache {
-    pub fn insert<T>(&mut self, path: T, contents: T) -> Option<Arc<str>>
+    pub fn insert<P, C>(&mut self, path: P, contents: C) -> Option<Arc<str>>
     where
-        T: AsRef<str>,
+        P: AsRef<str>,
+        C: AsRef<str>,
     {
         let arc_contents: Arc<str> = contents.as_ref().into();
         self.cache.insert(path.as_ref().to_string(), arc_contents)
