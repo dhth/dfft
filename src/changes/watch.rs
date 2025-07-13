@@ -70,7 +70,7 @@ pub async fn watch_for_changes(
                             match event.kind {
                                 EventKind::Create(CreateKind::File) => {
                                     for path in &event.paths {
-                                        if is_file_to_be_ignored(path, &gitignore) {
+                                        if is_file_to_be_ignored(path, &gitignore).await {
                                             continue;
                                         }
 
@@ -102,7 +102,7 @@ pub async fn watch_for_changes(
                                 }
                                 EventKind::Modify(ModifyKind::Data(DataChange::Content)) => {
                                     for path in &event.paths {
-                                        if is_file_to_be_ignored(path, &gitignore) {
+                                        if is_file_to_be_ignored(path, &gitignore).await {
                                             continue;
                                         }
 
@@ -153,7 +153,7 @@ pub async fn watch_for_changes(
                                 }
                                 EventKind::Remove(RemoveKind::File) => {
                                     for path in &event.paths {
-                                        if is_file_to_be_ignored(path, &gitignore) {
+                                        if is_file_to_be_ignored(path, &gitignore).await {
                                             continue;
                                         }
 
@@ -223,7 +223,7 @@ where
             continue;
         }
 
-        if is_file_to_be_ignored(path, gitignore) {
+        if is_file_to_be_ignored(path, gitignore).await {
             continue;
         }
 
