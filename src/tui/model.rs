@@ -219,7 +219,7 @@ impl Model {
     pub(super) fn select_next(&mut self) {
         match self.active_pane {
             Pane::Changes | Pane::Diff => {
-                if self.changes.state.selected().is_none() {
+                if self.changes.items.is_empty() {
                     return;
                 }
 
@@ -240,7 +240,7 @@ impl Model {
     pub(super) fn select_previous(&mut self) {
         match self.active_pane {
             Pane::Changes | Pane::Diff => {
-                if self.changes.state.selected().is_none() {
+                if self.changes.items.is_empty() {
                     return;
                 }
 
@@ -261,7 +261,7 @@ impl Model {
     pub(super) fn select_first(&mut self) {
         match self.active_pane {
             Pane::Changes | Pane::Diff => {
-                if self.changes.state.selected().is_none() {
+                if self.changes.items.is_empty() {
                     return;
                 }
 
@@ -281,17 +281,18 @@ impl Model {
     pub(super) fn select_last(&mut self) {
         match self.active_pane {
             Pane::Changes | Pane::Diff => {
-                if self.changes.state.selected().is_none() {
+                if self.changes.items.is_empty() {
                     return;
                 }
 
+                let last_index = self.changes.items.len() - 1;
                 if let Some(i) = self.changes.state.selected()
-                    && i == self.changes.items.len() - 1
+                    && i == last_index
                 {
                     return;
                 }
 
-                self.changes.state.select_last();
+                self.changes.state.select(Some(last_index));
                 self.compute_max_diff_scroll_available();
                 self.reset_diff_scroll();
             }

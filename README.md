@@ -20,8 +20,8 @@ Todo
 - [x] More detailed diffs
 - [x] Allow following changes
 - [x] Keymaps for moving around the list from diff pane
-- [ ] Show contents for new file
-- [ ] [bug] error when "G" is pressed
+- [x] Show contents for new file
+- [x] [bug] error when "G" is pressed
 - [ ] Errors are shown to the user wherever possible
     - [ ] Errors listening to fs events
 - [ ] Consistent colors
