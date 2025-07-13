@@ -1,4 +1,4 @@
-use crate::changes::watch_for_changes;
+use crate::watcher::watch_for_changes;
 
 use super::cmd::Cmd;
 use super::msg::Msg;

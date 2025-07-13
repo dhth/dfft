@@ -1,8 +1,8 @@
-mod changes;
 mod domain;
 mod log;
 mod tui;
 mod utils;
+mod watcher;
 use anyhow::Context;
 use log::setup_logging;
 
