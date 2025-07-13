@@ -45,7 +45,7 @@ pub async fn watch_for_changes(
             }
             Err(e) => {
                 debug!("prepopulation failed: {}, continuing without cache", e);
-                let _ = updates_tx.try_send(WatchUpdate::PrepopulationError(e.to_string()));
+                let _ = updates_tx.try_send(WatchUpdate::PrepopulationFailed(e.to_string()));
             }
         }
     }
