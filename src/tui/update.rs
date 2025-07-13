@@ -54,12 +54,16 @@ pub fn update(model: &mut Model, msg: Msg) -> Vec<Cmd> {
         }
         // internal
         Msg::ChangeReceived(change) => model.add_change(change),
+        // this is just to trigger a render of TUI
+        Msg::PrepopulationFinished => {}
         Msg::PrepopulationFailed(e) => {
             model.watching = false;
             model.user_msg = Some(UserMsg::error(format!("prepopulating changes failed: {e}")));
         }
-        // this is just to trigger a render of TUI
-        Msg::PrepopulationFinished => {}
+        Msg::WatchingFailed(e) => {
+            model.watching = false;
+            model.user_msg = Some(UserMsg::error(format!("watching for changes failed: {e}")));
+        }
     }
 
     if let Some(message) = &mut model.user_msg {

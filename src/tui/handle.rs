@@ -23,7 +23,7 @@ pub(super) async fn handle_command(command: Cmd, event_tx: Sender<Msg>) {
                 )
                 .await
                 {
-                    let _ = event_tx.try_send(Msg::PrepopulationFailed(e.to_string()));
+                    let _ = event_tx.try_send(Msg::WatchingFailed(e.to_string()));
                 }
             });
         }

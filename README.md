@@ -22,12 +22,10 @@ Todo
 - [x] Keymaps for moving around the list from diff pane
 - [x] Show contents for new file
 - [x] [bug] error when "G" is pressed
-- [ ] Errors are shown to the user wherever possible
-    - [ ] Errors listening to fs events
-- [ ] Consistent colors
 - [x] Stop/resume listening for changes
 - [x] Play sound when a change occurs
 - [x] Allow pre-populating snapshots at startup
 - [x] Show number of snapshots in memory
 - [x] Consider `dfft` specific ignore file
-- [ ] Consider `.git/info/exclude`
+- [x] Consider `.git/info/exclude`
+- [ ] Show errors while watching for fs events
