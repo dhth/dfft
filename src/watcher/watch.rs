@@ -129,6 +129,13 @@ pub async fn watch_for_changes(
                                     }
                                 }
                                 EventKind::Modify(modify_kind) => {
+                                    // renames are tricky to handle
+                                    // two events might show up for a rename, with the modify kind
+                                    // ModifyKind::Any, in which case it's tricky to determine
+                                    // which path no longer exists
+                                    // As such, the older path will remain in the cache, which is a
+                                    // bug
+                                    // TODO: fix the bug mentioned above
                                     for path in &event.paths {
                                         debug!("got modify event, path: {}", &path.to_string_lossy());
                                         if is_file_to_be_ignored(path, &gitignore, false).await {
