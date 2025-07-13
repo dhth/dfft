@@ -44,7 +44,7 @@ pub fn update(model: &mut Model, msg: Msg) -> Vec<Cmd> {
                     cache: model.cache(),
                     sender: model.watch_updates_tx.clone(),
                     cancellation_token: model.get_cancellation_token(),
-                    prepopulate_cache: false,
+                    prepopulate_cache: true,
                 });
             }
         }
