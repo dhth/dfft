@@ -1,4 +1,4 @@
-use super::helpers::{get_ignore, is_file_to_be_ignored};
+use super::helpers::{get_ignore, is_file_to_be_ignored, is_file_too_large};
 use crate::domain::{Change, ChangeKind, Diff, FileCache, Modification, WatchUpdate};
 use anyhow::Context;
 use ignore::{Walk, gitignore::Gitignore};
@@ -81,7 +81,11 @@ pub async fn watch_for_changes(
                                 EventKind::Create(CreateKind::File) => {
                                     for path in &event.paths {
                                         debug!("got create event, path: {}", &path.to_string_lossy());
-                                        if is_file_to_be_ignored(path, &gitignore, true).await {
+                                        if is_file_to_be_ignored(path, &gitignore).await {
+                                            continue;
+                                        }
+
+                                        if is_file_too_large(path).await {
                                             continue;
                                         }
 
@@ -130,7 +134,7 @@ pub async fn watch_for_changes(
                                 EventKind::Modify(modify_kind) => {
                                     for path in &event.paths {
                                         debug!("got modify event, path: {}", &path.to_string_lossy());
-                                        if is_file_to_be_ignored(path, &gitignore, false).await {
+                                        if is_file_to_be_ignored(path, &gitignore).await {
                                             continue;
                                         }
 
@@ -163,6 +167,9 @@ pub async fn watch_for_changes(
                                             continue;
                                         };
 
+                                        if is_file_too_large(path).await {
+                                            continue;
+                                        }
 
                                         let change = match tokio::fs::read_to_string(path).await {
                                             Ok(contents) => {
@@ -214,7 +221,7 @@ pub async fn watch_for_changes(
                                 EventKind::Remove(RemoveKind::File) => {
                                     for path in &event.paths {
                                         debug!("got delete event, path: {}", &path.to_string_lossy());
-                                        if is_file_to_be_ignored(path, &gitignore, false).await {
+                                        if is_file_to_be_ignored(path, &gitignore).await {
                                             continue;
                                         }
 
@@ -279,7 +286,11 @@ where
             continue;
         }
 
-        if is_file_to_be_ignored(path, gitignore, true).await {
+        if is_file_to_be_ignored(path, gitignore).await {
+            continue;
+        }
+
+        if is_file_too_large(path).await {
             continue;
         }
 
