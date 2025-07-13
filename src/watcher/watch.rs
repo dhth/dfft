@@ -93,7 +93,6 @@ pub async fn watch_for_changes(
 
                                         let change = match tokio::fs::read_to_string(path).await {
                                             Ok(contents) => {
-
                                                 // Not a 100% sure if we need to check if the path
                                                 // existed in the cache, leaving it in as a
                                                 // safeguard
@@ -210,11 +209,6 @@ pub async fn watch_for_changes(
                                             let mut cache_guard = cache.write().await;
                                             cache_guard.remove(&file_path);
                                         }
-                                        let file_path = path
-                                            .strip_prefix(&root)
-                                            .unwrap_or(path)
-                                            .to_string_lossy()
-                                            .to_string();
                                         let change = Change {
                                             file_path,
                                             kind: ChangeKind::Removed,
