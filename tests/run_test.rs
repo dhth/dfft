@@ -57,7 +57,7 @@ fn turning_off_following_works() {
 fn turning_off_prepopulation_works() {
     // GIVEN
     let fx = Fixture::new();
-    let mut cmd = fx.cmd(["--debug", "run", "--no-prepopulation"]);
+    let mut cmd = fx.cmd(["--debug", "run", "--no-prepop"]);
 
     // WHEN
     // THEN

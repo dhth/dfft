@@ -52,11 +52,11 @@ fn showing_help_for_run_works() {
     Usage: dfft run [OPTIONS]
 
     Options:
-      -F, --no-follow         Start with change following disabled
-          --debug             Output debug information without doing anything
-      -P, --no-prepopulation  Skip prepopulating cache with existing file snapshots
-      -W, --no-watch          Start with file watching disabled
-      -h, --help              Print help
+      -F, --no-follow  Start with change following disabled
+          --debug      Output debug information without doing anything
+      -P, --no-prepop  Skip prepopulating cache with existing file snapshots
+      -W, --no-watch   Start with file watching disabled
+      -h, --help       Print help
 
     ----- stderr -----
     ");
