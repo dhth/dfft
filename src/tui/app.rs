@@ -1,3 +1,4 @@
+use super::TuiBehaviours;
 use super::cmd::Cmd;
 use super::common::*;
 use super::handle::handle_command;
@@ -16,8 +17,8 @@ use tokio::sync::mpsc::{Receiver, Sender};
 
 const EVENT_POLL_DURATION_MS: u64 = 16;
 
-pub async fn run(root: PathBuf) -> anyhow::Result<()> {
-    let mut tui = AppTui::new(root)?;
+pub async fn run(root: PathBuf, behaviours: TuiBehaviours) -> anyhow::Result<()> {
+    let mut tui = AppTui::new(root, behaviours)?;
     tui.run().await
 }
 
@@ -29,7 +30,7 @@ struct AppTui {
 }
 
 impl AppTui {
-    pub fn new(root: PathBuf) -> anyhow::Result<Self> {
+    pub fn new(root: PathBuf, behaviours: TuiBehaviours) -> anyhow::Result<Self> {
         let terminal = ratatui::try_init()?;
         let (event_tx, event_rx) = mpsc::channel(10);
 
@@ -39,7 +40,7 @@ impl AppTui {
 
         let debug = std::env::var("DFFT_DEBUG").unwrap_or_default().trim() == "1";
 
-        let model = Model::new(root, terminal_dimensions, true, debug);
+        let model = Model::new(behaviours, root, terminal_dimensions, debug);
 
         Ok(Self {
             terminal,
@@ -57,14 +58,16 @@ impl AppTui {
         self.terminal.draw(|f| view(&mut self.model, f))?;
 
         let mut initial_cmds = vec![];
-        let changes_tx = self.model.watch_updates_tx.clone();
-        initial_cmds.push(Cmd::WatchForChanges {
-            root: self.model.root.clone(), // TODO: prevent cloning here
-            cache: self.model.cache(),
-            sender: changes_tx,
-            cancellation_token: self.model.get_cancellation_token(),
-            prepopulate_cache: true,
-        });
+        if self.model.behaviours.watch {
+            let changes_tx = self.model.watch_updates_tx.clone();
+            initial_cmds.push(Cmd::WatchForChanges {
+                root: self.model.root.clone(), // TODO: prevent cloning here
+                cache: self.model.cache(),
+                sender: changes_tx,
+                cancellation_token: self.model.get_cancellation_token(),
+                prepopulate_cache: self.model.behaviours.prepopulate_cache,
+            });
+        }
 
         for cmd in initial_cmds {
             handle_command(cmd.clone(), self.event_tx.clone()).await;

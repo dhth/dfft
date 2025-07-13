@@ -54,8 +54,8 @@ publish-dry:
 test:
   cargo nextest run
 
-run:
-  cargo run
+run *FLAGS:
+  cargo run {{FLAGS}}
 
 review:
   cargo insta test --review

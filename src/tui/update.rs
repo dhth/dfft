@@ -36,10 +36,10 @@ pub fn update(model: &mut Model, msg: Msg) -> Vec<Cmd> {
             }
         }
         Msg::ToggleFollowChanges => {
-            model.follow_changes = !model.follow_changes;
+            model.behaviours.follow_changes = !model.behaviours.follow_changes;
         }
         Msg::ToggleWatching => {
-            if model.watching {
+            if model.behaviours.watch {
                 model.pause_watching();
             } else {
                 model.regenerate_cancellation_token();
@@ -48,7 +48,7 @@ pub fn update(model: &mut Model, msg: Msg) -> Vec<Cmd> {
                     cache: model.cache(),
                     sender: model.watch_updates_tx.clone(),
                     cancellation_token: model.get_cancellation_token(),
-                    prepopulate_cache: true,
+                    prepopulate_cache: model.behaviours.prepopulate_cache,
                 });
             }
         }
@@ -57,11 +57,11 @@ pub fn update(model: &mut Model, msg: Msg) -> Vec<Cmd> {
         // this is just to trigger a render of TUI
         Msg::PrepopulationFinished => {}
         Msg::PrepopulationFailed(e) => {
-            model.watching = false;
+            model.behaviours.watch = false;
             model.user_msg = Some(UserMsg::error(format!("prepopulating changes failed: {e}")));
         }
         Msg::WatchingFailed(e) => {
-            model.watching = false;
+            model.behaviours.watch = false;
             model.user_msg = Some(UserMsg::error(format!("watching for changes failed: {e}")));
         }
     }

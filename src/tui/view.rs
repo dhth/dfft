@@ -282,7 +282,7 @@ fn render_status_line(model: &Model, frame: &mut Frame, rect: Rect) {
         ));
     }
 
-    let (watching_label, watching_color) = if model.watching {
+    let (watching_label, watching_color) = if model.behaviours.watch {
         (WATCHING_LABEL, WATCHING_COLOR)
     } else {
         (PAUSED_LABEL, PAUSED_COLOR)
@@ -293,7 +293,7 @@ fn render_status_line(model: &Model, frame: &mut Frame, rect: Rect) {
         Style::default().fg(watching_color).bold(),
     ));
 
-    if model.follow_changes {
+    if model.behaviours.follow_changes {
         status_bar_lines.push(Span::styled(
             " [following changes]",
             Style::default().fg(FOLLOWING_CHANGES_COLOR).bold(),

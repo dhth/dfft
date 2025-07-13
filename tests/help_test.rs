@@ -1,0 +1,63 @@
+mod common;
+
+use common::Fixture;
+use insta_cmd::assert_cmd_snapshot;
+
+//-------------//
+//  SUCCESSES  //
+//-------------//
+
+#[test]
+fn showing_help_works() {
+    // GIVEN
+    let fx = Fixture::new();
+    let mut cmd = fx.cmd(["--help"]);
+
+    // WHEN
+    // THEN
+    assert_cmd_snapshot!(cmd, @r"
+    success: true
+    exit_code: 0
+    ----- stdout -----
+    dfft shows you changes to files in a directory as they happen
+
+    Usage: dfft [OPTIONS] <COMMAND>
+
+    Commands:
+      run   Run dfft's TUI
+      help  Print this message or the help of the given subcommand(s)
+
+    Options:
+          --debug  Output debug information without doing anything
+      -h, --help   Print help
+
+    ----- stderr -----
+    ");
+}
+
+#[test]
+fn showing_help_for_run_works() {
+    // GIVEN
+    let fx = Fixture::new();
+    let mut cmd = fx.cmd(["run", "--help"]);
+
+    // WHEN
+    // THEN
+    assert_cmd_snapshot!(cmd, @r"
+    success: true
+    exit_code: 0
+    ----- stdout -----
+    Run dfft's TUI
+
+    Usage: dfft run [OPTIONS]
+
+    Options:
+      -F, --no-follow         Start with change following disabled
+          --debug             Output debug information without doing anything
+      -P, --no-prepopulation  Skip prepopulating cache with existing file snapshots
+      -W, --no-watch          Start with file watching disabled
+      -h, --help              Print help
+
+    ----- stderr -----
+    ");
+}

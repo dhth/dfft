@@ -17,6 +17,7 @@ exclude = [
 
 [dependencies]
 anyhow = "1.0.98"
+clap = { version = "4.5.32", features = ["derive"] }
 console = "0.16.0"
 etcetera = "0.10.0"
 ignore = "0.4.23"
@@ -32,6 +33,7 @@ tracing-subscriber = { version = "0.3.19", features = ["env-filter"] }
 
 [dev-dependencies]
 insta = "1.43.1"
+insta-cmd = "0.6.0"
 strip-ansi-escapes = "0.2.1"
 
 [lints.clippy]
