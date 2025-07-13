@@ -15,14 +15,14 @@ pub struct Args {
 pub enum DfftCommand {
     /// Run dfft's TUI
     Run {
-        /// Start with change following disabled
-        #[arg(short = 'F', long = "no-follow")]
-        no_follow: bool,
-        /// Skip prepopulating cache with existing file snapshots
-        #[arg(short = 'P', long = "no-prepop")]
+        /// Start with change following enabled
+        #[arg(short = 'f', long = "follow")]
+        follow_changes: bool,
+        /// Skip prepopulating cache with file snapshots
+        #[arg(long = "no-prepop")]
         no_prepopulation: bool,
         /// Start with file watching disabled
-        #[arg(short = 'W', long = "no-watch")]
+        #[arg(long = "no-watch")]
         no_watch: bool,
     },
 }
@@ -31,15 +31,15 @@ impl std::fmt::Display for Args {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let output = match &self.command {
             DfftCommand::Run {
-                no_follow,
+                follow_changes,
                 no_prepopulation,
                 no_watch,
             } => format!(
                 r#"
-Command:                                                  Run TUI
-Start with change following disabled:                     {no_follow}
-Skip prepopulating cache with existing file snapshots:    {no_prepopulation}
-Start with file watching disabled:                        {no_watch}
+Command:                                         Run TUI
+Start with change following enabled:             {follow_changes}
+Skip prepopulating cache with file snapshots:    {no_prepopulation}
+Start with file watching disabled:               {no_watch}
 "#,
             ),
         };
