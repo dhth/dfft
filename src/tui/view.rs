@@ -134,7 +134,7 @@ fn render_diff_pane(model: &mut Model, frame: &mut Frame, rect: Rect) {
                     ChangeKind::Created(Ok(contents)) => contents
                         .lines()
                         .skip(model.diff_scroll)
-                        .map(|line| Line::raw(line.to_string()))
+                        .map(Line::raw)
                         .collect(),
                     ChangeKind::Created(Err(e)) => {
                         vec![Line::raw(format!("error reading file contents: {e}"))]
