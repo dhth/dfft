@@ -4,7 +4,7 @@ use anyhow::Context;
 use ignore::{Walk, gitignore::Gitignore};
 use notify::EventKind;
 use notify::RecursiveMode;
-use notify::event::{CreateKind, RemoveKind};
+use notify::event::{CreateKind, ModifyKind, RemoveKind};
 use notify_debouncer_full::new_debouncer;
 use std::path::Path;
 use std::path::PathBuf;
@@ -26,6 +26,8 @@ const PREPOPULATION_MAX_THRESHOLD: usize = 10000;
 // - rm existing.txt                                                           = REMOVED
 // - creation via a temp file (new.txt.tmp -> rename to new.txt)               = CREATED
 // - modification via a temp file (existing.txt.tmp -> rename to existing.txt) = MODIFIED
+//
+// the last two are how files are sometimes created/modified by agents/editors
 pub async fn watch_for_changes(
     root: PathBuf,
     cache: Arc<RwLock<FileCache>>,
@@ -126,7 +128,7 @@ pub async fn watch_for_changes(
                                         }
                                     }
                                 }
-                                EventKind::Modify(_) => {
+                                EventKind::Modify(modify_kind) => {
                                     for path in &event.paths {
                                         debug!("got modify event, path: {}", &path.to_string_lossy());
                                         if is_file_to_be_ignored(path, &gitignore, false).await {
@@ -154,15 +156,23 @@ pub async fn watch_for_changes(
                                                             })
                                                     }
                                                     None => {
-                                                        // Some agents will create a temporary
-                                                        // file and then rename it to the
-                                                        // target file, registering a MODIFY
-                                                        // event instead of a CREATE, but for
-                                                        // our purposes, the file was CREATED
-                                                        Some(Change {
-                                                            file_path,
-                                                            kind: ChangeKind::Created(Ok(contents)),
-                                                        })
+                                                        match modify_kind {
+                                                            ModifyKind::Name(_) => {
+                                                                // Some agents will create a temporary
+                                                                // file and then rename it to the
+                                                                // target file, registering a MODIFY
+                                                                // event instead of a CREATE, but for
+                                                                // our purposes, the file was CREATED
+                                                                Some(Change {
+                                                                    file_path,
+                                                                    kind: ChangeKind::Created(Ok(contents)),
+                                                                })
+                                                            }
+                                                            _ => Some(Change {
+                                                                file_path,
+                                                                kind: ChangeKind::Modified(Ok(Modification::InitialSnapshot)),
+                                                            })
+                                                        }
                                                     }
                                                 }
                                             }
