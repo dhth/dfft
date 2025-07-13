@@ -60,6 +60,7 @@ impl AppTui {
         let changes_tx = self.model.watch_updates_tx.clone();
         initial_cmds.push(Cmd::WatchForChanges {
             root: self.model.root.clone(), // TODO: prevent cloning here
+            cache: self.model.cache(),
             sender: changes_tx,
             cancellation_token: self.model.get_cancellation_token(),
             prepopulate_cache: true,
@@ -88,10 +89,9 @@ impl AppTui {
 
                 Some(watch_update) = self.model.watch_updates_rx.recv() => {
                     let msg = match watch_update {
-                        WatchUpdate::PrepopulationBegan => Msg::PrepopulationBegan,
                         WatchUpdate::ChangeReceived(change) => Msg::ChangeReceived(change),
-                        WatchUpdate::PrepopulationEnded(i) => Msg::PrepopulationEnded(i),
-                        WatchUpdate::ErrorOccurred(e) => Msg::WatchingFailed(e),
+                        WatchUpdate::PrepopulationFinished => Msg::PrepopulationFinished,
+                        WatchUpdate::PrepopulationError(e) => Msg::PrepopulationFailed(e),
                     };
                     let _ = self.event_tx.try_send(msg);
                 }

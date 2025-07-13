@@ -20,6 +20,7 @@ const WATCHING_COLOR: Color = Color::from_u32(0xbabbf1);
 const PAUSED_COLOR: Color = Color::from_u32(0xef9f76);
 const WATCHING_LABEL: &str = " [watching]";
 const PAUSED_LABEL: &str = " [ paused ]";
+const SNAPSHOTS_COLOR: Color = Color::from_u32(0x8bd5ca);
 const FOLLOWING_CHANGES_COLOR: Color = Color::from_u32(0xca9ee6);
 const HELP_COLOR: Color = Color::from_u32(0x8caaee);
 const DIM_COLOR: Color = Color::Gray;
@@ -266,6 +267,15 @@ fn render_status_line(model: &Model, frame: &mut Frame, rect: Rect) {
             .bg(PRIMARY_COLOR)
             .fg(PANE_TITLE_FG_COLOR),
     )];
+
+    if let Some(n) = model.snapshots_in_memory()
+        && n > 0
+    {
+        status_bar_lines.push(Span::styled(
+            format!(" [{n} snapshots in memory]"),
+            Style::default().fg(SNAPSHOTS_COLOR).bold(),
+        ));
+    }
 
     let (watching_label, watching_color) = if model.watching {
         (WATCHING_LABEL, WATCHING_COLOR)

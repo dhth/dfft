@@ -44,7 +44,7 @@ where
     ))
 }
 
-pub(super) fn is_file_to_be_ignored<P>(path: P, gitignore: &Option<Gitignore>) -> bool
+pub(super) async fn is_file_to_be_ignored<P>(path: P, gitignore: &Option<Gitignore>) -> bool
 where
     P: AsRef<Path>,
 {
@@ -56,7 +56,10 @@ where
     }
 
     // other reasons for ignoring files
-    if is_file_too_large(&path, MAX_FILE_SIZE).unwrap_or(true) {
+    if is_file_too_large(&path, MAX_FILE_SIZE)
+        .await
+        .unwrap_or(true)
+    {
         return true;
     }
 
@@ -79,11 +82,11 @@ where
     }
 }
 
-fn is_file_too_large<P>(path: P, max_size: u64) -> anyhow::Result<bool>
+async fn is_file_too_large<P>(path: P, max_size: u64) -> anyhow::Result<bool>
 where
     P: AsRef<Path>,
 {
-    match std::fs::metadata(path) {
+    match tokio::fs::metadata(path).await {
         Ok(metadata) => Ok(metadata.len() > max_size),
         Err(_) => Ok(true),
     }
