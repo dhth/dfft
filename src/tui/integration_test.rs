@@ -228,7 +228,7 @@ fn diff_pane_doesnt_scroll_beyond_limits() {
 
     let change = Change {
         file_path: "modified_file.txt".to_string(),
-        kind: ChangeKind::Modified(Ok(Modification::Diff(Some(diff)))),
+        kind: ChangeKind::Modified(Ok(Modification::Diff(diff))),
     };
     update(&mut model, Msg::ChangeReceived(change));
 
@@ -539,7 +539,7 @@ line 2
     .expect("diff should've been generated");
     let change = Change {
         file_path: "modified_file.txt".to_string(),
-        kind: ChangeKind::Modified(Ok(Modification::Diff(Some(diff)))),
+        kind: ChangeKind::Modified(Ok(Modification::Diff(diff))),
     };
     update(&mut model, Msg::ChangeReceived(change));
 
@@ -952,7 +952,7 @@ fn diff_pane_renders_diff_with_several_hunks_correctly() {
 
     let change = Change {
         file_path: "modified_file.txt".to_string(),
-        kind: ChangeKind::Modified(Ok(Modification::Diff(Some(diff)))),
+        kind: ChangeKind::Modified(Ok(Modification::Diff(diff))),
     };
     update(&mut model, Msg::ChangeReceived(change));
 
@@ -1021,7 +1021,7 @@ fn scrolling_diff_works() {
 
     let change = Change {
         file_path: "modified_file.txt".to_string(),
-        kind: ChangeKind::Modified(Ok(Modification::Diff(Some(diff)))),
+        kind: ChangeKind::Modified(Ok(Modification::Diff(diff))),
     };
     update(&mut model, Msg::ChangeReceived(change));
     terminal
@@ -1112,7 +1112,7 @@ fn diff_scroll_is_reset_when_follow_mode_is_on() {
 
     let change = Change {
         file_path: "modified_file.txt".to_string(),
-        kind: ChangeKind::Modified(Ok(Modification::Diff(Some(diff)))),
+        kind: ChangeKind::Modified(Ok(Modification::Diff(diff))),
     };
     update(&mut model, Msg::ChangeReceived(change));
     for _ in 1..=4 {
@@ -1160,7 +1160,7 @@ fn diff_scroll_is_reset_when_follow_mode_is_on() {
 
     let change = Change {
         file_path: "another_modified_file.txt".to_string(),
-        kind: ChangeKind::Modified(Ok(Modification::Diff(Some(diff)))),
+        kind: ChangeKind::Modified(Ok(Modification::Diff(diff))),
     };
     update(&mut model, Msg::ChangeReceived(change));
     terminal
@@ -1215,7 +1215,7 @@ fn diff_scroll_is_reset_when_another_change_is_selected() {
 
     let change = Change {
         file_path: "modified_file.txt".to_string(),
-        kind: ChangeKind::Modified(Ok(Modification::Diff(Some(diff)))),
+        kind: ChangeKind::Modified(Ok(Modification::Diff(diff))),
     };
     update(&mut model, Msg::ChangeReceived(change));
 
@@ -1232,7 +1232,7 @@ fn diff_scroll_is_reset_when_another_change_is_selected() {
 
     let change = Change {
         file_path: "another_modified_file.txt".to_string(),
-        kind: ChangeKind::Modified(Ok(Modification::Diff(Some(diff)))),
+        kind: ChangeKind::Modified(Ok(Modification::Diff(diff))),
     };
     update(&mut model, Msg::ChangeReceived(change));
     terminal
@@ -1319,7 +1319,7 @@ fn max_scroll_for_diff_is_reset_when_change_list_is_reset() {
 
     let change = Change {
         file_path: "modified_file.txt".to_string(),
-        kind: ChangeKind::Modified(Ok(Modification::Diff(Some(diff)))),
+        kind: ChangeKind::Modified(Ok(Modification::Diff(diff))),
     };
     update(&mut model, Msg::ChangeReceived(change));
 
@@ -1363,7 +1363,7 @@ fn max_scroll_for_diff_is_reset_when_change_list_is_reset() {
 
     let change = Change {
         file_path: "newly_modified_file.txt".to_string(),
-        kind: ChangeKind::Modified(Ok(Modification::Diff(Some(diff)))),
+        kind: ChangeKind::Modified(Ok(Modification::Diff(diff))),
     };
     update(&mut model, Msg::ChangeReceived(change));
     for _ in 1..=4 {
@@ -1421,7 +1421,7 @@ fn max_scroll_for_diff_is_recomputed_when_terminal_height_changes() {
 
     let change = Change {
         file_path: "modified_file.txt".to_string(),
-        kind: ChangeKind::Modified(Ok(Modification::Diff(Some(diff)))),
+        kind: ChangeKind::Modified(Ok(Modification::Diff(diff))),
     };
     update(&mut model, Msg::ChangeReceived(change));
 
@@ -1710,52 +1710,6 @@ fn main_view_renders_initial_snapshot_change() {
     "┌ changes (1/1) ───────────────────────────────────────────────────────────────┐"
     "│                                                                              │"
     "│>  modified  snapshot_file.txt                                                │"
-    "│                                                                              │"
-    "│                                                                              │"
-    "│                                                                              │"
-    "│                                                                              │"
-    "│                                                                              │"
-    "│                                                                              │"
-    "│                                                                              │"
-    "│                                                                              │"
-    "└──────────────────────────────────────────────────────────────────────────────┘"
-    " dfft  [watching]                                                               "
-    "#);
-}
-
-#[test]
-fn main_view_renders_modified_file_with_no_diff() {
-    // GIVEN
-    let (mut terminal, terminal_dimensions) = get_test_terminal();
-    let mut model = Model::new(PathBuf::new(), terminal_dimensions, true, false);
-
-    let change = Change {
-        file_path: "no_diff_file.txt".to_string(),
-        kind: ChangeKind::Modified(Ok(Modification::Diff(None))),
-    };
-    update(&mut model, Msg::ChangeReceived(change));
-
-    // WHEN
-    terminal
-        .draw(|f| view(&mut model, f))
-        .expect("frame should've been drawn");
-
-    // THEN
-    assert_snapshot!(terminal.backend(), @r#"
-    "┌ diff ────────────────────────────────────────────────────────────────────────┐"
-    "│                                                                              │"
-    "│ nothing changed                                                              │"
-    "│                                                                              │"
-    "│                                                                              │"
-    "│                                                                              │"
-    "│                                                                              │"
-    "│                                                                              │"
-    "│                                                                              │"
-    "│                                                                              │"
-    "└──────────────────────────────────────────────────────────────────────────────┘"
-    "┌ changes (1/1) ───────────────────────────────────────────────────────────────┐"
-    "│                                                                              │"
-    "│>  modified  no_diff_file.txt                                                 │"
     "│                                                                              │"
     "│                                                                              │"
     "│                                                                              │"
@@ -2536,7 +2490,7 @@ fn max_scroll_for_diff_doesnt_change_when_only_terminal_width_changes() {
 
     let change = Change {
         file_path: "modified_file.txt".to_string(),
-        kind: ChangeKind::Modified(Ok(Modification::Diff(Some(diff)))),
+        kind: ChangeKind::Modified(Ok(Modification::Diff(diff))),
     };
     update(&mut model, Msg::ChangeReceived(change));
     for _ in 1..=5 {
@@ -2587,7 +2541,7 @@ fn max_scroll_for_diff_is_recomputed_when_terminal_size_crosses_minimum_threshol
 
     let change = Change {
         file_path: "modified_file.txt".to_string(),
-        kind: ChangeKind::Modified(Ok(Modification::Diff(Some(diff)))),
+        kind: ChangeKind::Modified(Ok(Modification::Diff(diff))),
     };
     update(&mut model, Msg::ChangeReceived(change));
     for _ in 1..=5 {

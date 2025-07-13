@@ -441,9 +441,7 @@ impl Model {
 
         self.max_diff_scroll_available = match change_item {
             Some(item) => match &item.change.kind {
-                ChangeKind::Modified(Ok(Modification::Diff(Some(diff))))
-                    if !self.terminal_too_small =>
-                {
+                ChangeKind::Modified(Ok(Modification::Diff(diff))) if !self.terminal_too_small => {
                     diff.num_lines().saturating_sub(available_height)
                 }
                 ChangeKind::Created(Ok(contents)) if !self.terminal_too_small => {

@@ -107,7 +107,7 @@ pub async fn watch_for_changes(
                                                         Diff::new(&old, &contents).map(|diff| Change {
                                                                 file_path,
                                                                 kind: ChangeKind::Modified(Ok(
-                                                                    Modification::Diff(Some(diff)),
+                                                                    Modification::Diff(diff),
                                                                 )),
                                                             })
                                                     }
@@ -158,7 +158,7 @@ pub async fn watch_for_changes(
                                                         Diff::new(&old, &contents).map(|diff| Change {
                                                                 file_path,
                                                                 kind: ChangeKind::Modified(Ok(
-                                                                    Modification::Diff(Some(diff)),
+                                                                    Modification::Diff(diff),
                                                                 )),
                                                             })
                                                     }

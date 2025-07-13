@@ -22,5 +22,5 @@ pub enum ChangeKind {
 #[derive(Clone, Debug)]
 pub enum Modification {
     InitialSnapshot,
-    Diff(Option<Diff>),
+    Diff(Diff),
 }
