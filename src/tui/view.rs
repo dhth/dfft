@@ -194,6 +194,8 @@ fn render_changes_pane(model: &mut Model, frame: &mut Frame, rect: Rect) {
 
     let title = if items.is_empty() {
         " changes ".to_string()
+    } else if let Some(i) = model.changes.state.selected() {
+        format!(" changes ({}/{}) ", i + 1, items.len())
     } else {
         format!(" changes ({}) ", items.len())
     };
