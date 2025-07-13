@@ -20,9 +20,9 @@ async fn main() -> anyhow::Result<()> {
         return Ok(());
     }
 
-    match &args.command {
+    match args.command {
         DfftCommand::Run {
-            no_follow,
+            follow_changes,
             no_prepopulation,
             no_watch,
         } => {
@@ -34,7 +34,7 @@ async fn main() -> anyhow::Result<()> {
 
             let behaviours = TuiBehaviours {
                 watch: !no_watch,
-                follow_changes: !no_follow,
+                follow_changes,
                 prepopulate_cache: !no_prepopulation,
             };
             tui::run(root, behaviours).await?;

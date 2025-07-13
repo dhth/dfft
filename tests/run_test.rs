@@ -21,10 +21,10 @@ fn debug_flag_works() {
     ----- stdout -----
     DEBUG INFO:
 
-    Command:                                                  Run TUI
-    Start with change following disabled:                     false
-    Skip prepopulating cache with existing file snapshots:    false
-    Start with file watching disabled:                        false
+    Command:                                         Run TUI
+    Start with change following enabled:             false
+    Skip prepopulating cache with file snapshots:    false
+    Start with file watching disabled:               false
 
     ----- stderr -----
     ");
@@ -34,7 +34,7 @@ fn debug_flag_works() {
 fn turning_off_following_works() {
     // GIVEN
     let fx = Fixture::new();
-    let mut cmd = fx.cmd(["--debug", "run", "--no-follow"]);
+    let mut cmd = fx.cmd(["run", "--follow", "--debug"]);
 
     // WHEN
     // THEN
@@ -44,10 +44,10 @@ fn turning_off_following_works() {
     ----- stdout -----
     DEBUG INFO:
 
-    Command:                                                  Run TUI
-    Start with change following disabled:                     true
-    Skip prepopulating cache with existing file snapshots:    false
-    Start with file watching disabled:                        false
+    Command:                                         Run TUI
+    Start with change following enabled:             true
+    Skip prepopulating cache with file snapshots:    false
+    Start with file watching disabled:               false
 
     ----- stderr -----
     ");
@@ -57,7 +57,7 @@ fn turning_off_following_works() {
 fn turning_off_prepopulation_works() {
     // GIVEN
     let fx = Fixture::new();
-    let mut cmd = fx.cmd(["--debug", "run", "--no-prepop"]);
+    let mut cmd = fx.cmd(["run", "--no-prepop", "--debug"]);
 
     // WHEN
     // THEN
@@ -67,10 +67,10 @@ fn turning_off_prepopulation_works() {
     ----- stdout -----
     DEBUG INFO:
 
-    Command:                                                  Run TUI
-    Start with change following disabled:                     false
-    Skip prepopulating cache with existing file snapshots:    true
-    Start with file watching disabled:                        false
+    Command:                                         Run TUI
+    Start with change following enabled:             false
+    Skip prepopulating cache with file snapshots:    true
+    Start with file watching disabled:               false
 
     ----- stderr -----
     ");
@@ -80,7 +80,7 @@ fn turning_off_prepopulation_works() {
 fn turning_off_watching_works() {
     // GIVEN
     let fx = Fixture::new();
-    let mut cmd = fx.cmd(["--debug", "run", "--no-watch"]);
+    let mut cmd = fx.cmd(["run", "--no-watch", "--debug"]);
 
     // WHEN
     // THEN
@@ -90,33 +90,10 @@ fn turning_off_watching_works() {
     ----- stdout -----
     DEBUG INFO:
 
-    Command:                                                  Run TUI
-    Start with change following disabled:                     false
-    Skip prepopulating cache with existing file snapshots:    false
-    Start with file watching disabled:                        true
-
-    ----- stderr -----
-    ");
-}
-
-#[test]
-fn short_flags_work() {
-    // GIVEN
-    let fx = Fixture::new();
-    let mut cmd = fx.cmd(["--debug", "run", "-F", "-P", "-W"]);
-
-    // WHEN
-    // THEN
-    assert_cmd_snapshot!(cmd, @r"
-    success: true
-    exit_code: 0
-    ----- stdout -----
-    DEBUG INFO:
-
-    Command:                                                  Run TUI
-    Start with change following disabled:                     true
-    Skip prepopulating cache with existing file snapshots:    true
-    Start with file watching disabled:                        true
+    Command:                                         Run TUI
+    Start with change following enabled:             false
+    Skip prepopulating cache with file snapshots:    false
+    Start with file watching disabled:               true
 
     ----- stderr -----
     ");
