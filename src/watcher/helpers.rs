@@ -47,7 +47,7 @@ where
 pub(super) async fn is_file_to_be_ignored<P>(
     path: P,
     gitignore: &Option<Gitignore>,
-    file_removed: bool,
+    check_size: bool,
 ) -> bool
 where
     P: AsRef<Path>,
@@ -59,16 +59,15 @@ where
         return true;
     }
 
-    // skip file size check for removed files since they no longer exist
-    if !file_removed
+    if is_extension_to_be_ignored(&path).unwrap_or(true) {
+        return true;
+    }
+
+    if check_size
         && is_file_too_large(&path, MAX_FILE_SIZE)
             .await
             .unwrap_or(true)
     {
-        return true;
-    }
-
-    if is_extension_to_be_ignored(&path).unwrap_or(true) {
         return true;
     }
 

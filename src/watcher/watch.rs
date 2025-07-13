@@ -81,7 +81,7 @@ pub async fn watch_for_changes(
                                 EventKind::Create(CreateKind::File) => {
                                     for path in &event.paths {
                                         debug!("got create event, path: {}", &path.to_string_lossy());
-                                        if is_file_to_be_ignored(path, &gitignore, false).await {
+                                        if is_file_to_be_ignored(path, &gitignore, true).await {
                                             continue;
                                         }
 
@@ -128,13 +128,6 @@ pub async fn watch_for_changes(
                                     }
                                 }
                                 EventKind::Modify(modify_kind) => {
-                                    // renames are tricky to handle
-                                    // two events might show up for a rename, with the modify kind
-                                    // ModifyKind::Any, in which case it's tricky to determine
-                                    // which path no longer exists
-                                    // As such, the older path will remain in the cache, which is a
-                                    // bug
-                                    // TODO: fix the bug mentioned above
                                     for path in &event.paths {
                                         debug!("got modify event, path: {}", &path.to_string_lossy());
                                         if is_file_to_be_ignored(path, &gitignore, false).await {
@@ -146,6 +139,31 @@ pub async fn watch_for_changes(
                                             .unwrap_or(path)
                                             .to_string_lossy()
                                             .to_string();
+
+                                        // Renames are tricky to handle
+                                        // Two events might show up for a rename, with the modify kind
+                                        // ModifyKind::Any, in which case it's tricky to determine
+                                        // which path no longer exists
+                                        // Sometimes a file removal also shows up as a modification
+                                        if !tokio::fs::try_exists(path).await.unwrap_or(true) {
+                                            let was_held = {
+                                                let mut cache_guard = cache.write().await;
+                                                cache_guard.remove(&file_path).is_some()
+                                            };
+
+                                            if was_held {
+                                                let change = Change {
+                                                    file_path,
+                                                    kind: ChangeKind::Removed,
+                                                };
+
+                                                let _ = updates_tx.send(WatchUpdate::ChangeReceived(change)).await;
+                                            }
+
+                                            continue;
+                                        };
+
+
                                         let change = match tokio::fs::read_to_string(path).await {
                                             Ok(contents) => {
                                                 let was_held = {
@@ -196,7 +214,7 @@ pub async fn watch_for_changes(
                                 EventKind::Remove(RemoveKind::File) => {
                                     for path in &event.paths {
                                         debug!("got delete event, path: {}", &path.to_string_lossy());
-                                        if is_file_to_be_ignored(path, &gitignore, true).await {
+                                        if is_file_to_be_ignored(path, &gitignore, false).await {
                                             continue;
                                         }
 
@@ -261,7 +279,7 @@ where
             continue;
         }
 
-        if is_file_to_be_ignored(path, gitignore, false).await {
+        if is_file_to_be_ignored(path, gitignore, true).await {
             continue;
         }
 
