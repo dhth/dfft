@@ -25,11 +25,12 @@ pub fn update(model: &mut Model, msg: Msg) -> Vec<Cmd> {
         Msg::SelectPrevious => model.select_previous(),
         Msg::TerminalResize(new_width, new_height) => {
             let height_changed = model.terminal_dimensions.height != new_height;
+            let was_too_small = model.terminal_too_small;
             model.terminal_dimensions.update(new_width, new_height);
             model.terminal_too_small =
                 !(new_width >= MIN_TERMINAL_WIDTH && new_height >= MIN_TERMINAL_HEIGHT);
 
-            if height_changed {
+            if height_changed || was_too_small != model.terminal_too_small {
                 model.compute_max_help_scroll_available();
                 model.compute_max_diff_scroll_available();
             }

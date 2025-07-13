@@ -1,4 +1,4 @@
-use super::common::TerminalDimensions;
+use super::common::{MIN_TERMINAL_HEIGHT, MIN_TERMINAL_WIDTH, TerminalDimensions};
 use super::{msg::Msg, update::update, view::view};
 use crate::domain::{Change, ChangeKind, Diff, Modification};
 use crate::tui::common::Pane;
@@ -8,9 +8,9 @@ use ratatui::{Terminal, backend::TestBackend};
 use std::path::PathBuf;
 
 fn get_test_terminal() -> (Terminal<TestBackend>, TerminalDimensions) {
-    let terminal =
-        Terminal::new(TestBackend::new(80, 24)).expect("terminal should've been created");
-    let terminal_dimensions = TerminalDimensions::from((80, 24));
+    let terminal = Terminal::new(TestBackend::new(MIN_TERMINAL_WIDTH, MIN_TERMINAL_HEIGHT))
+        .expect("terminal should've been created");
+    let terminal_dimensions = TerminalDimensions::from((MIN_TERMINAL_WIDTH, MIN_TERMINAL_HEIGHT));
 
     (terminal, terminal_dimensions)
 }
@@ -1034,7 +1034,7 @@ fn max_scroll_for_diff_is_recomputed_when_terminal_height_changes() {
     " dfft  [watching]                                                               "
     "#);
 
-    let (mut new_terminal, new_terminal_dimensions) = get_test_terminal_with_dims(80, 24);
+    let (mut new_terminal, new_terminal_dimensions) = get_test_terminal();
     update(
         &mut model,
         Msg::TerminalResize(
@@ -1996,7 +1996,7 @@ fn max_scroll_for_created_file_contents_is_recomputed_when_terminal_height_chang
     " dfft  [watching]                                                               "
     "#);
 
-    let (mut new_terminal, new_terminal_dimensions) = get_test_terminal_with_dims(80, 24);
+    let (mut new_terminal, new_terminal_dimensions) = get_test_terminal();
     update(
         &mut model,
         Msg::TerminalResize(
@@ -2067,6 +2067,109 @@ fn max_scroll_for_created_file_contents_is_recomputed_when_terminal_height_chang
     "└──────────────────────────────────────────────────────────────────────────────┘"
     " dfft  [watching]                                                               "
     "#);
+}
+
+#[test]
+fn max_scroll_for_help_doesnt_change_when_only_terminal_width_changes() {
+    // GIVEN
+    let terminal_dimensions = TerminalDimensions::min_needed();
+    let (width, height) = terminal_dimensions.values();
+    let mut model = Model::new(PathBuf::new(), terminal_dimensions, true, false);
+    let max_help_scroll = model.max_help_scroll_available;
+
+    // WHEN
+    update(&mut model, Msg::TerminalResize(width + 20, height));
+
+    // THEN
+    assert_eq!(model.max_help_scroll_available, max_help_scroll);
+}
+
+#[test]
+fn max_scroll_for_diff_doesnt_change_when_only_terminal_width_changes() {
+    // GIVEN
+    let terminal_dimensions = TerminalDimensions::min_needed();
+    let (width, height) = terminal_dimensions.values();
+    let mut model = Model::new(PathBuf::new(), terminal_dimensions, true, false);
+    let mut lines = (1..=20).map(|n| format!("line {n}")).collect::<Vec<_>>();
+    let old = lines.join("\n");
+
+    lines[0] = "line 1 (modified)".to_string();
+    lines[1] = "line 2 (modified)".to_string();
+    lines[14] = "line 15 (modified)".to_string();
+    lines[15] = "line 16 (modified)".to_string();
+
+    let new = lines.join("\n");
+
+    let diff = Diff::new(&old, &new).expect("diff should've been created");
+
+    let change = Change {
+        file_path: "modified_file.txt".to_string(),
+        kind: ChangeKind::Modified(Ok(Modification::Diff(Some(diff)))),
+    };
+    update(&mut model, Msg::ChangeReceived(change));
+    for _ in 1..=5 {
+        update(&mut model, Msg::ScrollDown);
+    }
+    let max_diff_scroll = model.max_diff_scroll_available;
+
+    // WHEN
+    // THEN
+    update(&mut model, Msg::TerminalResize(width + 20, height));
+    assert_eq!(model.max_diff_scroll_available, max_diff_scroll);
+}
+
+#[test]
+fn max_scroll_for_help_is_recomputed_when_terminal_size_crosses_minimum_threshold() {
+    // GIVEN
+    let terminal_dimensions = TerminalDimensions::min_needed();
+    let (width, height) = terminal_dimensions.values();
+    let mut model = Model::new(PathBuf::new(), terminal_dimensions, true, false);
+    let max_help_scroll = model.max_help_scroll_available;
+
+    // WHEN
+    // THEN
+    update(&mut model, Msg::TerminalResize(width - 20, height));
+    assert_eq!(model.max_help_scroll_available, 0);
+
+    update(&mut model, Msg::TerminalResize(width + 20, height));
+    assert_eq!(model.max_help_scroll_available, max_help_scroll);
+}
+
+#[test]
+fn max_scroll_for_diff_is_recomputed_when_terminal_size_crosses_minimum_threshold() {
+    // GIVEN
+    let terminal_dimensions = TerminalDimensions::min_needed();
+    let (width, height) = terminal_dimensions.values();
+    let mut model = Model::new(PathBuf::new(), terminal_dimensions, true, false);
+    let mut lines = (1..=20).map(|n| format!("line {n}")).collect::<Vec<_>>();
+    let old = lines.join("\n");
+
+    lines[0] = "line 1 (modified)".to_string();
+    lines[1] = "line 2 (modified)".to_string();
+    lines[14] = "line 15 (modified)".to_string();
+    lines[15] = "line 16 (modified)".to_string();
+
+    let new = lines.join("\n");
+
+    let diff = Diff::new(&old, &new).expect("diff should've been created");
+
+    let change = Change {
+        file_path: "modified_file.txt".to_string(),
+        kind: ChangeKind::Modified(Ok(Modification::Diff(Some(diff)))),
+    };
+    update(&mut model, Msg::ChangeReceived(change));
+    for _ in 1..=5 {
+        update(&mut model, Msg::ScrollDown);
+    }
+    let max_diff_scroll = model.max_diff_scroll_available;
+
+    // WHEN
+    // THEN
+    update(&mut model, Msg::TerminalResize(width - 20, height));
+    assert_eq!(model.max_diff_scroll_available, 0);
+
+    update(&mut model, Msg::TerminalResize(width + 20, height));
+    assert_eq!(model.max_diff_scroll_available, max_diff_scroll);
 }
 
 #[test]

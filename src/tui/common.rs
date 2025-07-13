@@ -38,6 +38,19 @@ impl TerminalDimensions {
         self.width = new_width;
         self.height = new_height;
     }
+
+    #[cfg(test)]
+    pub(super) fn values(&self) -> (u16, u16) {
+        (self.width, self.height)
+    }
+
+    #[cfg(test)]
+    pub(super) fn min_needed() -> Self {
+        Self {
+            width: MIN_TERMINAL_WIDTH,
+            height: MIN_TERMINAL_HEIGHT,
+        }
+    }
 }
 
 #[cfg(test)]
