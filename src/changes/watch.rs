@@ -223,13 +223,6 @@ where
             continue;
         }
 
-        if let Some(ignore) = gitignore {
-            if ignore.matched_path_or_any_parents(path, false).is_ignore() {
-                debug!("ignored: {:?}", path);
-                continue;
-            }
-        }
-
         if is_file_to_be_ignored(path, gitignore) {
             continue;
         }
