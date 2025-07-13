@@ -2,7 +2,7 @@ use super::consts::EXTENSIONS_TO_IGNORE;
 use anyhow::Context;
 use ignore::gitignore::Gitignore;
 use ignore::gitignore::GitignoreBuilder;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 
 const GITIGNORE_PATH: &str = ".gitignore";
 const DFFTIGNORE_PATH: &str = ".dfftignore";
@@ -12,10 +12,11 @@ pub(super) fn get_ignore<P>(root: P) -> anyhow::Result<Option<Gitignore>>
 where
     P: AsRef<Path>,
 {
+    let root_path = root.as_ref();
     let ignore_paths = vec![
-        PathBuf::from(".git").join("info").join("exclude"),
-        PathBuf::from(GITIGNORE_PATH),
-        PathBuf::from(DFFTIGNORE_PATH),
+        root_path.join(".git").join("info").join("exclude"),
+        root_path.join(GITIGNORE_PATH),
+        root_path.join(DFFTIGNORE_PATH),
     ];
 
     let mut builder = GitignoreBuilder::new(&root);
