@@ -131,7 +131,11 @@ fn render_diff_pane(model: &mut Model, frame: &mut Frame, rect: Rect) {
             let maybe_change = model.changes.items.get(selected_index);
             let lines = match maybe_change {
                 Some(change) => match &change.change.kind {
-                    ChangeKind::Created(Ok(_)) => vec![Line::raw("created").gray()],
+                    ChangeKind::Created(Ok(contents)) => contents
+                        .lines()
+                        .skip(model.diff_scroll)
+                        .map(Line::raw)
+                        .collect(),
                     ChangeKind::Created(Err(e)) => {
                         vec![Line::raw(format!("error reading file contents: {e}"))]
                     }
@@ -311,12 +315,13 @@ fn render_status_line(model: &Model, frame: &mut Frame, rect: Rect) {
     }
 
     if model.debug {
+        status_bar_lines.push(Span::from(format!(" [render: {}]", model.render_counter)));
+        status_bar_lines.push(Span::from(format!(" [event: {}]", model.event_counter)));
+        status_bar_lines.push(Span::from(format!(" [watch: {}]", model.watch_counter)));
         status_bar_lines.push(Span::from(format!(
-            " [index: {:?}]",
-            model.changes.state.selected()
+            " [dimensions: {}x{}] ",
+            model.terminal_dimensions.width, model.terminal_dimensions.height
         )));
-
-        status_bar_lines.push(Span::from(format!(" [watching: {:?}]", model.watching,)));
     }
 
     let status_bar_text = Line::from(status_bar_lines);

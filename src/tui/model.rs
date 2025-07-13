@@ -147,6 +147,7 @@ pub struct Model {
     pub terminal_too_small: bool,
     pub render_counter: u64,
     pub event_counter: u64,
+    pub watch_counter: u64,
     pub watch_updates_tx: Sender<WatchUpdate>,
     pub watch_updates_rx: Receiver<WatchUpdate>,
     cancellation_token: CancellationToken,
@@ -184,6 +185,7 @@ impl Model {
             terminal_too_small,
             render_counter: 0,
             event_counter: 0,
+            watch_counter: 0,
             watch_updates_tx: changes_tx,
             watch_updates_rx: changes_rx,
             cancellation_token: CancellationToken::new(),
@@ -432,15 +434,19 @@ impl Model {
         let selected_index = self.changes.state.selected();
         let change_item = selected_index.and_then(|i| self.changes.items.get(i));
 
-        let max_scroll = match change_item {
+        //       top border + padding top + lower border + changes pane (fixed) + status bar height
+        // 16 => 1          + 1           + 1            + 12                   + 1
+        let available_height = self.terminal_dimensions.height as usize - 16;
+
+        self.max_diff_scroll_available = match change_item {
             Some(item) => match &item.change.kind {
                 ChangeKind::Modified(Ok(Modification::Diff(Some(diff))))
                     if !self.terminal_too_small =>
                 {
-                    //       top border + padding top + lower border + changes pane (fixed) + status bar height
-                    // 16 => 1          + 1           + 1            + 12                   + 1
-                    let available_height = self.terminal_dimensions.height as usize - 16;
                     diff.num_lines().saturating_sub(available_height)
+                }
+                ChangeKind::Created(Ok(contents)) if !self.terminal_too_small => {
+                    contents.lines().count().saturating_sub(available_height)
                 }
                 _ => 0,
             },
@@ -451,8 +457,6 @@ impl Model {
                 0
             }
         };
-
-        self.max_diff_scroll_available = max_scroll;
     }
 
     pub(super) fn cache(&self) -> Arc<RwLock<FileCache>> {

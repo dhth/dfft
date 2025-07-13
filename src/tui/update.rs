@@ -23,13 +23,17 @@ pub fn update(model: &mut Model, msg: Msg) -> Vec<Cmd> {
         Msg::SelectLast => model.select_last(),
         Msg::SelectNext => model.select_next(),
         Msg::SelectPrevious => model.select_previous(),
-        Msg::TerminalResize(width, height) => {
-            model.terminal_dimensions = TerminalDimensions { width, height };
+        Msg::TerminalResize(new_width, new_height) => {
+            let height_changed = model.terminal_dimensions.height != new_height;
+            let was_too_small = model.terminal_too_small;
+            model.terminal_dimensions.update(new_width, new_height);
             model.terminal_too_small =
-                !(width >= MIN_TERMINAL_WIDTH && height >= MIN_TERMINAL_HEIGHT);
+                !(new_width >= MIN_TERMINAL_WIDTH && new_height >= MIN_TERMINAL_HEIGHT);
 
-            model.compute_max_help_scroll_available();
-            model.compute_max_diff_scroll_available();
+            if height_changed || was_too_small != model.terminal_too_small {
+                model.compute_max_help_scroll_available();
+                model.compute_max_diff_scroll_available();
+            }
         }
         Msg::ToggleFollowChanges => {
             model.follow_changes = !model.follow_changes;

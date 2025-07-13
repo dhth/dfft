@@ -33,6 +33,26 @@ pub(super) struct TerminalDimensions {
     pub(super) height: u16,
 }
 
+impl TerminalDimensions {
+    pub(super) fn update(&mut self, new_width: u16, new_height: u16) {
+        self.width = new_width;
+        self.height = new_height;
+    }
+
+    #[cfg(test)]
+    pub(super) fn values(&self) -> (u16, u16) {
+        (self.width, self.height)
+    }
+
+    #[cfg(test)]
+    pub(super) fn min_needed() -> Self {
+        Self {
+            width: MIN_TERMINAL_WIDTH,
+            height: MIN_TERMINAL_HEIGHT,
+        }
+    }
+}
+
 #[cfg(test)]
 impl From<(u16, u16)> for TerminalDimensions {
     fn from(value: (u16, u16)) -> Self {

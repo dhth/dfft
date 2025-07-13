@@ -1,4 +1,4 @@
-use super::common::TerminalDimensions;
+use super::common::{MIN_TERMINAL_HEIGHT, MIN_TERMINAL_WIDTH, TerminalDimensions};
 use super::{msg::Msg, update::update, view::view};
 use crate::domain::{Change, ChangeKind, Diff, Modification};
 use crate::tui::common::Pane;
@@ -8,9 +8,9 @@ use ratatui::{Terminal, backend::TestBackend};
 use std::path::PathBuf;
 
 fn get_test_terminal() -> (Terminal<TestBackend>, TerminalDimensions) {
-    let terminal =
-        Terminal::new(TestBackend::new(80, 24)).expect("terminal should've been created");
-    let terminal_dimensions = TerminalDimensions::from((80, 24));
+    let terminal = Terminal::new(TestBackend::new(MIN_TERMINAL_WIDTH, MIN_TERMINAL_HEIGHT))
+        .expect("terminal should've been created");
+    let terminal_dimensions = TerminalDimensions::from((MIN_TERMINAL_WIDTH, MIN_TERMINAL_HEIGHT));
 
     (terminal, terminal_dimensions)
 }
@@ -400,7 +400,7 @@ fn main_view_renders_created_file_change() {
 
     let change = Change {
         file_path: "new_file.txt".to_string(),
-        kind: ChangeKind::Created(Ok(())),
+        kind: ChangeKind::Created(Ok("test file contents".to_string())),
     };
     update(&mut model, Msg::ChangeReceived(change));
 
@@ -411,31 +411,31 @@ fn main_view_renders_created_file_change() {
 
     // THEN
     assert_snapshot!(terminal.backend(), @r#"
-        "┌ diff ────────────────────────────────────────────────────────────────────────┐"
-        "│                                                                              │"
-        "│ created                                                                      │"
-        "│                                                                              │"
-        "│                                                                              │"
-        "│                                                                              │"
-        "│                                                                              │"
-        "│                                                                              │"
-        "│                                                                              │"
-        "│                                                                              │"
-        "└──────────────────────────────────────────────────────────────────────────────┘"
-        "┌ changes (1) ─────────────────────────────────────────────────────────────────┐"
-        "│                                                                              │"
-        "│>  created   new_file.txt                                                     │"
-        "│                                                                              │"
-        "│                                                                              │"
-        "│                                                                              │"
-        "│                                                                              │"
-        "│                                                                              │"
-        "│                                                                              │"
-        "│                                                                              │"
-        "│                                                                              │"
-        "└──────────────────────────────────────────────────────────────────────────────┘"
-        " dfft  [watching]                                                               "
-        "#);
+    "┌ diff ────────────────────────────────────────────────────────────────────────┐"
+    "│                                                                              │"
+    "│ test file contents                                                           │"
+    "│                                                                              │"
+    "│                                                                              │"
+    "│                                                                              │"
+    "│                                                                              │"
+    "│                                                                              │"
+    "│                                                                              │"
+    "│                                                                              │"
+    "└──────────────────────────────────────────────────────────────────────────────┘"
+    "┌ changes (1) ─────────────────────────────────────────────────────────────────┐"
+    "│                                                                              │"
+    "│>  created   new_file.txt                                                     │"
+    "│                                                                              │"
+    "│                                                                              │"
+    "│                                                                              │"
+    "│                                                                              │"
+    "│                                                                              │"
+    "│                                                                              │"
+    "│                                                                              │"
+    "│                                                                              │"
+    "└──────────────────────────────────────────────────────────────────────────────┘"
+    " dfft  [watching]                                                               "
+    "#);
 }
 
 #[test]
@@ -660,7 +660,7 @@ fn scrolling_diff_works() {
 }
 
 #[test]
-fn diff_scrolling_is_reset_when_follow_mode_is_on() {
+fn diff_scroll_is_reset_when_follow_mode_is_on() {
     // GIVEN
     let (mut terminal, terminal_dimensions) = get_test_terminal();
     let mut model = Model::new(PathBuf::new(), terminal_dimensions, true, false);
@@ -764,7 +764,7 @@ fn diff_scrolling_is_reset_when_follow_mode_is_on() {
 }
 
 #[test]
-fn diff_scrolling_is_reset_when_another_change_is_selected() {
+fn diff_scroll_is_reset_when_another_change_is_selected() {
     // GIVEN
     let (mut terminal, terminal_dimensions) = get_test_terminal();
     let mut model = Model::new(PathBuf::new(), terminal_dimensions, true, false);
@@ -869,7 +869,7 @@ fn diff_scrolling_is_reset_when_another_change_is_selected() {
 }
 
 #[test]
-fn max_diff_scroll_is_reset_when_change_list_is_reset() {
+fn max_scroll_for_diff_is_reset_when_change_list_is_reset() {
     // GIVEN
     let (mut terminal, terminal_dimensions) = get_test_terminal();
     let mut model = Model::new(PathBuf::new(), terminal_dimensions, true, false);
@@ -968,6 +968,143 @@ fn max_diff_scroll_is_reset_when_change_list_is_reset() {
         "└──────────────────────────────────────────────────────────────────────────────┘"
         " dfft  [watching]                                                               "
         "#);
+}
+
+#[test]
+fn max_scroll_for_diff_is_recomputed_when_terminal_height_changes() {
+    // GIVEN
+    let (mut terminal, terminal_dimensions) = get_test_terminal_with_dims(80, 30);
+    let mut model = Model::new(PathBuf::new(), terminal_dimensions, true, false);
+    let mut lines = (1..=20).map(|n| format!("line {n}")).collect::<Vec<_>>();
+    let old = lines.join("\n");
+
+    lines[0] = "line 1 (modified)".to_string();
+    lines[1] = "line 2 (modified)".to_string();
+    lines[14] = "line 15 (modified)".to_string();
+    lines[15] = "line 16 (modified)".to_string();
+
+    let new = lines.join("\n");
+
+    let diff = Diff::new(&old, &new).expect("diff should've been created");
+
+    let change = Change {
+        file_path: "modified_file.txt".to_string(),
+        kind: ChangeKind::Modified(Ok(Modification::Diff(Some(diff)))),
+    };
+    update(&mut model, Msg::ChangeReceived(change));
+
+    // WHEN
+    // THEN
+    for _ in 1..=5 {
+        update(&mut model, Msg::ScrollDown);
+    }
+    terminal
+        .draw(|f| view(&mut model, f))
+        .expect("frame should've been drawn");
+    assert_snapshot!(terminal.backend(), @r#"
+    "┌ diff ────────────────────────────────────────────────────────────────────────┐"
+    "│                                                                              │"
+    "│ 3   3   | line 3                                                             │"
+    "│ 4   4   | line 4                                                             │"
+    "│ 5   5   | line 5                                                             │"
+    "│ -----------------------------------------------------------------------------│"
+    "│ 12  12  | line 12                                                            │"
+    "│ 13  13  | line 13                                                            │"
+    "│ 14  14  | line 14                                                            │"
+    "│ 15      |-line 15                                                            │"
+    "│ 16      |-line 16                                                            │"
+    "│     15  |+line 15 (modified)                                                 │"
+    "│     16  |+line 16 (modified)                                                 │"
+    "│ 17  17  | line 17                                                            │"
+    "│ 18  18  | line 18                                                            │"
+    "│ 19  19  | line 19                                                            │"
+    "└──────────────────────────────────────────────────────────────────────────────┘"
+    "┌ changes (1) ─────────────────────────────────────────────────────────────────┐"
+    "│                                                                              │"
+    "│>  modified  modified_file.txt                                                │"
+    "│                                                                              │"
+    "│                                                                              │"
+    "│                                                                              │"
+    "│                                                                              │"
+    "│                                                                              │"
+    "│                                                                              │"
+    "│                                                                              │"
+    "│                                                                              │"
+    "└──────────────────────────────────────────────────────────────────────────────┘"
+    " dfft  [watching]                                                               "
+    "#);
+
+    let (mut new_terminal, new_terminal_dimensions) = get_test_terminal();
+    update(
+        &mut model,
+        Msg::TerminalResize(
+            new_terminal_dimensions.width,
+            new_terminal_dimensions.height,
+        ),
+    );
+    new_terminal
+        .draw(|f| view(&mut model, f))
+        .expect("frame should've been drawn");
+    assert_snapshot!(new_terminal.backend(), @r#"
+    "┌ diff ────────────────────────────────────────────────────────────────────────┐"
+    "│                                                                              │"
+    "│ 3   3   | line 3                                                             │"
+    "│ 4   4   | line 4                                                             │"
+    "│ 5   5   | line 5                                                             │"
+    "│ -----------------------------------------------------------------------------│"
+    "│ 12  12  | line 12                                                            │"
+    "│ 13  13  | line 13                                                            │"
+    "│ 14  14  | line 14                                                            │"
+    "│ 15      |-line 15                                                            │"
+    "└──────────────────────────────────────────────────────────────────────────────┘"
+    "┌ changes (1) ─────────────────────────────────────────────────────────────────┐"
+    "│                                                                              │"
+    "│>  modified  modified_file.txt                                                │"
+    "│                                                                              │"
+    "│                                                                              │"
+    "│                                                                              │"
+    "│                                                                              │"
+    "│                                                                              │"
+    "│                                                                              │"
+    "│                                                                              │"
+    "│                                                                              │"
+    "└──────────────────────────────────────────────────────────────────────────────┘"
+    " dfft  [watching]                                                               "
+    "#);
+
+    for _ in 1..=20 {
+        update(&mut model, Msg::ScrollDown);
+    }
+
+    new_terminal
+        .draw(|f| view(&mut model, f))
+        .expect("frame should've been drawn");
+    assert_snapshot!(new_terminal.backend(), @r#"
+    "┌ diff ────────────────────────────────────────────────────────────────────────┐"
+    "│                                                                              │"
+    "│ 14  14  | line 14                                                            │"
+    "│ 15      |-line 15                                                            │"
+    "│ 16      |-line 16                                                            │"
+    "│     15  |+line 15 (modified)                                                 │"
+    "│     16  |+line 16 (modified)                                                 │"
+    "│ 17  17  | line 17                                                            │"
+    "│ 18  18  | line 18                                                            │"
+    "│ 19  19  | line 19                                                            │"
+    "└──────────────────────────────────────────────────────────────────────────────┘"
+    "┌ changes (1) ─────────────────────────────────────────────────────────────────┐"
+    "│                                                                              │"
+    "│>  modified  modified_file.txt                                                │"
+    "│                                                                              │"
+    "│                                                                              │"
+    "│                                                                              │"
+    "│                                                                              │"
+    "│                                                                              │"
+    "│                                                                              │"
+    "│                                                                              │"
+    "│                                                                              │"
+    "└──────────────────────────────────────────────────────────────────────────────┘"
+    " dfft  [watching]                                                               "
+    "#);
 }
 
 #[test]
@@ -1209,7 +1346,7 @@ fn changes_list_shows_item_count_in_title() {
     for i in 0..3 {
         let change = Change {
             file_path: format!("file{i}.txt"),
-            kind: ChangeKind::Created(Ok(())),
+            kind: ChangeKind::Created(Ok("test file contents".to_string())),
         };
         update(&mut model, Msg::ChangeReceived(change));
     }
@@ -1221,31 +1358,31 @@ fn changes_list_shows_item_count_in_title() {
 
     // THEN
     assert_snapshot!(terminal.backend(), @r#"
-        "┌ diff ────────────────────────────────────────────────────────────────────────┐"
-        "│                                                                              │"
-        "│ created                                                                      │"
-        "│                                                                              │"
-        "│                                                                              │"
-        "│                                                                              │"
-        "│                                                                              │"
-        "│                                                                              │"
-        "│                                                                              │"
-        "│                                                                              │"
-        "└──────────────────────────────────────────────────────────────────────────────┘"
-        "┌ changes (3) ─────────────────────────────────────────────────────────────────┐"
-        "│                                                                              │"
-        "│>  created   file0.txt                                                        │"
-        "│   created   file1.txt                                                        │"
-        "│   created   file2.txt                                                        │"
-        "│                                                                              │"
-        "│                                                                              │"
-        "│                                                                              │"
-        "│                                                                              │"
-        "│                                                                              │"
-        "│                                                                              │"
-        "└──────────────────────────────────────────────────────────────────────────────┘"
-        " dfft  [watching]                                                               "
-        "#);
+    "┌ diff ────────────────────────────────────────────────────────────────────────┐"
+    "│                                                                              │"
+    "│ test file contents                                                           │"
+    "│                                                                              │"
+    "│                                                                              │"
+    "│                                                                              │"
+    "│                                                                              │"
+    "│                                                                              │"
+    "│                                                                              │"
+    "│                                                                              │"
+    "└──────────────────────────────────────────────────────────────────────────────┘"
+    "┌ changes (3) ─────────────────────────────────────────────────────────────────┐"
+    "│                                                                              │"
+    "│>  created   file0.txt                                                        │"
+    "│   created   file1.txt                                                        │"
+    "│   created   file2.txt                                                        │"
+    "│                                                                              │"
+    "│                                                                              │"
+    "│                                                                              │"
+    "│                                                                              │"
+    "│                                                                              │"
+    "│                                                                              │"
+    "└──────────────────────────────────────────────────────────────────────────────┘"
+    " dfft  [watching]                                                               "
+    "#);
 }
 
 #[test]
@@ -1257,7 +1394,7 @@ fn changes_list_handles_long_file_paths() {
     let change = Change {
         file_path: "very/long/path/to/a/file/that/exceeds/normal/length/limits/file.txt"
             .to_string(),
-        kind: ChangeKind::Created(Ok(())),
+        kind: ChangeKind::Created(Ok("test file contents".to_string())),
     };
     update(&mut model, Msg::ChangeReceived(change));
 
@@ -1268,31 +1405,31 @@ fn changes_list_handles_long_file_paths() {
 
     // THEN
     assert_snapshot!(terminal.backend(), @r#"
-        "┌ diff ────────────────────────────────────────────────────────────────────────┐"
-        "│                                                                              │"
-        "│ created                                                                      │"
-        "│                                                                              │"
-        "│                                                                              │"
-        "│                                                                              │"
-        "│                                                                              │"
-        "│                                                                              │"
-        "│                                                                              │"
-        "│                                                                              │"
-        "└──────────────────────────────────────────────────────────────────────────────┘"
-        "┌ changes (1) ─────────────────────────────────────────────────────────────────┐"
-        "│                                                                              │"
-        "│>  created   very/long/path/to/a/file/that/exceeds/normal/length/limits/file.t│"
-        "│                                                                              │"
-        "│                                                                              │"
-        "│                                                                              │"
-        "│                                                                              │"
-        "│                                                                              │"
-        "│                                                                              │"
-        "│                                                                              │"
-        "│                                                                              │"
-        "└──────────────────────────────────────────────────────────────────────────────┘"
-        " dfft  [watching]                                                               "
-        "#);
+    "┌ diff ────────────────────────────────────────────────────────────────────────┐"
+    "│                                                                              │"
+    "│ test file contents                                                           │"
+    "│                                                                              │"
+    "│                                                                              │"
+    "│                                                                              │"
+    "│                                                                              │"
+    "│                                                                              │"
+    "│                                                                              │"
+    "│                                                                              │"
+    "└──────────────────────────────────────────────────────────────────────────────┘"
+    "┌ changes (1) ─────────────────────────────────────────────────────────────────┐"
+    "│                                                                              │"
+    "│>  created   very/long/path/to/a/file/that/exceeds/normal/length/limits/file.t│"
+    "│                                                                              │"
+    "│                                                                              │"
+    "│                                                                              │"
+    "│                                                                              │"
+    "│                                                                              │"
+    "│                                                                              │"
+    "│                                                                              │"
+    "│                                                                              │"
+    "└──────────────────────────────────────────────────────────────────────────────┘"
+    " dfft  [watching]                                                               "
+    "#);
 }
 
 #[test]
@@ -1539,13 +1676,13 @@ fn cursor_moves_automatically_when_following_enabled() {
 
     let change = Change {
         file_path: "first.txt".to_string(),
-        kind: ChangeKind::Created(Ok(())),
+        kind: ChangeKind::Created(Ok("test file contents".to_string())),
     };
     update(&mut model, Msg::ChangeReceived(change));
 
     let change = Change {
         file_path: "this-should-be-selected.txt".to_string(),
-        kind: ChangeKind::Created(Ok(())),
+        kind: ChangeKind::Created(Ok("test file contents".to_string())),
     };
     update(&mut model, Msg::ChangeReceived(change));
 
@@ -1556,31 +1693,31 @@ fn cursor_moves_automatically_when_following_enabled() {
 
     // THEN
     assert_snapshot!(terminal.backend(), @r#"
-        "┌ diff ────────────────────────────────────────────────────────────────────────┐"
-        "│                                                                              │"
-        "│ created                                                                      │"
-        "│                                                                              │"
-        "│                                                                              │"
-        "│                                                                              │"
-        "│                                                                              │"
-        "│                                                                              │"
-        "│                                                                              │"
-        "│                                                                              │"
-        "└──────────────────────────────────────────────────────────────────────────────┘"
-        "┌ changes (2) ─────────────────────────────────────────────────────────────────┐"
-        "│                                                                              │"
-        "│   created   first.txt                                                        │"
-        "│>  created   this-should-be-selected.txt                                      │"
-        "│                                                                              │"
-        "│                                                                              │"
-        "│                                                                              │"
-        "│                                                                              │"
-        "│                                                                              │"
-        "│                                                                              │"
-        "│                                                                              │"
-        "└──────────────────────────────────────────────────────────────────────────────┘"
-        " dfft  [watching] [following changes]                                           "
-        "#);
+    "┌ diff ────────────────────────────────────────────────────────────────────────┐"
+    "│                                                                              │"
+    "│ test file contents                                                           │"
+    "│                                                                              │"
+    "│                                                                              │"
+    "│                                                                              │"
+    "│                                                                              │"
+    "│                                                                              │"
+    "│                                                                              │"
+    "│                                                                              │"
+    "└──────────────────────────────────────────────────────────────────────────────┘"
+    "┌ changes (2) ─────────────────────────────────────────────────────────────────┐"
+    "│                                                                              │"
+    "│   created   first.txt                                                        │"
+    "│>  created   this-should-be-selected.txt                                      │"
+    "│                                                                              │"
+    "│                                                                              │"
+    "│                                                                              │"
+    "│                                                                              │"
+    "│                                                                              │"
+    "│                                                                              │"
+    "│                                                                              │"
+    "└──────────────────────────────────────────────────────────────────────────────┘"
+    " dfft  [watching] [following changes]                                           "
+    "#);
 }
 
 #[test]
@@ -1594,7 +1731,7 @@ fn cursor_moves_to_the_end_when_following_is_turned_on_after_a_while() {
     for i in 1..=3 {
         let change = Change {
             file_path: format!("file-{i}.txt"),
-            kind: ChangeKind::Created(Ok(())),
+            kind: ChangeKind::Created(Ok("test file contents".to_string())),
         };
         update(&mut model, Msg::ChangeReceived(change));
     }
@@ -1602,67 +1739,67 @@ fn cursor_moves_to_the_end_when_following_is_turned_on_after_a_while() {
         .draw(|f| view(&mut model, f))
         .expect("frame should've been drawn");
     assert_snapshot!(terminal.backend(), @r#"
-        "┌ diff ────────────────────────────────────────────────────────────────────────┐"
-        "│                                                                              │"
-        "│ created                                                                      │"
-        "│                                                                              │"
-        "│                                                                              │"
-        "│                                                                              │"
-        "│                                                                              │"
-        "│                                                                              │"
-        "│                                                                              │"
-        "│                                                                              │"
-        "└──────────────────────────────────────────────────────────────────────────────┘"
-        "┌ changes (3) ─────────────────────────────────────────────────────────────────┐"
-        "│                                                                              │"
-        "│>  created   file-1.txt                                                       │"
-        "│   created   file-2.txt                                                       │"
-        "│   created   file-3.txt                                                       │"
-        "│                                                                              │"
-        "│                                                                              │"
-        "│                                                                              │"
-        "│                                                                              │"
-        "│                                                                              │"
-        "│                                                                              │"
-        "└──────────────────────────────────────────────────────────────────────────────┘"
-        " dfft  [watching]                                                               "
-        "#);
+    "┌ diff ────────────────────────────────────────────────────────────────────────┐"
+    "│                                                                              │"
+    "│ test file contents                                                           │"
+    "│                                                                              │"
+    "│                                                                              │"
+    "│                                                                              │"
+    "│                                                                              │"
+    "│                                                                              │"
+    "│                                                                              │"
+    "│                                                                              │"
+    "└──────────────────────────────────────────────────────────────────────────────┘"
+    "┌ changes (3) ─────────────────────────────────────────────────────────────────┐"
+    "│                                                                              │"
+    "│>  created   file-1.txt                                                       │"
+    "│   created   file-2.txt                                                       │"
+    "│   created   file-3.txt                                                       │"
+    "│                                                                              │"
+    "│                                                                              │"
+    "│                                                                              │"
+    "│                                                                              │"
+    "│                                                                              │"
+    "│                                                                              │"
+    "└──────────────────────────────────────────────────────────────────────────────┘"
+    " dfft  [watching]                                                               "
+    "#);
 
     update(&mut model, Msg::ToggleFollowChanges);
     let change = Change {
         file_path: "this-should-be-selected.txt".to_string(),
-        kind: ChangeKind::Created(Ok(())),
+        kind: ChangeKind::Created(Ok("test file contents".to_string())),
     };
     update(&mut model, Msg::ChangeReceived(change));
     terminal
         .draw(|f| view(&mut model, f))
         .expect("frame should've been drawn");
     assert_snapshot!(terminal.backend(), @r#"
-        "┌ diff ────────────────────────────────────────────────────────────────────────┐"
-        "│                                                                              │"
-        "│ created                                                                      │"
-        "│                                                                              │"
-        "│                                                                              │"
-        "│                                                                              │"
-        "│                                                                              │"
-        "│                                                                              │"
-        "│                                                                              │"
-        "│                                                                              │"
-        "└──────────────────────────────────────────────────────────────────────────────┘"
-        "┌ changes (4) ─────────────────────────────────────────────────────────────────┐"
-        "│                                                                              │"
-        "│   created   file-1.txt                                                       │"
-        "│   created   file-2.txt                                                       │"
-        "│   created   file-3.txt                                                       │"
-        "│>  created   this-should-be-selected.txt                                      │"
-        "│                                                                              │"
-        "│                                                                              │"
-        "│                                                                              │"
-        "│                                                                              │"
-        "│                                                                              │"
-        "└──────────────────────────────────────────────────────────────────────────────┘"
-        " dfft  [watching] [following changes]                                           "
-        "#);
+    "┌ diff ────────────────────────────────────────────────────────────────────────┐"
+    "│                                                                              │"
+    "│ test file contents                                                           │"
+    "│                                                                              │"
+    "│                                                                              │"
+    "│                                                                              │"
+    "│                                                                              │"
+    "│                                                                              │"
+    "│                                                                              │"
+    "│                                                                              │"
+    "└──────────────────────────────────────────────────────────────────────────────┘"
+    "┌ changes (4) ─────────────────────────────────────────────────────────────────┐"
+    "│                                                                              │"
+    "│   created   file-1.txt                                                       │"
+    "│   created   file-2.txt                                                       │"
+    "│   created   file-3.txt                                                       │"
+    "│>  created   this-should-be-selected.txt                                      │"
+    "│                                                                              │"
+    "│                                                                              │"
+    "│                                                                              │"
+    "│                                                                              │"
+    "│                                                                              │"
+    "└──────────────────────────────────────────────────────────────────────────────┘"
+    " dfft  [watching] [following changes]                                           "
+    "#);
 }
 
 #[test]
@@ -1673,13 +1810,13 @@ fn cursor_doesnt_move_by_itself_when_following_disabled() {
 
     let change = Change {
         file_path: "this-will-still-be-selected.txt".to_string(),
-        kind: ChangeKind::Created(Ok(())),
+        kind: ChangeKind::Created(Ok("test file contents".to_string())),
     };
     update(&mut model, Msg::ChangeReceived(change));
 
     let change = Change {
         file_path: "second.txt".to_string(),
-        kind: ChangeKind::Created(Ok(())),
+        kind: ChangeKind::Created(Ok("test file contents".to_string())),
     };
     update(&mut model, Msg::ChangeReceived(change));
 
@@ -1690,29 +1827,397 @@ fn cursor_doesnt_move_by_itself_when_following_disabled() {
 
     // THEN
     assert_snapshot!(terminal.backend(), @r#"
-        "┌ diff ────────────────────────────────────────────────────────────────────────┐"
-        "│                                                                              │"
-        "│ created                                                                      │"
-        "│                                                                              │"
-        "│                                                                              │"
-        "│                                                                              │"
-        "│                                                                              │"
-        "│                                                                              │"
-        "│                                                                              │"
-        "│                                                                              │"
-        "└──────────────────────────────────────────────────────────────────────────────┘"
-        "┌ changes (2) ─────────────────────────────────────────────────────────────────┐"
-        "│                                                                              │"
-        "│>  created   this-will-still-be-selected.txt                                  │"
-        "│   created   second.txt                                                       │"
-        "│                                                                              │"
-        "│                                                                              │"
-        "│                                                                              │"
-        "│                                                                              │"
-        "│                                                                              │"
-        "│                                                                              │"
-        "│                                                                              │"
-        "└──────────────────────────────────────────────────────────────────────────────┘"
-        " dfft  [watching]                                                               "
-        "#);
+    "┌ diff ────────────────────────────────────────────────────────────────────────┐"
+    "│                                                                              │"
+    "│ test file contents                                                           │"
+    "│                                                                              │"
+    "│                                                                              │"
+    "│                                                                              │"
+    "│                                                                              │"
+    "│                                                                              │"
+    "│                                                                              │"
+    "│                                                                              │"
+    "└──────────────────────────────────────────────────────────────────────────────┘"
+    "┌ changes (2) ─────────────────────────────────────────────────────────────────┐"
+    "│                                                                              │"
+    "│>  created   this-will-still-be-selected.txt                                  │"
+    "│   created   second.txt                                                       │"
+    "│                                                                              │"
+    "│                                                                              │"
+    "│                                                                              │"
+    "│                                                                              │"
+    "│                                                                              │"
+    "│                                                                              │"
+    "│                                                                              │"
+    "└──────────────────────────────────────────────────────────────────────────────┘"
+    " dfft  [watching]                                                               "
+    "#);
+}
+
+#[test]
+fn scrolling_for_created_file_contents_doesnt_go_beyond_limits() {
+    // GIVEN
+    let (mut terminal, terminal_dimensions) = get_test_terminal();
+    let mut model = Model::new(PathBuf::new(), terminal_dimensions, true, false);
+    let contents = (1..=10)
+        .map(|n| format!("line {n}"))
+        .collect::<Vec<_>>()
+        .join("\n");
+
+    let change = Change {
+        file_path: "created.txt".to_string(),
+        kind: ChangeKind::Created(Ok(contents)),
+    };
+    update(&mut model, Msg::ChangeReceived(change));
+
+    // WHEN
+    // THEN
+    for _ in 1..=3 {
+        update(&mut model, Msg::ScrollUp);
+    }
+    terminal
+        .draw(|f| view(&mut model, f))
+        .expect("frame should've been drawn");
+    assert_snapshot!(terminal.backend(), @r#"
+    "┌ diff ────────────────────────────────────────────────────────────────────────┐"
+    "│                                                                              │"
+    "│ line 1                                                                       │"
+    "│ line 2                                                                       │"
+    "│ line 3                                                                       │"
+    "│ line 4                                                                       │"
+    "│ line 5                                                                       │"
+    "│ line 6                                                                       │"
+    "│ line 7                                                                       │"
+    "│ line 8                                                                       │"
+    "└──────────────────────────────────────────────────────────────────────────────┘"
+    "┌ changes (1) ─────────────────────────────────────────────────────────────────┐"
+    "│                                                                              │"
+    "│>  created   created.txt                                                      │"
+    "│                                                                              │"
+    "│                                                                              │"
+    "│                                                                              │"
+    "│                                                                              │"
+    "│                                                                              │"
+    "│                                                                              │"
+    "│                                                                              │"
+    "│                                                                              │"
+    "└──────────────────────────────────────────────────────────────────────────────┘"
+    " dfft  [watching]                                                               "
+    "#);
+
+    for _ in 1..=20 {
+        update(&mut model, Msg::ScrollDown);
+    }
+    terminal
+        .draw(|f| view(&mut model, f))
+        .expect("frame should've been drawn");
+    assert_snapshot!(terminal.backend(), @r#"
+    "┌ diff ────────────────────────────────────────────────────────────────────────┐"
+    "│                                                                              │"
+    "│ line 3                                                                       │"
+    "│ line 4                                                                       │"
+    "│ line 5                                                                       │"
+    "│ line 6                                                                       │"
+    "│ line 7                                                                       │"
+    "│ line 8                                                                       │"
+    "│ line 9                                                                       │"
+    "│ line 10                                                                      │"
+    "└──────────────────────────────────────────────────────────────────────────────┘"
+    "┌ changes (1) ─────────────────────────────────────────────────────────────────┐"
+    "│                                                                              │"
+    "│>  created   created.txt                                                      │"
+    "│                                                                              │"
+    "│                                                                              │"
+    "│                                                                              │"
+    "│                                                                              │"
+    "│                                                                              │"
+    "│                                                                              │"
+    "│                                                                              │"
+    "│                                                                              │"
+    "└──────────────────────────────────────────────────────────────────────────────┘"
+    " dfft  [watching]                                                               "
+    "#);
+}
+
+#[test]
+fn max_scroll_for_created_file_contents_is_recomputed_when_terminal_height_changes() {
+    // GIVEN
+    let (mut terminal, terminal_dimensions) = get_test_terminal_with_dims(80, 30);
+    let mut model = Model::new(PathBuf::new(), terminal_dimensions, true, false);
+    let contents = (1..=20)
+        .map(|n| format!("line {n}"))
+        .collect::<Vec<_>>()
+        .join("\n");
+
+    let change = Change {
+        file_path: "created.txt".to_string(),
+        kind: ChangeKind::Created(Ok(contents)),
+    };
+    update(&mut model, Msg::ChangeReceived(change));
+
+    // WHEN
+    // THEN
+    for _ in 1..=5 {
+        update(&mut model, Msg::ScrollDown);
+    }
+    terminal
+        .draw(|f| view(&mut model, f))
+        .expect("frame should've been drawn");
+    assert_snapshot!(terminal.backend(), @r#"
+    "┌ diff ────────────────────────────────────────────────────────────────────────┐"
+    "│                                                                              │"
+    "│ line 6                                                                       │"
+    "│ line 7                                                                       │"
+    "│ line 8                                                                       │"
+    "│ line 9                                                                       │"
+    "│ line 10                                                                      │"
+    "│ line 11                                                                      │"
+    "│ line 12                                                                      │"
+    "│ line 13                                                                      │"
+    "│ line 14                                                                      │"
+    "│ line 15                                                                      │"
+    "│ line 16                                                                      │"
+    "│ line 17                                                                      │"
+    "│ line 18                                                                      │"
+    "│ line 19                                                                      │"
+    "└──────────────────────────────────────────────────────────────────────────────┘"
+    "┌ changes (1) ─────────────────────────────────────────────────────────────────┐"
+    "│                                                                              │"
+    "│>  created   created.txt                                                      │"
+    "│                                                                              │"
+    "│                                                                              │"
+    "│                                                                              │"
+    "│                                                                              │"
+    "│                                                                              │"
+    "│                                                                              │"
+    "│                                                                              │"
+    "│                                                                              │"
+    "└──────────────────────────────────────────────────────────────────────────────┘"
+    " dfft  [watching]                                                               "
+    "#);
+
+    let (mut new_terminal, new_terminal_dimensions) = get_test_terminal();
+    update(
+        &mut model,
+        Msg::TerminalResize(
+            new_terminal_dimensions.width,
+            new_terminal_dimensions.height,
+        ),
+    );
+    new_terminal
+        .draw(|f| view(&mut model, f))
+        .expect("frame should've been drawn");
+    assert_snapshot!(new_terminal.backend(), @r#"
+    "┌ diff ────────────────────────────────────────────────────────────────────────┐"
+    "│                                                                              │"
+    "│ line 6                                                                       │"
+    "│ line 7                                                                       │"
+    "│ line 8                                                                       │"
+    "│ line 9                                                                       │"
+    "│ line 10                                                                      │"
+    "│ line 11                                                                      │"
+    "│ line 12                                                                      │"
+    "│ line 13                                                                      │"
+    "└──────────────────────────────────────────────────────────────────────────────┘"
+    "┌ changes (1) ─────────────────────────────────────────────────────────────────┐"
+    "│                                                                              │"
+    "│>  created   created.txt                                                      │"
+    "│                                                                              │"
+    "│                                                                              │"
+    "│                                                                              │"
+    "│                                                                              │"
+    "│                                                                              │"
+    "│                                                                              │"
+    "│                                                                              │"
+    "│                                                                              │"
+    "└──────────────────────────────────────────────────────────────────────────────┘"
+    " dfft  [watching]                                                               "
+    "#);
+
+    for _ in 1..=20 {
+        update(&mut model, Msg::ScrollDown);
+    }
+
+    new_terminal
+        .draw(|f| view(&mut model, f))
+        .expect("frame should've been drawn");
+    assert_snapshot!(new_terminal.backend(), @r#"
+    "┌ diff ────────────────────────────────────────────────────────────────────────┐"
+    "│                                                                              │"
+    "│ line 13                                                                      │"
+    "│ line 14                                                                      │"
+    "│ line 15                                                                      │"
+    "│ line 16                                                                      │"
+    "│ line 17                                                                      │"
+    "│ line 18                                                                      │"
+    "│ line 19                                                                      │"
+    "│ line 20                                                                      │"
+    "└──────────────────────────────────────────────────────────────────────────────┘"
+    "┌ changes (1) ─────────────────────────────────────────────────────────────────┐"
+    "│                                                                              │"
+    "│>  created   created.txt                                                      │"
+    "│                                                                              │"
+    "│                                                                              │"
+    "│                                                                              │"
+    "│                                                                              │"
+    "│                                                                              │"
+    "│                                                                              │"
+    "│                                                                              │"
+    "│                                                                              │"
+    "└──────────────────────────────────────────────────────────────────────────────┘"
+    " dfft  [watching]                                                               "
+    "#);
+}
+
+#[test]
+fn max_scroll_for_help_doesnt_change_when_only_terminal_width_changes() {
+    // GIVEN
+    let terminal_dimensions = TerminalDimensions::min_needed();
+    let (width, height) = terminal_dimensions.values();
+    let mut model = Model::new(PathBuf::new(), terminal_dimensions, true, false);
+    let max_help_scroll = model.max_help_scroll_available;
+
+    // WHEN
+    update(&mut model, Msg::TerminalResize(width + 20, height));
+
+    // THEN
+    assert_eq!(model.max_help_scroll_available, max_help_scroll);
+}
+
+#[test]
+fn max_scroll_for_diff_doesnt_change_when_only_terminal_width_changes() {
+    // GIVEN
+    let terminal_dimensions = TerminalDimensions::min_needed();
+    let (width, height) = terminal_dimensions.values();
+    let mut model = Model::new(PathBuf::new(), terminal_dimensions, true, false);
+    let mut lines = (1..=20).map(|n| format!("line {n}")).collect::<Vec<_>>();
+    let old = lines.join("\n");
+
+    lines[0] = "line 1 (modified)".to_string();
+    lines[1] = "line 2 (modified)".to_string();
+    lines[14] = "line 15 (modified)".to_string();
+    lines[15] = "line 16 (modified)".to_string();
+
+    let new = lines.join("\n");
+
+    let diff = Diff::new(&old, &new).expect("diff should've been created");
+
+    let change = Change {
+        file_path: "modified_file.txt".to_string(),
+        kind: ChangeKind::Modified(Ok(Modification::Diff(Some(diff)))),
+    };
+    update(&mut model, Msg::ChangeReceived(change));
+    for _ in 1..=5 {
+        update(&mut model, Msg::ScrollDown);
+    }
+    let max_diff_scroll = model.max_diff_scroll_available;
+
+    // WHEN
+    // THEN
+    update(&mut model, Msg::TerminalResize(width + 20, height));
+    assert_eq!(model.max_diff_scroll_available, max_diff_scroll);
+}
+
+#[test]
+fn max_scroll_for_help_is_recomputed_when_terminal_size_crosses_minimum_threshold() {
+    // GIVEN
+    let terminal_dimensions = TerminalDimensions::min_needed();
+    let (width, height) = terminal_dimensions.values();
+    let mut model = Model::new(PathBuf::new(), terminal_dimensions, true, false);
+    let max_help_scroll = model.max_help_scroll_available;
+
+    // WHEN
+    // THEN
+    update(&mut model, Msg::TerminalResize(width - 20, height));
+    assert_eq!(model.max_help_scroll_available, 0);
+
+    update(&mut model, Msg::TerminalResize(width + 20, height));
+    assert_eq!(model.max_help_scroll_available, max_help_scroll);
+}
+
+#[test]
+fn max_scroll_for_diff_is_recomputed_when_terminal_size_crosses_minimum_threshold() {
+    // GIVEN
+    let terminal_dimensions = TerminalDimensions::min_needed();
+    let (width, height) = terminal_dimensions.values();
+    let mut model = Model::new(PathBuf::new(), terminal_dimensions, true, false);
+    let mut lines = (1..=20).map(|n| format!("line {n}")).collect::<Vec<_>>();
+    let old = lines.join("\n");
+
+    lines[0] = "line 1 (modified)".to_string();
+    lines[1] = "line 2 (modified)".to_string();
+    lines[14] = "line 15 (modified)".to_string();
+    lines[15] = "line 16 (modified)".to_string();
+
+    let new = lines.join("\n");
+
+    let diff = Diff::new(&old, &new).expect("diff should've been created");
+
+    let change = Change {
+        file_path: "modified_file.txt".to_string(),
+        kind: ChangeKind::Modified(Ok(Modification::Diff(Some(diff)))),
+    };
+    update(&mut model, Msg::ChangeReceived(change));
+    for _ in 1..=5 {
+        update(&mut model, Msg::ScrollDown);
+    }
+    let max_diff_scroll = model.max_diff_scroll_available;
+
+    // WHEN
+    // THEN
+    update(&mut model, Msg::TerminalResize(width - 20, height));
+    assert_eq!(model.max_diff_scroll_available, 0);
+
+    update(&mut model, Msg::TerminalResize(width + 20, height));
+    assert_eq!(model.max_diff_scroll_available, max_diff_scroll);
+}
+
+#[test]
+fn showing_debug_info_works() {
+    // GIVEN
+    let (mut terminal, terminal_dimensions) = get_test_terminal_with_dims(90, 24);
+    let mut model = Model::new(PathBuf::new(), terminal_dimensions, true, true);
+    let contents = (1..=5)
+        .map(|n| format!("line {n}"))
+        .collect::<Vec<_>>()
+        .join("\n");
+
+    let change = Change {
+        file_path: "created.txt".to_string(),
+        kind: ChangeKind::Created(Ok(contents)),
+    };
+    update(&mut model, Msg::ChangeReceived(change));
+
+    // WHEN
+    terminal
+        .draw(|f| view(&mut model, f))
+        .expect("frame should've been drawn");
+
+    // THEN
+    assert_snapshot!(terminal.backend(), @r#"
+    "┌ diff ──────────────────────────────────────────────────────────────────────────────────┐"
+    "│                                                                                        │"
+    "│ line 1                                                                                 │"
+    "│ line 2                                                                                 │"
+    "│ line 3                                                                                 │"
+    "│ line 4                                                                                 │"
+    "│ line 5                                                                                 │"
+    "│                                                                                        │"
+    "│                                                                                        │"
+    "│                                                                                        │"
+    "└────────────────────────────────────────────────────────────────────────────────────────┘"
+    "┌ changes (1) ───────────────────────────────────────────────────────────────────────────┐"
+    "│                                                                                        │"
+    "│>  created   created.txt                                                                │"
+    "│                                                                                        │"
+    "│                                                                                        │"
+    "│                                                                                        │"
+    "│                                                                                        │"
+    "│                                                                                        │"
+    "│                                                                                        │"
+    "│                                                                                        │"
+    "│                                                                                        │"
+    "└────────────────────────────────────────────────────────────────────────────────────────┘"
+    " dfft  [watching] [render: 0] [event: 0] [watch: 0] [dimensions: 90x24]                   "
+    "#);
 }
