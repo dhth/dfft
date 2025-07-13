@@ -16,8 +16,11 @@ impl FileCache {
         self.cache.insert(path.as_ref().to_string(), arc_contents)
     }
 
-    pub fn remove(&mut self, path: &str) {
-        self.cache.remove(path);
+    pub fn remove<P>(&mut self, path: P) -> Option<Arc<str>>
+    where
+        P: AsRef<str>,
+    {
+        self.cache.remove(path.as_ref())
     }
 
     pub fn len(&self) -> usize {

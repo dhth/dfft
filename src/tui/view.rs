@@ -145,8 +145,7 @@ fn render_diff_pane(model: &mut Model, frame: &mut Frame, rect: Rect) {
                                 "initial snapshot captured; diffs will be available from now onwards",
                             )]
                         }
-                        Modification::Diff(None) => vec![Line::raw("nothing changed")],
-                        Modification::Diff(Some(diff)) => get_diff_lines(diff)
+                        Modification::Diff(diff) => get_diff_lines(diff)
                             .into_iter()
                             .skip(model.diff_scroll)
                             .collect(),

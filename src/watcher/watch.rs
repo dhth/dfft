@@ -1,10 +1,10 @@
-use super::helpers::{get_ignore, is_file_to_be_ignored};
+use super::helpers::{get_ignore, is_file_to_be_ignored, is_file_too_large};
 use crate::domain::{Change, ChangeKind, Diff, FileCache, Modification, WatchUpdate};
 use anyhow::Context;
 use ignore::{Walk, gitignore::Gitignore};
 use notify::EventKind;
 use notify::RecursiveMode;
-use notify::event::{CreateKind, DataChange, ModifyKind, RemoveKind};
+use notify::event::{CreateKind, ModifyKind, RemoveKind};
 use notify_debouncer_full::new_debouncer;
 use std::path::Path;
 use std::path::PathBuf;
@@ -18,6 +18,16 @@ use tracing::debug;
 const EVENT_CHANNEL_BUFFER: usize = 100;
 const PREPOPULATION_MAX_THRESHOLD: usize = 10000;
 
+// How this function behaves
+// - touch file.txt                                                            = CREATED
+// - echo "content" > new.txt                                                  = CREATED
+// - echo "content" > existing.txt                                             = MODIFIED
+// - touch existing.txt                                                        = SKIPPED
+// - rm existing.txt                                                           = REMOVED
+// - creation via a temp file (new.txt.tmp -> rename to new.txt)               = CREATED
+// - modification via a temp file (existing.txt.tmp -> rename to existing.txt) = MODIFIED
+//
+// the last two are how files are sometimes created/modified by agents/editors
 pub async fn watch_for_changes(
     root: PathBuf,
     cache: Arc<RwLock<FileCache>>,
@@ -70,7 +80,12 @@ pub async fn watch_for_changes(
                             match event.kind {
                                 EventKind::Create(CreateKind::File) => {
                                     for path in &event.paths {
+                                        debug!("got create event, path: {}", &path.to_string_lossy());
                                         if is_file_to_be_ignored(path, &gitignore).await {
+                                            continue;
+                                        }
+
+                                        if is_file_too_large(path).await {
                                             continue;
                                         }
 
@@ -82,26 +97,43 @@ pub async fn watch_for_changes(
 
                                         let change = match tokio::fs::read_to_string(path).await {
                                             Ok(contents) => {
-                                                {
+                                                // Not a 100% sure if we need to check if the path
+                                                // existed in the cache, leaving it in as a
+                                                // safeguard
+                                                let was_held = {
                                                     let mut cache_guard = cache.write().await;
-                                                    cache_guard.insert(&file_path, &contents);
-                                                }
-                                                Change {
-                                                    file_path,
-                                                    kind: ChangeKind::Created(Ok(contents)),
+                                                    cache_guard.insert(&file_path, &contents)
+                                                };
+                                                match was_held {
+                                                    Some(old) => {
+                                                        debug!("got create event, but was already in cache, path: {}", &file_path);
+                                                        Diff::new(&old, &contents).map(|diff| Change {
+                                                                file_path,
+                                                                kind: ChangeKind::Modified(Ok(
+                                                                    Modification::Diff(diff),
+                                                                )),
+                                                            })
+                                                    }
+                                                    None => Some(Change {
+                                                        file_path,
+                                                        kind: ChangeKind::Created(Ok(contents)),
+                                                    }),
                                                 }
                                             }
-                                            Err(e) => Change {
+                                            Err(e) => Some(Change {
                                                 file_path,
                                                 kind: ChangeKind::Created(Err(e.to_string())),
-                                            },
+                                            }),
                                         };
 
-                                        let _ = updates_tx.send(WatchUpdate::ChangeReceived(change)).await;
+                                        if let Some(c) = change {
+                                            let _ = updates_tx.send(WatchUpdate::ChangeReceived(c)).await;
+                                        }
                                     }
                                 }
-                                EventKind::Modify(ModifyKind::Data(DataChange::Content)) => {
+                                EventKind::Modify(modify_kind) => {
                                     for path in &event.paths {
+                                        debug!("got modify event, path: {}", &path.to_string_lossy());
                                         if is_file_to_be_ignored(path, &gitignore).await {
                                             continue;
                                         }
@@ -111,6 +143,34 @@ pub async fn watch_for_changes(
                                             .unwrap_or(path)
                                             .to_string_lossy()
                                             .to_string();
+
+                                        // Renames are tricky to handle
+                                        // Two events might show up for a rename, with the modify kind
+                                        // ModifyKind::Any, in which case it's tricky to determine
+                                        // which path no longer exists
+                                        // Sometimes a file removal also shows up as a modification
+                                        if !tokio::fs::try_exists(path).await.unwrap_or(true) {
+                                            let was_held = {
+                                                let mut cache_guard = cache.write().await;
+                                                cache_guard.remove(&file_path).is_some()
+                                            };
+
+                                            if was_held {
+                                                let change = Change {
+                                                    file_path,
+                                                    kind: ChangeKind::Removed,
+                                                };
+
+                                                let _ = updates_tx.send(WatchUpdate::ChangeReceived(change)).await;
+                                            }
+
+                                            continue;
+                                        };
+
+                                        if is_file_too_large(path).await {
+                                            continue;
+                                        }
+
                                         let change = match tokio::fs::read_to_string(path).await {
                                             Ok(contents) => {
                                                 let was_held = {
@@ -119,40 +179,48 @@ pub async fn watch_for_changes(
                                                 };
                                                 match was_held {
                                                     Some(old) => {
-                                                        if let Some(diff) = Diff::new(&old, &contents) {
-                                                            Change {
+                                                        Diff::new(&old, &contents).map(|diff| Change {
                                                                 file_path,
                                                                 kind: ChangeKind::Modified(Ok(
-                                                                    Modification::Diff(Some(diff)),
+                                                                    Modification::Diff(diff),
                                                                 )),
+                                                            })
+                                                    }
+                                                    None => {
+                                                        match modify_kind {
+                                                            ModifyKind::Name(_) => {
+                                                                // Some agents will create a temporary
+                                                                // file and then rename it to the
+                                                                // target file, registering a MODIFY
+                                                                // event instead of a CREATE, but for
+                                                                // our purposes, the file was CREATED
+                                                                Some(Change {
+                                                                    file_path,
+                                                                    kind: ChangeKind::Created(Ok(contents)),
+                                                                })
                                                             }
-                                                        } else {
-                                                            Change {
+                                                            _ => Some(Change {
                                                                 file_path,
-                                                                kind: ChangeKind::Modified(Ok(
-                                                                    Modification::Diff(None),
-                                                                )),
-                                                            }
+                                                                kind: ChangeKind::Modified(Ok(Modification::InitialSnapshot)),
+                                                            })
                                                         }
                                                     }
-                                                    None => Change {
-                                                        file_path,
-                                                        kind: ChangeKind::Modified(Ok(
-                                                            Modification::InitialSnapshot,
-                                                        )),
-                                                    },
                                                 }
                                             }
-                                            Err(e) => Change {
+                                            Err(e) => Some(Change {
                                                 file_path,
                                                 kind: ChangeKind::Modified(Err(e.to_string())),
-                                            },
+                                            }),
                                         };
-                                        let _ = updates_tx.send(WatchUpdate::ChangeReceived(change)).await;
+
+                                        if let Some(c) = change {
+                                            let _ = updates_tx.send(WatchUpdate::ChangeReceived(c)).await;
+                                        }
                                     }
                                 }
                                 EventKind::Remove(RemoveKind::File) => {
                                     for path in &event.paths {
+                                        debug!("got delete event, path: {}", &path.to_string_lossy());
                                         if is_file_to_be_ignored(path, &gitignore).await {
                                             continue;
                                         }
@@ -166,11 +234,6 @@ pub async fn watch_for_changes(
                                             let mut cache_guard = cache.write().await;
                                             cache_guard.remove(&file_path);
                                         }
-                                        let file_path = path
-                                            .strip_prefix(&root)
-                                            .unwrap_or(path)
-                                            .to_string_lossy()
-                                            .to_string();
                                         let change = Change {
                                             file_path,
                                             kind: ChangeKind::Removed,
@@ -224,6 +287,10 @@ where
         }
 
         if is_file_to_be_ignored(path, gitignore).await {
+            continue;
+        }
+
+        if is_file_too_large(path).await {
             continue;
         }
 

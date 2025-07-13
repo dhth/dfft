@@ -55,14 +55,6 @@ where
         return true;
     }
 
-    // other reasons for ignoring files
-    if is_file_too_large(&path, MAX_FILE_SIZE)
-        .await
-        .unwrap_or(true)
-    {
-        return true;
-    }
-
     if is_extension_to_be_ignored(&path).unwrap_or(true) {
         return true;
     }
@@ -82,12 +74,12 @@ where
     }
 }
 
-async fn is_file_too_large<P>(path: P, max_size: u64) -> anyhow::Result<bool>
+pub async fn is_file_too_large<P>(path: P) -> bool
 where
     P: AsRef<Path>,
 {
-    match tokio::fs::metadata(path).await {
-        Ok(metadata) => Ok(metadata.len() > max_size),
-        Err(_) => Ok(true),
-    }
+    tokio::fs::metadata(path)
+        .await
+        .map(|m| m.len() > MAX_FILE_SIZE)
+        .unwrap_or(true)
 }
