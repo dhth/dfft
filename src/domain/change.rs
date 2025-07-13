@@ -14,7 +14,7 @@ pub struct Change {
 
 #[derive(Clone, Debug)]
 pub enum ChangeKind {
-    Created(Result<(), String>),
+    Created(Result<String, String>),
     Modified(Result<Modification, String>),
     Removed,
 }

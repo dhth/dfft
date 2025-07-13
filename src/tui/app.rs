@@ -88,6 +88,7 @@ impl AppTui {
                 }
 
                 Some(watch_update) = self.model.watch_updates_rx.recv() => {
+                    self.model.watch_counter += 1;
                     let msg = match watch_update {
                         WatchUpdate::ChangeReceived(change) => Msg::ChangeReceived(change),
                         WatchUpdate::PrepopulationFinished => Msg::PrepopulationFinished,
