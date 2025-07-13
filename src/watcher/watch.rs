@@ -84,7 +84,7 @@ pub async fn watch_for_changes(
                                             Ok(contents) => {
                                                 {
                                                     let mut cache_guard = cache.write().await;
-                                                    cache_guard.insert(&file_path, contents.clone());
+                                                    cache_guard.insert(&file_path, &contents);
                                                 }
                                                 Change {
                                                     file_path,
@@ -115,7 +115,7 @@ pub async fn watch_for_changes(
                                             Ok(contents) => {
                                                 let was_held = {
                                                     let mut cache_guard = cache.write().await;
-                                                    cache_guard.insert(&file_path, contents.clone())
+                                                    cache_guard.insert(&file_path, &contents)
                                                 };
                                                 match was_held {
                                                     Some(old) => {
@@ -236,7 +236,7 @@ where
                     .to_string();
                 {
                     let mut cache_guard = cache.write().await;
-                    cache_guard.insert(&file_path, contents);
+                    cache_guard.insert(&file_path, &contents);
                 }
                 file_count += 1;
                 debug!("added to cache: {:?}", &file_path);

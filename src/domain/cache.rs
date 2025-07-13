@@ -7,9 +7,12 @@ pub struct FileCache {
 }
 
 impl FileCache {
-    pub fn insert(&mut self, path: &str, contents: String) -> Option<Arc<str>> {
-        let arc_contents: Arc<str> = contents.into();
-        self.cache.insert(path.to_string(), arc_contents)
+    pub fn insert<T>(&mut self, path: T, contents: T) -> Option<Arc<str>>
+    where
+        T: AsRef<str>,
+    {
+        let arc_contents: Arc<str> = contents.as_ref().into();
+        self.cache.insert(path.as_ref().to_string(), arc_contents)
     }
 
     pub fn remove(&mut self, path: &str) {
