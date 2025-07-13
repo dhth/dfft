@@ -19,7 +19,7 @@ pub enum DfftCommand {
         #[arg(short = 'F', long = "no-follow")]
         no_follow: bool,
         /// Skip prepopulating cache with existing file snapshots
-        #[arg(short = 'P', long = "no-prepopulation")]
+        #[arg(short = 'P', long = "no-prepop")]
         no_prepopulation: bool,
         /// Start with file watching disabled
         #[arg(short = 'W', long = "no-watch")]
@@ -29,7 +29,7 @@ pub enum DfftCommand {
 
 impl std::fmt::Display for Args {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let output = match self.command {
+        let output = match &self.command {
             DfftCommand::Run {
                 no_follow,
                 no_prepopulation,
