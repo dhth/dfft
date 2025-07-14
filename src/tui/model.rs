@@ -159,7 +159,7 @@ pub struct Model {
     pub max_help_scroll_available: usize,
     pub diff_scroll: usize,
     pub max_diff_scroll_available: usize,
-    audio_player: Option<AudioPlayer>,
+    audio_player: Result<Option<AudioPlayer>, ()>,
 }
 
 impl Model {
@@ -174,16 +174,16 @@ impl Model {
 
         let (changes_tx, changes_rx) = mpsc::channel::<WatchUpdate>(100);
 
-        let audio_player = if behaviours.play_audio {
+        let audio_player = if behaviours.play_sound {
             match AudioPlayer::new() {
-                Ok(ap) => Some(ap),
+                Ok(ap) => Ok(Some(ap)),
                 Err(e) => {
                     warn!("couldn't set up audio player: {e}");
-                    None
+                    Err(())
                 }
             }
         } else {
-            None
+            Ok(None)
         };
 
         let mut model = Model {
@@ -213,6 +213,9 @@ impl Model {
         };
 
         model.compute_max_help_scroll_available();
+        if model.is_sound_unavailable() {
+            model.user_msg = Some(UserMsg::error("couldn't set up sound notifications"));
+        }
 
         model
     }
@@ -338,7 +341,9 @@ impl Model {
     }
 
     pub(super) fn add_change(&mut self, change: Change) {
-        if let Some(ap) = &self.audio_player {
+        if let Ok(Some(ap)) = &self.audio_player
+            && self.behaviours.play_sound
+        {
             ap.play_change_sound(&change.kind);
         }
 
@@ -351,7 +356,9 @@ impl Model {
     }
 
     pub(super) fn play_error_sound(&self) {
-        if let Some(ap) = &self.audio_player {
+        if let Ok(Some(ap)) = &self.audio_player
+            && self.behaviours.play_sound
+        {
             ap.play_error_sound();
         }
     }
@@ -489,5 +496,33 @@ impl Model {
 
     pub(super) fn snapshots_in_memory(&self) -> Option<usize> {
         self.cache.try_read().ok().map(|c| c.len())
+    }
+
+    pub(super) fn toggle_sound(&mut self) {
+        match &self.audio_player {
+            Ok(Some(_)) => {
+                self.behaviours.play_sound = !self.behaviours.play_sound;
+            }
+            Ok(None) => {
+                self.audio_player = match AudioPlayer::new() {
+                    Ok(ap) => Ok(Some(ap)),
+                    Err(_) => {
+                        self.user_msg = Some(UserMsg::error("couldn't set up sound notifications"));
+                        Err(())
+                    }
+                };
+
+                if let Ok(Some(_)) = &self.audio_player {
+                    self.behaviours.play_sound = true;
+                }
+            }
+            Err(_) => {
+                self.user_msg = Some(UserMsg::error("sound notifications are unavailable"));
+            }
+        }
+    }
+
+    pub(super) fn is_sound_unavailable(&self) -> bool {
+        self.audio_player.is_err()
     }
 }

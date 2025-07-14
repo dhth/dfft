@@ -30,9 +30,3 @@ Todo
 - [x] Consider `dfft` specific ignore file
 - [x] Consider `.git/info/exclude`
 - [ ] Show errors while watching for fs events
-
-## Audio Notifications
-
-`dfft` can play audio notifications for different kinds of file changes to make
-following changes easy. These audio notifications are disabled by default and can
-be turned on using `--audio/-a`.

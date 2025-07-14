@@ -17,6 +17,7 @@ pub enum Msg {
     SelectPrevious,
     TerminalResize(u16, u16),
     ToggleFollowChanges,
+    ToggleSound,
     ToggleWatching,
     // internal
     ChangeReceived(Change),
@@ -48,6 +49,7 @@ pub fn get_event_handling_msg(model: &Model, event: Event) -> Option<Msg> {
                         KeyCode::Char('r') if key_event.modifiers == KeyModifiers::CONTROL => {
                             Some(Msg::ResetList)
                         }
+                        KeyCode::Char('s') => Some(Msg::ToggleSound),
                         KeyCode::Esc | KeyCode::Char('q') => Some(Msg::GoBackOrQuit),
                         KeyCode::Tab | KeyCode::BackTab => Some(Msg::GoToPane(Pane::Diff)),
                         KeyCode::Char(' ') => Some(Msg::ToggleWatching),
@@ -70,6 +72,7 @@ pub fn get_event_handling_msg(model: &Model, event: Event) -> Option<Msg> {
                         KeyCode::Char('r') if key_event.modifiers == KeyModifiers::CONTROL => {
                             Some(Msg::ResetList)
                         }
+                        KeyCode::Char('s') => Some(Msg::ToggleSound),
                         KeyCode::Char('?') => Some(Msg::GoToPane(Pane::Help)),
                         KeyCode::Esc | KeyCode::Char('q') => Some(Msg::GoBackOrQuit),
                         KeyCode::Char('c') if key_event.modifiers == KeyModifiers::CONTROL => {

@@ -26,7 +26,7 @@ async fn main() -> anyhow::Result<()> {
             follow_changes,
             no_prepopulation,
             no_watch,
-            no_audio,
+            no_sound,
         } => {
             setup_logging().context("couldn't set up logging")?;
 
@@ -38,7 +38,7 @@ async fn main() -> anyhow::Result<()> {
                 watch: !no_watch,
                 follow_changes,
                 prepopulate_cache: !no_prepopulation,
-                play_audio: !no_audio,
+                play_sound: !no_sound,
             };
             tui::run(root, behaviours).await?;
         }

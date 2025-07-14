@@ -25,7 +25,7 @@ fn debug_flag_works() {
     follow changes:     false
     no prepopulation:   false
     no watch:           false
-    no audio:           false
+    no sound:           false
 
     ----- stderr -----
     ");
@@ -49,7 +49,7 @@ fn turning_off_following_works() {
     follow changes:     true
     no prepopulation:   false
     no watch:           false
-    no audio:           false
+    no sound:           false
 
     ----- stderr -----
     ");
@@ -73,7 +73,7 @@ fn turning_off_prepopulation_works() {
     follow changes:     false
     no prepopulation:   true
     no watch:           false
-    no audio:           false
+    no sound:           false
 
     ----- stderr -----
     ");
@@ -97,17 +97,17 @@ fn turning_off_watching_works() {
     follow changes:     false
     no prepopulation:   false
     no watch:           true
-    no audio:           false
+    no sound:           false
 
     ----- stderr -----
     ");
 }
 
 #[test]
-fn turning_off_audio_works() {
+fn turning_off_sound_works() {
     // GIVEN
     let fx = Fixture::new();
-    let mut cmd = fx.cmd(["run", "--no-audio", "--debug"]);
+    let mut cmd = fx.cmd(["run", "--no-sound", "--debug"]);
 
     // WHEN
     // THEN
@@ -121,7 +121,7 @@ fn turning_off_audio_works() {
     follow changes:     false
     no prepopulation:   false
     no watch:           false
-    no audio:           true
+    no sound:           true
 
     ----- stderr -----
     ");

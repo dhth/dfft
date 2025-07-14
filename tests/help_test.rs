@@ -56,7 +56,7 @@ fn showing_help_for_run_works() {
           --debug           Output debug information without doing anything
           --no-prepop       Skip prepopulating cache with file snapshots
           --no-watch        Start with file watching disabled
-          --no-audio        Disable audio notifications
+          --no-sound        Start with sound notifications disabled
       -h, --help            Print help
 
     ----- stderr -----

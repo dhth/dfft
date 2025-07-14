@@ -38,6 +38,9 @@ pub fn update(model: &mut Model, msg: Msg) -> Vec<Cmd> {
         Msg::ToggleFollowChanges => {
             model.behaviours.follow_changes = !model.behaviours.follow_changes;
         }
+        Msg::ToggleSound => {
+            model.toggle_sound();
+        }
         Msg::ToggleWatching => {
             if model.behaviours.watch {
                 model.pause_watching();

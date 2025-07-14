@@ -16,6 +16,7 @@ Diff Pane
     <space>              toggle watching
     <c-r>                reset list
     f                    toggle following changes
+    s                    toggle sound notifications
     Tab/<S-Tab>          switch to changes pane
 
 Changes Pane
@@ -26,6 +27,7 @@ Changes Pane
     J                    scroll diff down (if applicable)
     K                    scroll diff up (if applicable)
     f                    toggle following changes
+    s                    toggle sound notifications
     <c-r>                reset list
     <space>              toggle watching
     Tab/<S-Tab>          switch to diff pane
