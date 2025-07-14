@@ -18,11 +18,6 @@ impl TuiBehaviours {
     }
 
     pub fn with_watch(self, watch: bool) -> Self {
-        Self {
-            watch,
-            follow_changes: self.follow_changes,
-            prepopulate_cache: self.prepopulate_cache,
-            play_sound: self.play_sound,
-        }
+        Self { watch, ..self }
     }
 }

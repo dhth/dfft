@@ -1,6 +1,5 @@
 use clap::{Parser, Subcommand};
 
-/// dfft shows you changes to files in a directory as they happen
 #[derive(Parser, Debug)]
 #[command(author, about, long_about = None)]
 pub struct Args {

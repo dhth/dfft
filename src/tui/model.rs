@@ -506,7 +506,8 @@ impl Model {
             Ok(None) => {
                 self.audio_player = match AudioPlayer::new() {
                     Ok(ap) => Ok(Some(ap)),
-                    Err(_) => {
+                    Err(e) => {
+                        warn!("couldn't set up audio player: {e}");
                         self.user_msg = Some(UserMsg::error("couldn't set up sound notifications"));
                         Err(())
                     }

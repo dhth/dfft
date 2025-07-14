@@ -3,7 +3,9 @@ name = "dfft"
 version = "0.1.0-alpha.1"
 edition = "2024"
 license = "MIT"
-description = "dfft shows you changes to files in a directory as they happen"
+repository = "https://github.com/dhth/dfft"
+description = "see changes to files in a directory as they happen"
+homepage = "https://tools.dhruvs.space/dfft/"
 keywords = [
     "cli",
     "diff",
@@ -37,8 +39,21 @@ insta = "1.43.1"
 insta-cmd = "0.6.0"
 strip-ansi-escapes = "0.2.1"
 
+[profile.dev.package]
+insta.opt-level = 3
+similar.opt-level = 3
+
 [lints.clippy]
 unwrap_used = "deny"
 expect_used = "deny"
 todo = "deny"
 dbg_macro = "deny"
+
+[profile.release]
+codegen-units = 1
+lto = "fat"
+strip = "symbols"
+
+# The profile that 'cargo dist' will build with
+[profile.dist]
+inherits = "release"

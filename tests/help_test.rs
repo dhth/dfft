@@ -19,7 +19,7 @@ fn showing_help_works() {
     success: true
     exit_code: 0
     ----- stdout -----
-    dfft shows you changes to files in a directory as they happen
+    see changes to files in a directory as they happen
 
     Usage: dfft [OPTIONS] <COMMAND>
 
