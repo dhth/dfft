@@ -14,6 +14,7 @@ outputs them as they happen.
 Todo
 ---
 
+- [x] Add CLI
 - [x] Add basic TUI
 - [x] Scrollable diff section
 - [x] Help page

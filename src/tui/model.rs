@@ -1,3 +1,4 @@
+use super::TuiBehaviours;
 use super::common::*;
 use crate::domain::{Change, ChangeKind, FileCache, Modification, WatchUpdate};
 use ratatui::{
@@ -134,12 +135,11 @@ impl From<&ChangeItem> for ListItem<'_> {
 }
 
 pub struct Model {
+    pub behaviours: TuiBehaviours,
     pub root: PathBuf,
     cache: Arc<RwLock<FileCache>>,
     pub active_pane: Pane,
-    pub watching: bool,
     pub changes: Changes,
-    pub follow_changes: bool,
     pub last_active_pane: Option<Pane>,
     pub running_state: RunningState,
     pub user_msg: Option<UserMsg>,
@@ -161,9 +161,9 @@ pub struct Model {
 
 impl Model {
     pub fn new(
+        behaviours: TuiBehaviours,
         root: PathBuf,
         terminal_dimensions: TerminalDimensions,
-        watching: bool,
         debug: bool,
     ) -> Self {
         let terminal_too_small = terminal_dimensions.width < MIN_TERMINAL_WIDTH
@@ -172,12 +172,11 @@ impl Model {
         let (changes_tx, changes_rx) = mpsc::channel::<WatchUpdate>(100);
 
         let mut model = Model {
+            behaviours,
             root,
             cache: Arc::new(RwLock::new(FileCache::new())),
             active_pane: Pane::Diff,
-            watching,
             changes: Changes::new(),
-            follow_changes: false,
             last_active_pane: None,
             running_state: RunningState::Running,
             user_msg: None,
@@ -323,9 +322,9 @@ impl Model {
     }
 
     pub(super) fn add_change(&mut self, change: Change) {
-        self.changes.append(change, self.follow_changes);
+        self.changes.append(change, self.behaviours.follow_changes);
 
-        if self.follow_changes || self.changes.items.len() == 1 {
+        if self.behaviours.follow_changes || self.changes.items.len() == 1 {
             self.reset_diff_scroll();
             self.compute_max_diff_scroll_available();
         }
@@ -343,12 +342,12 @@ impl Model {
 
     pub(super) fn pause_watching(&mut self) {
         self.cancellation_token.cancel();
-        self.watching = false;
+        self.behaviours.watch = false;
     }
 
     pub(super) fn regenerate_cancellation_token(&mut self) {
         self.cancellation_token = CancellationToken::new();
-        self.watching = true;
+        self.behaviours.watch = true;
     }
 
     pub(super) fn scroll_help_down(&mut self) {

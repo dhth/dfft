@@ -1,4 +1,5 @@
 mod app;
+mod behaviours;
 mod cmd;
 mod common;
 mod handle;
@@ -10,3 +11,4 @@ mod update;
 mod view;
 
 pub use app::run;
+pub use behaviours::*;
