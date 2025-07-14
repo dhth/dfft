@@ -97,9 +97,6 @@ pub async fn watch_for_changes(
 
                                         let change = match tokio::fs::read_to_string(path).await {
                                             Ok(contents) => {
-                                                // Not a 100% sure if we need to check if the path
-                                                // existed in the cache, leaving it in as a
-                                                // safeguard
                                                 let was_held = {
                                                     let mut cache_guard = cache.write().await;
                                                     cache_guard.insert(&file_path, &contents)
@@ -224,6 +221,15 @@ pub async fn watch_for_changes(
                                         if is_file_to_be_ignored(path, &gitignore).await {
                                             continue;
                                         }
+
+                                        // "git checkout" emits a DELETE followed by a CREATE
+                                        // if file still exists when we receive this event, we can
+                                        // skip it. The arm handling CREATE events already checks
+                                        // if the path in question is in the cache, ultimately
+                                        // making git checkouts appear as MODIFICATIONS
+                                        if tokio::fs::try_exists(path).await.unwrap_or(false) {
+                                            continue;
+                                        };
 
                                         let file_path = path
                                             .strip_prefix(&root)
