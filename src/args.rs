@@ -15,7 +15,7 @@ pub struct Args {
 pub enum DfftCommand {
     /// Run dfft's TUI
     Run {
-        /// TUI will follow changes as they happen
+        /// Start with the setting "follow changes" enabled
         #[arg(short = 'f', long = "follow-changes")]
         follow_changes: bool,
         /// Skip prepopulating cache with file snapshots

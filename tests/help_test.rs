@@ -43,7 +43,7 @@ fn showing_help_for_run_works() {
 
     // WHEN
     // THEN
-    assert_cmd_snapshot!(cmd, @r"
+    assert_cmd_snapshot!(cmd, @r#"
     success: true
     exit_code: 0
     ----- stdout -----
@@ -52,12 +52,12 @@ fn showing_help_for_run_works() {
     Usage: dfft run [OPTIONS]
 
     Options:
-      -f, --follow-changes  TUI will follow changes as they happen
+      -f, --follow-changes  Start with the setting "follow changes" enabled
           --debug           Output debug information without doing anything
           --no-prepop       Skip prepopulating cache with file snapshots
           --no-watch        Start with file watching disabled
       -h, --help            Print help
 
     ----- stderr -----
-    ");
+    "#);
 }
