@@ -37,7 +37,7 @@ impl AudioManager {
 
     fn play_sound_async(&self, sound_data: &'static [u8]) {
         let stream_handle = self.stream_handle.clone();
-        
+
         if tokio::runtime::Handle::try_current().is_ok() {
             tokio::spawn(async move {
                 let _ = Self::play_sound_internal(sound_data, &stream_handle);
@@ -52,12 +52,10 @@ impl AudioManager {
         let sink = Sink::try_new(stream_handle)?;
         let cursor = Cursor::new(sound_data);
         let source = Decoder::new(cursor)?;
-        
+
         sink.append(source);
         sink.sleep_until_end();
-        
+
         Ok(())
     }
 }
-
-

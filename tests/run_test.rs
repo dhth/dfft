@@ -21,10 +21,10 @@ fn debug_flag_works() {
     ----- stdout -----
     DEBUG INFO:
 
-    Command:                                         Run TUI
-    Start with change following enabled:             false
-    Skip prepopulating cache with file snapshots:    false
-    Start with file watching disabled:               false
+    command:            run TUI
+    follow changes:     false
+    no prepopulation:   false
+    no watch:           false
 
     ----- stderr -----
     ");
@@ -34,7 +34,7 @@ fn debug_flag_works() {
 fn turning_off_following_works() {
     // GIVEN
     let fx = Fixture::new();
-    let mut cmd = fx.cmd(["run", "--follow", "--debug"]);
+    let mut cmd = fx.cmd(["run", "--follow-changes", "--debug"]);
 
     // WHEN
     // THEN
@@ -44,10 +44,10 @@ fn turning_off_following_works() {
     ----- stdout -----
     DEBUG INFO:
 
-    Command:                                         Run TUI
-    Start with change following enabled:             true
-    Skip prepopulating cache with file snapshots:    false
-    Start with file watching disabled:               false
+    command:            run TUI
+    follow changes:     true
+    no prepopulation:   false
+    no watch:           false
 
     ----- stderr -----
     ");
@@ -67,10 +67,10 @@ fn turning_off_prepopulation_works() {
     ----- stdout -----
     DEBUG INFO:
 
-    Command:                                         Run TUI
-    Start with change following enabled:             false
-    Skip prepopulating cache with file snapshots:    true
-    Start with file watching disabled:               false
+    command:            run TUI
+    follow changes:     false
+    no prepopulation:   true
+    no watch:           false
 
     ----- stderr -----
     ");
@@ -90,10 +90,10 @@ fn turning_off_watching_works() {
     ----- stdout -----
     DEBUG INFO:
 
-    Command:                                         Run TUI
-    Start with change following enabled:             false
-    Skip prepopulating cache with file snapshots:    false
-    Start with file watching disabled:               true
+    command:            run TUI
+    follow changes:     false
+    no prepopulation:   false
+    no watch:           true
 
     ----- stderr -----
     ");
