@@ -23,3 +23,4 @@ pr-run-mode = "upload"
 
 [dist.dependencies.apt]
 libasound2-dev = { version = '*', stage = ["build"] }
+pkg-config = { version = '*', stage = ["build"] }
