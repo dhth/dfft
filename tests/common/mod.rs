@@ -6,7 +6,6 @@ pub struct Fixture {
 }
 
 #[cfg(test)]
-#[allow(unused)]
 impl Fixture {
     pub fn new() -> Self {
         let bin_path = get_cargo_bin("dfft");
@@ -14,10 +13,6 @@ impl Fixture {
         Self {
             _bin_path: bin_path,
         }
-    }
-
-    pub fn base_cmd(&self) -> Command {
-        Command::new(&self._bin_path)
     }
 
     pub fn cmd<I, S>(&self, args: I) -> Command
