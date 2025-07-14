@@ -3,6 +3,7 @@ pub struct TuiBehaviours {
     pub watch: bool,
     pub follow_changes: bool,
     pub prepopulate_cache: bool,
+    #[cfg(feature = "sound")]
     pub play_sound: bool,
 }
 
@@ -13,11 +14,15 @@ impl TuiBehaviours {
             watch: true,
             follow_changes: false,
             prepopulate_cache: true,
+            #[cfg(feature = "sound")]
             play_sound: false,
         }
     }
 
-    pub fn with_watch(self, watch: bool) -> Self {
-        Self { watch, ..self }
+    pub fn with_watch_off(self) -> Self {
+        Self {
+            watch: false,
+            ..self
+        }
     }
 }

@@ -36,6 +36,7 @@ fn showing_help_works() {
 }
 
 #[test]
+#[cfg(feature = "sound")]
 fn showing_help_for_run_works() {
     // GIVEN
     let fx = Fixture::new();

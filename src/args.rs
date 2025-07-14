@@ -24,6 +24,7 @@ pub enum DfftCommand {
         #[arg(long = "no-watch")]
         no_watch: bool,
         /// Start with sound notifications disabled
+        #[cfg(feature = "sound")]
         #[arg(long = "no-sound")]
         no_sound: bool,
     },
@@ -36,16 +37,30 @@ impl std::fmt::Display for Args {
                 follow_changes,
                 no_prepopulation,
                 no_watch,
+                #[cfg(feature = "sound")]
                 no_sound,
-            } => format!(
-                r#"
+            } => {
+                #[cfg(feature = "sound")]
+                let output = format!(
+                    r#"
 command:            run TUI
 follow changes:     {follow_changes}
 no prepopulation:   {no_prepopulation}
 no watch:           {no_watch}
 no sound:           {no_sound}
 "#,
-            ),
+                );
+                #[cfg(not(feature = "sound"))]
+                let output = format!(
+                    r#"
+command:            run TUI
+follow changes:     {follow_changes}
+no prepopulation:   {no_prepopulation}
+no watch:           {no_watch}
+"#,
+                );
+                output
+            }
         };
 
         f.write_str(&output)

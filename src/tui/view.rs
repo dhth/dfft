@@ -24,7 +24,9 @@ const SNAPSHOTS_COLOR: Color = Color::from_u32(0xca9ee6);
 const FOLLOWING_CHANGES_COLOR: Color = Color::from_u32(0x99d1db);
 const HELP_COLOR: Color = Color::from_u32(0xbabbf1);
 const DIM_COLOR: Color = Color::Gray;
+#[cfg(feature = "sound")]
 const SOUND_UNAVAILABLE_COLOR: Color = Color::from_u32(0xe78284);
+#[cfg(feature = "sound")]
 const SOUND_ON_COLOR: Color = Color::from_u32(0xf5a97f);
 
 const TITLE: &str = " dfft ";
@@ -242,7 +244,8 @@ fn render_help_pane(model: &Model, frame: &mut Frame) {
         .constraints(vec![Constraint::Fill(1), Constraint::Length(1)])
         .split(frame.area());
 
-    let lines: Vec<Line> = HELP_CONTENT
+    let help_content = get_help_content();
+    let lines: Vec<Line> = help_content
         .lines()
         .skip(model.help_scroll)
         .map(Line::raw)
@@ -295,6 +298,7 @@ fn render_status_line(model: &Model, frame: &mut Frame, rect: Rect) {
         Style::default().fg(watching_color).bold(),
     ));
 
+    #[cfg(feature = "sound")]
     if model.is_sound_unavailable() {
         status_bar_lines.push(Span::styled(
             " [sound unavailable]",
