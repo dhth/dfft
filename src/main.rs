@@ -1,7 +1,7 @@
 mod args;
-mod audio;
 mod domain;
 mod log;
+mod notifs;
 mod tui;
 mod utils;
 mod watcher;

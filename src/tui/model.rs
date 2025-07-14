@@ -1,7 +1,7 @@
 use super::TuiBehaviours;
 use super::common::*;
-use crate::audio::AudioManager;
 use crate::domain::{Change, ChangeKind, FileCache, Modification, WatchUpdate};
+use crate::notifs::AudioPlayer;
 use ratatui::{
     style::{Style, Stylize},
     text::{Line, Span},
@@ -12,6 +12,7 @@ use std::sync::Arc;
 use tokio::sync::mpsc::{Receiver, Sender};
 use tokio::sync::{RwLock, mpsc};
 use tokio_util::sync::CancellationToken;
+use tracing::warn;
 
 const USER_MESSAGE_DEFAULT_FRAMES: u16 = 4;
 const CREATED_LABEL: &str = " created  ";
@@ -158,7 +159,7 @@ pub struct Model {
     pub max_help_scroll_available: usize,
     pub diff_scroll: usize,
     pub max_diff_scroll_available: usize,
-    audio_manager: Option<AudioManager>,
+    audio_player: Option<AudioPlayer>,
 }
 
 impl Model {
@@ -173,11 +174,16 @@ impl Model {
 
         let (changes_tx, changes_rx) = mpsc::channel::<WatchUpdate>(100);
 
-        // Initialize audio manager - None for tests, Some for production
-        let audio_manager = if cfg!(test) {
+        let audio_player = if cfg!(test) {
             None
         } else {
-            AudioManager::new().ok()
+            match AudioPlayer::new() {
+                Ok(ap) => Some(ap),
+                Err(e) => {
+                    warn!("couldn't set up audio player: {e}");
+                    None
+                }
+            }
         };
 
         let mut model = Model {
@@ -203,7 +209,7 @@ impl Model {
             max_help_scroll_available: 0,
             diff_scroll: 0,
             max_diff_scroll_available: 0,
-            audio_manager,
+            audio_player,
         };
 
         model.compute_max_help_scroll_available();
@@ -332,8 +338,8 @@ impl Model {
     }
 
     pub(super) fn add_change(&mut self, change: Change) {
-        if let Some(ref audio) = self.audio_manager {
-            audio.play_for_change(&change.kind);
+        if let Some(ap) = &self.audio_player {
+            ap.play_change_sound(&change.kind);
         }
 
         self.changes.append(change, self.behaviours.follow_changes);
@@ -345,8 +351,8 @@ impl Model {
     }
 
     pub(super) fn play_error_sound(&self) {
-        if let Some(ref audio) = self.audio_manager {
-            audio.play_error_sound();
+        if let Some(ap) = &self.audio_player {
+            ap.play_error_sound();
         }
     }
 
