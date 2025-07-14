@@ -322,6 +322,9 @@ impl Model {
     }
 
     pub(super) fn add_change(&mut self, change: Change) {
+        // Play notification sound based on change type
+        crate::audio::play_notification_for_change(&change.kind);
+
         self.changes.append(change, self.behaviours.follow_changes);
 
         if self.behaviours.follow_changes || self.changes.items.len() == 1 {

@@ -19,6 +19,7 @@ exclude = [
 anyhow = "1.0.98"
 clap = { version = "4.5.41", features = ["derive"] }
 console = "0.16.0"
+rodio = { version = "0.18", default-features = false, features = ["wav"] }
 etcetera = "0.10.0"
 ignore = "0.4.23"
 notify = "8.1.0"

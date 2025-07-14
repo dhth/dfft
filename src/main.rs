@@ -1,4 +1,5 @@
 mod args;
+mod audio;
 mod domain;
 mod log;
 mod tui;

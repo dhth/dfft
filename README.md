@@ -24,7 +24,7 @@ Todo
 - [x] Show contents for new file
 - [x] [bug] error when "G" is pressed
 - [x] Stop/resume listening for changes
-- [x] Play sound when a change occurs
+- [ ] Play sound when a change occurs
 - [x] Allow pre-populating snapshots at startup
 - [x] Show number of snapshots in memory
 - [x] Consider `dfft` specific ignore file
