@@ -1,5 +1,6 @@
 use super::TuiBehaviours;
 use super::common::*;
+use crate::audio::AudioManager;
 use crate::domain::{Change, ChangeKind, FileCache, Modification, WatchUpdate};
 use ratatui::{
     style::{Style, Stylize},
@@ -157,6 +158,7 @@ pub struct Model {
     pub max_help_scroll_available: usize,
     pub diff_scroll: usize,
     pub max_diff_scroll_available: usize,
+    audio_manager: Option<AudioManager>,
 }
 
 impl Model {
@@ -170,6 +172,13 @@ impl Model {
             || terminal_dimensions.height < MIN_TERMINAL_HEIGHT;
 
         let (changes_tx, changes_rx) = mpsc::channel::<WatchUpdate>(100);
+
+        // Initialize audio manager - None for tests, Some for production
+        let audio_manager = if cfg!(test) {
+            None
+        } else {
+            AudioManager::new().ok()
+        };
 
         let mut model = Model {
             behaviours,
@@ -194,6 +203,7 @@ impl Model {
             max_help_scroll_available: 0,
             diff_scroll: 0,
             max_diff_scroll_available: 0,
+            audio_manager,
         };
 
         model.compute_max_help_scroll_available();
@@ -322,14 +332,21 @@ impl Model {
     }
 
     pub(super) fn add_change(&mut self, change: Change) {
-        // Play notification sound based on change type
-        crate::audio::play_notification_for_change(&change.kind);
+        if let Some(ref audio) = self.audio_manager {
+            audio.play_for_change(&change.kind);
+        }
 
         self.changes.append(change, self.behaviours.follow_changes);
 
         if self.behaviours.follow_changes || self.changes.items.len() == 1 {
             self.reset_diff_scroll();
             self.compute_max_diff_scroll_available();
+        }
+    }
+
+    pub(super) fn play_error_sound(&self) {
+        if let Some(ref audio) = self.audio_manager {
+            audio.play_error_sound();
         }
     }
 
