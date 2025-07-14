@@ -1964,11 +1964,7 @@ fn status_line_shows_paused_status() {
     // GIVEN
     let (mut terminal, terminal_dimensions) = get_test_terminal();
     let mut model = Model::new(
-        TuiBehaviours {
-            watch: false,
-            follow_changes: false,
-            prepopulate_cache: true,
-        },
+        TuiBehaviours::default_for_test().with_watch(false),
         PathBuf::new(),
         terminal_dimensions,
         false,
@@ -2778,11 +2774,7 @@ fn showing_debug_info_works() {
     // GIVEN
     let (mut terminal, terminal_dimensions) = get_test_terminal_with_dims(90, 24);
     let mut model = Model::new(
-        TuiBehaviours {
-            watch: true,
-            follow_changes: false,
-            prepopulate_cache: true,
-        },
+        TuiBehaviours::default_for_test(),
         PathBuf::new(),
         terminal_dimensions,
         true,

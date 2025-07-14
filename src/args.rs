@@ -24,6 +24,9 @@ pub enum DfftCommand {
         /// Start with file watching disabled
         #[arg(long = "no-watch")]
         no_watch: bool,
+        /// Disable audio notifications
+        #[arg(long = "no-audio")]
+        no_audio: bool,
     },
 }
 
@@ -34,12 +37,14 @@ impl std::fmt::Display for Args {
                 follow_changes,
                 no_prepopulation,
                 no_watch,
+                no_audio,
             } => format!(
                 r#"
 command:            run TUI
 follow changes:     {follow_changes}
 no prepopulation:   {no_prepopulation}
 no watch:           {no_watch}
+no audio:           {no_audio}
 "#,
             ),
         };

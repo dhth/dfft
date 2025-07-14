@@ -174,9 +174,7 @@ impl Model {
 
         let (changes_tx, changes_rx) = mpsc::channel::<WatchUpdate>(100);
 
-        let audio_player = if cfg!(test) {
-            None
-        } else {
+        let audio_player = if behaviours.play_audio {
             match AudioPlayer::new() {
                 Ok(ap) => Some(ap),
                 Err(e) => {
@@ -184,6 +182,8 @@ impl Model {
                     None
                 }
             }
+        } else {
+            None
         };
 
         let mut model = Model {
