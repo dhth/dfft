@@ -34,7 +34,7 @@ fn debug_flag_works() {
 fn turning_off_following_works() {
     // GIVEN
     let fx = Fixture::new();
-    let mut cmd = fx.cmd(["run", "--follow", "--debug"]);
+    let mut cmd = fx.cmd(["run", "--follow-changes", "--debug"]);
 
     // WHEN
     // THEN
