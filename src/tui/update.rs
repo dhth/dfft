@@ -38,6 +38,7 @@ pub fn update(model: &mut Model, msg: Msg) -> Vec<Cmd> {
         Msg::ToggleFollowChanges => {
             model.behaviours.follow_changes = !model.behaviours.follow_changes;
         }
+        #[cfg(feature = "sound")]
         Msg::ToggleSound => {
             model.toggle_sound();
         }

@@ -28,6 +28,7 @@ fn get_test_terminal_with_dims(
 }
 
 #[test]
+#[cfg(feature = "sound")]
 fn rendering_help_pane_works() {
     // GIVEN
     let (mut terminal, terminal_dimensions) = get_test_terminal_with_dims(80, 40);
@@ -58,10 +59,10 @@ fn rendering_help_pane_works() {
     "│     <ctrl+c>             exit immediately                                    │"
     "│                                                                              │"
     "│ Diff Pane                                                                    │"
-    "│     j                    select next change                                  │"
-    "│     k                    select previous change                              │"
-    "│     J / ↓                scroll diff down                                    │"
-    "│     K / ↑                scroll diff up                                      │"
+    "│     j / ↓                select next change                                  │"
+    "│     k / ↑                select previous change                              │"
+    "│     J                    scroll diff down                                    │"
+    "│     K                    scroll diff up                                      │"
     "│     g                    select first change                                 │"
     "│     G                    select last change                                  │"
     "│     <space>              toggle watching                                     │"
@@ -91,6 +92,71 @@ fn rendering_help_pane_works() {
 }
 
 #[test]
+#[cfg(not(feature = "sound"))]
+fn help_doesnt_show_keymaps_for_sound_if_feature_is_off() {
+    // GIVEN
+    let (mut terminal, terminal_dimensions) = get_test_terminal_with_dims(80, 40);
+
+    let mut model = Model::new(
+        TuiBehaviours::default_for_test(),
+        PathBuf::new(),
+        terminal_dimensions,
+        false,
+    );
+    update(&mut model, Msg::GoToPane(Pane::Help));
+
+    // WHEN
+    terminal
+        .draw(|f| view(&mut model, f))
+        .expect("frame should've been drawn");
+
+    // THEN
+    assert_snapshot!(terminal.backend(), @r#"
+    "┌ help ────────────────────────────────────────────────────────────────────────┐"
+    "│                                                                              │"
+    "│ Keymaps                                                                      │"
+    "│ ---                                                                          │"
+    "│                                                                              │"
+    "│ General                                                                      │"
+    "│     ?                    show/hide help view                                 │"
+    "│     Esc / q              go back/exit                                        │"
+    "│     <ctrl+c>             exit immediately                                    │"
+    "│                                                                              │"
+    "│ Diff Pane                                                                    │"
+    "│     j / ↓                select next change                                  │"
+    "│     k / ↑                select previous change                              │"
+    "│     J                    scroll diff down                                    │"
+    "│     K                    scroll diff up                                      │"
+    "│     g                    select first change                                 │"
+    "│     G                    select last change                                  │"
+    "│     <space>              toggle watching                                     │"
+    "│     <c-r>                reset list                                          │"
+    "│     f                    toggle following changes                            │"
+    "│     Tab/<S-Tab>          switch to changes pane                              │"
+    "│                                                                              │"
+    "│ Changes Pane                                                                 │"
+    "│     j / ↓                select next change                                  │"
+    "│     k / ↑                select previous change                              │"
+    "│     g                    select first change                                 │"
+    "│     G                    select last change                                  │"
+    "│     J                    scroll diff down (if applicable)                    │"
+    "│     K                    scroll diff up (if applicable)                      │"
+    "│     f                    toggle following changes                            │"
+    "│     <c-r>                reset list                                          │"
+    "│     <space>              toggle watching                                     │"
+    "│     Tab/<S-Tab>          switch to diff pane                                 │"
+    "│                                                                              │"
+    "│ Help Pane                                                                    │"
+    "│     j / ↓                scroll down                                         │"
+    "│     k / ↑                scroll up                                           │"
+    "│                                                                              │"
+    "└──────────────────────────────────────────────────────────────────────────────┘"
+    " dfft  [watching]                                                               "
+    "#);
+}
+
+#[test]
+#[cfg(feature = "sound")]
 fn scrolling_help_pane_works() {
     // GIVEN
     let (mut terminal, terminal_dimensions) = get_test_terminal();
@@ -121,10 +187,10 @@ fn scrolling_help_pane_works() {
     "│     <ctrl+c>             exit immediately                                    │"
     "│                                                                              │"
     "│ Diff Pane                                                                    │"
-    "│     j                    select next change                                  │"
-    "│     k                    select previous change                              │"
-    "│     J / ↓                scroll diff down                                    │"
-    "│     K / ↑                scroll diff up                                      │"
+    "│     j / ↓                select next change                                  │"
+    "│     k / ↑                select previous change                              │"
+    "│     J                    scroll diff down                                    │"
+    "│     K                    scroll diff up                                      │"
     "│     g                    select first change                                 │"
     "│     G                    select last change                                  │"
     "│     <space>              toggle watching                                     │"
@@ -142,6 +208,7 @@ fn scrolling_help_pane_works() {
 }
 
 #[test]
+#[cfg(feature = "sound")]
 fn help_pane_doesnt_scroll_beyond_limits() {
     // GIVEN
     let (mut terminal, terminal_dimensions) = get_test_terminal();
@@ -175,10 +242,10 @@ fn help_pane_doesnt_scroll_beyond_limits() {
     "│     <ctrl+c>             exit immediately                                    │"
     "│                                                                              │"
     "│ Diff Pane                                                                    │"
-    "│     j                    select next change                                  │"
-    "│     k                    select previous change                              │"
-    "│     J / ↓                scroll diff down                                    │"
-    "│     K / ↑                scroll diff up                                      │"
+    "│     j / ↓                select next change                                  │"
+    "│     k / ↑                select previous change                              │"
+    "│     J                    scroll diff down                                    │"
+    "│     K                    scroll diff up                                      │"
     "│     g                    select first change                                 │"
     "│     G                    select last change                                  │"
     "│     <space>              toggle watching                                     │"
@@ -1964,7 +2031,7 @@ fn status_line_shows_paused_status() {
     // GIVEN
     let (mut terminal, terminal_dimensions) = get_test_terminal();
     let mut model = Model::new(
-        TuiBehaviours::default_for_test().with_watch(false),
+        TuiBehaviours::default_for_test().with_watch_off(),
         PathBuf::new(),
         terminal_dimensions,
         false,
@@ -2767,6 +2834,54 @@ fn max_scroll_for_diff_is_recomputed_when_terminal_size_crosses_minimum_threshol
 
     update(&mut model, Msg::TerminalResize(width + 20, height));
     assert_eq!(model.max_diff_scroll_available, max_diff_scroll);
+}
+
+#[cfg(feature = "sound")]
+#[test]
+fn sound_unavailable_indicator_is_shown_when_applicable() {
+    // GIVEN
+    let (mut terminal, terminal_dimensions) = get_test_terminal_with_dims(90, 24);
+    let mut model = Model::new(
+        TuiBehaviours::default_for_test(),
+        PathBuf::new(),
+        terminal_dimensions,
+        false,
+    );
+    model.behaviours.play_sound = true;
+    model.audio_player = Err(());
+
+    // WHEN
+    terminal
+        .draw(|f| view(&mut model, f))
+        .expect("frame should've been drawn");
+
+    // THEN
+    assert_snapshot!(terminal.backend(), @r#"
+    "┌ diff ──────────────────────────────────────────────────────────────────────────────────┐"
+    "│                                                                                        │"
+    "│                                                                                        │"
+    "│                                                                                        │"
+    "│                                          dfft                                          │"
+    "│                                          ‾‾‾‾                                          │"
+    "│                                                                                        │"
+    "│                   see changes to files in a directory as they happen                   │"
+    "│                                                                                        │"
+    "│                                                                                        │"
+    "└────────────────────────────────────────────────────────────────────────────────────────┘"
+    "┌ changes ───────────────────────────────────────────────────────────────────────────────┐"
+    "│                                                                                        │"
+    "│ changes will appear here                                                               │"
+    "│                                                                                        │"
+    "│                                                                                        │"
+    "│                                                                                        │"
+    "│                                                                                        │"
+    "│                                                                                        │"
+    "│                                                                                        │"
+    "│                                                                                        │"
+    "│                                                                                        │"
+    "└────────────────────────────────────────────────────────────────────────────────────────┘"
+    " dfft  [watching] [sound unavailable]                                                     "
+    "#);
 }
 
 #[test]

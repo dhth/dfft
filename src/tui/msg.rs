@@ -17,6 +17,7 @@ pub enum Msg {
     SelectPrevious,
     TerminalResize(u16, u16),
     ToggleFollowChanges,
+    #[cfg(feature = "sound")]
     ToggleSound,
     ToggleWatching,
     // internal
@@ -49,6 +50,7 @@ pub fn get_event_handling_msg(model: &Model, event: Event) -> Option<Msg> {
                         KeyCode::Char('r') if key_event.modifiers == KeyModifiers::CONTROL => {
                             Some(Msg::ResetList)
                         }
+                        #[cfg(feature = "sound")]
                         KeyCode::Char('s') => Some(Msg::ToggleSound),
                         KeyCode::Esc | KeyCode::Char('q') => Some(Msg::GoBackOrQuit),
                         KeyCode::Tab | KeyCode::BackTab => Some(Msg::GoToPane(Pane::Diff)),
@@ -60,18 +62,19 @@ pub fn get_event_handling_msg(model: &Model, event: Event) -> Option<Msg> {
                         _ => None,
                     },
                     Pane::Diff => match key_event.code {
-                        KeyCode::Char('j') => Some(Msg::SelectNext),
-                        KeyCode::Char('k') => Some(Msg::SelectPrevious),
+                        KeyCode::Char('j') | KeyCode::Down => Some(Msg::SelectNext),
+                        KeyCode::Char('k') | KeyCode::Up => Some(Msg::SelectPrevious),
                         KeyCode::Char('g') => Some(Msg::SelectFirst),
                         KeyCode::Char('G') => Some(Msg::SelectLast),
-                        KeyCode::Char('J') | KeyCode::Down => Some(Msg::ScrollDown),
-                        KeyCode::Char('K') | KeyCode::Up => Some(Msg::ScrollUp),
+                        KeyCode::Char('J') => Some(Msg::ScrollDown),
+                        KeyCode::Char('K') => Some(Msg::ScrollUp),
                         KeyCode::Tab | KeyCode::BackTab => Some(Msg::GoToPane(Pane::Changes)),
                         KeyCode::Char('f') => Some(Msg::ToggleFollowChanges),
                         KeyCode::Char(' ') => Some(Msg::ToggleWatching),
                         KeyCode::Char('r') if key_event.modifiers == KeyModifiers::CONTROL => {
                             Some(Msg::ResetList)
                         }
+                        #[cfg(feature = "sound")]
                         KeyCode::Char('s') => Some(Msg::ToggleSound),
                         KeyCode::Char('?') => Some(Msg::GoToPane(Pane::Help)),
                         KeyCode::Esc | KeyCode::Char('q') => Some(Msg::GoBackOrQuit),

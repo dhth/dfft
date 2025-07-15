@@ -7,7 +7,22 @@ pub const SUBTRACTION_COLOR: Color = Color::from_u32(0xf7768e);
 pub const MODIFICATION_COLOR: Color = Color::from_u32(0xdf8e1d);
 pub const FILE_ERROR_COLOR: Color = Color::from_u32(0xfb4934);
 
-pub const HELP_CONTENT: &str = include_str!("static/help.txt");
+const HELP_CONTENT_RAW: &str = include_str!("static/help.txt");
+
+pub fn get_help_content() -> String {
+    #[cfg(feature = "sound")]
+    {
+        HELP_CONTENT_RAW.to_string()
+    }
+    #[cfg(not(feature = "sound"))]
+    {
+        HELP_CONTENT_RAW
+            .lines()
+            .filter(|line| !line.contains("toggle sound notifications"))
+            .collect::<Vec<_>>()
+            .join("\n")
+    }
+}
 pub const UNEXPECTED_ERROR_MSG: &str = "an unexpected error occurred";
 
 #[derive(PartialEq, Debug, Clone, Copy)]

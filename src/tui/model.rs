@@ -1,6 +1,7 @@
 use super::TuiBehaviours;
 use super::common::*;
 use crate::domain::{Change, ChangeKind, FileCache, Modification, WatchUpdate};
+#[cfg(feature = "sound")]
 use crate::notifs::AudioPlayer;
 use ratatui::{
     style::{Style, Stylize},
@@ -12,6 +13,7 @@ use std::sync::Arc;
 use tokio::sync::mpsc::{Receiver, Sender};
 use tokio::sync::{RwLock, mpsc};
 use tokio_util::sync::CancellationToken;
+#[cfg(feature = "sound")]
 use tracing::warn;
 
 const USER_MESSAGE_DEFAULT_FRAMES: u16 = 4;
@@ -159,7 +161,8 @@ pub struct Model {
     pub max_help_scroll_available: usize,
     pub diff_scroll: usize,
     pub max_diff_scroll_available: usize,
-    audio_player: Result<Option<AudioPlayer>, ()>,
+    #[cfg(feature = "sound")]
+    pub audio_player: Result<Option<AudioPlayer>, ()>,
 }
 
 impl Model {
@@ -174,6 +177,7 @@ impl Model {
 
         let (changes_tx, changes_rx) = mpsc::channel::<WatchUpdate>(100);
 
+        #[cfg(feature = "sound")]
         let audio_player = if behaviours.play_sound {
             match AudioPlayer::new() {
                 Ok(ap) => Ok(Some(ap)),
@@ -205,17 +209,15 @@ impl Model {
             cancellation_token: CancellationToken::new(),
             debug,
             help_scroll: 0,
-            help_line_count: HELP_CONTENT.lines().count(),
+            help_line_count: get_help_content().lines().count(),
             max_help_scroll_available: 0,
             diff_scroll: 0,
             max_diff_scroll_available: 0,
+            #[cfg(feature = "sound")]
             audio_player,
         };
 
         model.compute_max_help_scroll_available();
-        if model.is_sound_unavailable() {
-            model.user_msg = Some(UserMsg::error("couldn't set up sound notifications"));
-        }
 
         model
     }
@@ -341,6 +343,7 @@ impl Model {
     }
 
     pub(super) fn add_change(&mut self, change: Change) {
+        #[cfg(feature = "sound")]
         if let Ok(Some(ap)) = &self.audio_player
             && self.behaviours.play_sound
         {
@@ -356,6 +359,7 @@ impl Model {
     }
 
     pub(super) fn play_error_sound(&self) {
+        #[cfg(feature = "sound")]
         if let Ok(Some(ap)) = &self.audio_player
             && self.behaviours.play_sound
         {
@@ -498,6 +502,7 @@ impl Model {
         self.cache.try_read().ok().map(|c| c.len())
     }
 
+    #[cfg(feature = "sound")]
     pub(super) fn toggle_sound(&mut self) {
         match &self.audio_player {
             Ok(Some(_)) => {
@@ -508,7 +513,6 @@ impl Model {
                     Ok(ap) => Ok(Some(ap)),
                     Err(e) => {
                         warn!("couldn't set up audio player: {e}");
-                        self.user_msg = Some(UserMsg::error("couldn't set up sound notifications"));
                         Err(())
                     }
                 };
@@ -523,6 +527,7 @@ impl Model {
         }
     }
 
+    #[cfg(feature = "sound")]
     pub(super) fn is_sound_unavailable(&self) -> bool {
         self.audio_player.is_err()
     }
