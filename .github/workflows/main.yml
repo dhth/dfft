@@ -57,7 +57,7 @@ jobs:
           - name: "no-sound"
             flags: "--no-default-features"
             install_sound_deps: false
-    name: lint-${{ matrix.os }}-${{ matrix.features.name }}
+    name: lint-${{ matrix.features.name }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
