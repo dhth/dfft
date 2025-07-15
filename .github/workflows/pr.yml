@@ -45,51 +45,89 @@ jobs:
   lint:
     needs: changes
     if: ${{ needs.changes.outputs.code == 'true' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        features:
+          - name: "default"
+            flags: ""
+            install_sound_deps: true
+          - name: "no-sound"
+            flags: "--no-default-features"
+            install_sound_deps: false
+    name: lint-${{ matrix.features.name }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Install system dependencies
+        if: matrix.features.install_sound_deps
+        run: sudo apt-get update && sudo apt-get install -y libasound2-dev
       - name: Install toolchain
         uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
           components: clippy, rustfmt
       - name: Check formatting
         run: cargo fmt --all -- --check
-      - name: Lint
-        run: cargo clippy
+      - name: Lint (${{ matrix.features.name }})
+        run: cargo clippy ${{ matrix.features.flags }}
 
   build:
     needs: changes
     if: ${{ needs.changes.outputs.code == 'true' }}
     strategy:
+      fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest]
+        features:
+          - name: "default"
+            flags: ""
+            install_sound_deps: true
+          - name: "no-sound"
+            flags: "--no-default-features"
+            install_sound_deps: false
+    name: build-${{ matrix.os }}-${{ matrix.features.name }}
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
+      - name: Install system dependencies (Ubuntu)
+        if: matrix.os == 'ubuntu-latest' && matrix.features.install_sound_deps
+        run: sudo apt-get update && sudo apt-get install -y libasound2-dev
       - name: Install toolchain
         uses: actions-rust-lang/setup-rust-toolchain@v1
-      - name: Build
-        run: cargo build
+      - name: Build (${{ matrix.features.name }})
+        run: cargo build ${{ matrix.features.flags }}
 
   test:
     needs: changes
     if: ${{ needs.changes.outputs.code == 'true' }}
     strategy:
+      fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest]
+        features:
+          - name: "default"
+            flags: ""
+            install_sound_deps: true
+          - name: "no-sound"
+            flags: "--no-default-features"
+            install_sound_deps: false
+    name: test-${{ matrix.os }}-${{ matrix.features.name }}
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
+      - name: Install system dependencies (Ubuntu)
+        if: matrix.os == 'ubuntu-latest' && matrix.features.install_sound_deps
+        run: sudo apt-get update && sudo apt-get install -y libasound2-dev
       - name: Install toolchain
         uses: actions-rust-lang/setup-rust-toolchain@v1
       - name: Install nextest
         uses: taiki-e/install-action@c07504cae06f832dc8de08911c9a9c5cddb0d2d3 # v2.56.13
         with:
           tool: cargo-nextest
-      - name: Run tests
+      - name: Run tests (${{ matrix.features.name }})
         env:
           RUST_BACKTRACE: 0
-        run: cargo nextest run
+        run: cargo nextest run ${{ matrix.features.flags }}
 
   lint-yaml:
     needs: changes

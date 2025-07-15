@@ -1,6 +1,7 @@
 mod args;
 mod domain;
 mod log;
+mod notifs;
 mod tui;
 mod utils;
 mod watcher;
@@ -25,6 +26,8 @@ async fn main() -> anyhow::Result<()> {
             follow_changes,
             no_prepopulation,
             no_watch,
+            #[cfg(feature = "sound")]
+            no_sound,
         } => {
             setup_logging().context("couldn't set up logging")?;
 
@@ -36,6 +39,8 @@ async fn main() -> anyhow::Result<()> {
                 watch: !no_watch,
                 follow_changes,
                 prepopulate_cache: !no_prepopulation,
+                #[cfg(feature = "sound")]
+                play_sound: !no_sound,
             };
             tui::run(root, behaviours).await?;
         }

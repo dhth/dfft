@@ -13,6 +13,8 @@ alias lf := lint-fix
 alias r := run
 alias re := review
 alias t := test
+alias tl := tail-log
+alias tlf := tail-log-f
 alias yf := yaml-fmt
 
 aud:
@@ -55,13 +57,19 @@ test:
   cargo nextest run
 
 run *FLAGS:
-  cargo run {{FLAGS}}
+  cargo run -- run {{FLAGS}}
 
 review:
   cargo insta test --review
 
 actionlint:
   actionlint
+
+tail-log:
+  tail ~/.local/state/dfft/dfft.log -n 40
+
+tail-log-f:
+  tail -n 40 -f ~/.local/state/dfft/dfft.log
 
 yaml-fmt:
   yamlfmt $(git ls-files '*.yml')

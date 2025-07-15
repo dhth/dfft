@@ -12,18 +12,22 @@ use ratatui::{
 
 const PANE_TITLE_FG_COLOR: Color = Color::from_u32(0x151515);
 const PRIMARY_COLOR: Color = Color::from_u32(0xa6d189);
-const INACTIVE_PANE_TITLE_BG_COLOR: Color = Color::from_u32(0x737994);
+const INACTIVE_PANE_TITLE_BG_COLOR: Color = Color::from_u32(0x838ba7);
 const INACTIVE_PANE_BORDER_COLOR: Color = Color::from_u32(0x737994);
 const INFO_MESSAGE_COLOR: Color = Color::from_u32(0x83a598);
 const ERROR_MESSAGE_COLOR: Color = Color::from_u32(0xfb4934);
 const WATCHING_COLOR: Color = Color::from_u32(0xbabbf1);
-const PAUSED_COLOR: Color = Color::from_u32(0xef9f76);
+const PAUSED_COLOR: Color = Color::from_u32(0xe5c890);
 const WATCHING_LABEL: &str = " [watching]";
 const PAUSED_LABEL: &str = " [ paused ]";
-const SNAPSHOTS_COLOR: Color = Color::from_u32(0x8bd5ca);
-const FOLLOWING_CHANGES_COLOR: Color = Color::from_u32(0xca9ee6);
-const HELP_COLOR: Color = Color::from_u32(0x8caaee);
+const SNAPSHOTS_COLOR: Color = Color::from_u32(0xca9ee6);
+const FOLLOWING_CHANGES_COLOR: Color = Color::from_u32(0x99d1db);
+const HELP_COLOR: Color = Color::from_u32(0xbabbf1);
 const DIM_COLOR: Color = Color::Gray;
+#[cfg(feature = "sound")]
+const SOUND_UNAVAILABLE_COLOR: Color = Color::from_u32(0xe78284);
+#[cfg(feature = "sound")]
+const SOUND_ON_COLOR: Color = Color::from_u32(0xf5a97f);
 
 const TITLE: &str = " dfft ";
 const BANNER_LARGE: &str = r#"
@@ -240,7 +244,8 @@ fn render_help_pane(model: &Model, frame: &mut Frame) {
         .constraints(vec![Constraint::Fill(1), Constraint::Length(1)])
         .split(frame.area());
 
-    let lines: Vec<Line> = HELP_CONTENT
+    let help_content = get_help_content();
+    let lines: Vec<Line> = help_content
         .lines()
         .skip(model.help_scroll)
         .map(Line::raw)
@@ -292,6 +297,19 @@ fn render_status_line(model: &Model, frame: &mut Frame, rect: Rect) {
         watching_label,
         Style::default().fg(watching_color).bold(),
     ));
+
+    #[cfg(feature = "sound")]
+    if model.is_sound_unavailable() {
+        status_bar_lines.push(Span::styled(
+            " [sound unavailable]",
+            Style::default().fg(SOUND_UNAVAILABLE_COLOR).bold(),
+        ));
+    } else if model.behaviours.play_sound {
+        status_bar_lines.push(Span::styled(
+            " [sound on]",
+            Style::default().fg(SOUND_ON_COLOR).bold(),
+        ));
+    }
 
     if model.behaviours.follow_changes {
         status_bar_lines.push(Span::styled(

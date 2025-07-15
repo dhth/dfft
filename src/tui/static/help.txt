@@ -7,15 +7,16 @@ General
     <ctrl+c>             exit immediately
 
 Diff Pane
-    j                    select next change
-    k                    select previous change
-    J / ↓                scroll diff down
-    K / ↑                scroll diff up
+    j / ↓                select next change
+    k / ↑                select previous change
+    J                    scroll diff down
+    K                    scroll diff up
     g                    select first change
     G                    select last change
     <space>              toggle watching
     <c-r>                reset list
     f                    toggle following changes
+    s                    toggle sound notifications
     Tab/<S-Tab>          switch to changes pane
 
 Changes Pane
@@ -26,6 +27,7 @@ Changes Pane
     J                    scroll diff down (if applicable)
     K                    scroll diff up (if applicable)
     f                    toggle following changes
+    s                    toggle sound notifications
     <c-r>                reset list
     <space>              toggle watching
     Tab/<S-Tab>          switch to diff pane

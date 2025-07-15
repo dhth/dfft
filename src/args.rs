@@ -1,6 +1,5 @@
 use clap::{Parser, Subcommand};
 
-/// dfft shows you changes to files in a directory as they happen
 #[derive(Parser, Debug)]
 #[command(author, about, long_about = None)]
 pub struct Args {
@@ -24,6 +23,10 @@ pub enum DfftCommand {
         /// Start with file watching disabled
         #[arg(long = "no-watch")]
         no_watch: bool,
+        /// Start with sound notifications disabled
+        #[cfg(feature = "sound")]
+        #[arg(long = "no-sound")]
+        no_sound: bool,
     },
 }
 
@@ -34,14 +37,30 @@ impl std::fmt::Display for Args {
                 follow_changes,
                 no_prepopulation,
                 no_watch,
-            } => format!(
-                r#"
+                #[cfg(feature = "sound")]
+                no_sound,
+            } => {
+                #[cfg(feature = "sound")]
+                let output = format!(
+                    r#"
+command:            run TUI
+follow changes:     {follow_changes}
+no prepopulation:   {no_prepopulation}
+no watch:           {no_watch}
+no sound:           {no_sound}
+"#,
+                );
+                #[cfg(not(feature = "sound"))]
+                let output = format!(
+                    r#"
 command:            run TUI
 follow changes:     {follow_changes}
 no prepopulation:   {no_prepopulation}
 no watch:           {no_watch}
 "#,
-            ),
+                );
+                output
+            }
         };
 
         f.write_str(&output)

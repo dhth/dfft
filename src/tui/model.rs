@@ -1,6 +1,8 @@
 use super::TuiBehaviours;
 use super::common::*;
 use crate::domain::{Change, ChangeKind, FileCache, Modification, WatchUpdate};
+#[cfg(feature = "sound")]
+use crate::notifs::AudioPlayer;
 use ratatui::{
     style::{Style, Stylize},
     text::{Line, Span},
@@ -11,6 +13,8 @@ use std::sync::Arc;
 use tokio::sync::mpsc::{Receiver, Sender};
 use tokio::sync::{RwLock, mpsc};
 use tokio_util::sync::CancellationToken;
+#[cfg(feature = "sound")]
+use tracing::warn;
 
 const USER_MESSAGE_DEFAULT_FRAMES: u16 = 4;
 const CREATED_LABEL: &str = " created  ";
@@ -157,6 +161,8 @@ pub struct Model {
     pub max_help_scroll_available: usize,
     pub diff_scroll: usize,
     pub max_diff_scroll_available: usize,
+    #[cfg(feature = "sound")]
+    pub audio_player: Result<Option<AudioPlayer>, ()>,
 }
 
 impl Model {
@@ -170,6 +176,19 @@ impl Model {
             || terminal_dimensions.height < MIN_TERMINAL_HEIGHT;
 
         let (changes_tx, changes_rx) = mpsc::channel::<WatchUpdate>(100);
+
+        #[cfg(feature = "sound")]
+        let audio_player = if behaviours.play_sound {
+            match AudioPlayer::new() {
+                Ok(ap) => Ok(Some(ap)),
+                Err(e) => {
+                    warn!("couldn't set up audio player: {e}");
+                    Err(())
+                }
+            }
+        } else {
+            Ok(None)
+        };
 
         let mut model = Model {
             behaviours,
@@ -190,10 +209,12 @@ impl Model {
             cancellation_token: CancellationToken::new(),
             debug,
             help_scroll: 0,
-            help_line_count: HELP_CONTENT.lines().count(),
+            help_line_count: get_help_content().lines().count(),
             max_help_scroll_available: 0,
             diff_scroll: 0,
             max_diff_scroll_available: 0,
+            #[cfg(feature = "sound")]
+            audio_player,
         };
 
         model.compute_max_help_scroll_available();
@@ -322,11 +343,27 @@ impl Model {
     }
 
     pub(super) fn add_change(&mut self, change: Change) {
+        #[cfg(feature = "sound")]
+        if let Ok(Some(ap)) = &self.audio_player
+            && self.behaviours.play_sound
+        {
+            ap.play_change_sound(&change.kind);
+        }
+
         self.changes.append(change, self.behaviours.follow_changes);
 
         if self.behaviours.follow_changes || self.changes.items.len() == 1 {
             self.reset_diff_scroll();
             self.compute_max_diff_scroll_available();
+        }
+    }
+
+    pub(super) fn play_error_sound(&self) {
+        #[cfg(feature = "sound")]
+        if let Ok(Some(ap)) = &self.audio_player
+            && self.behaviours.play_sound
+        {
+            ap.play_error_sound();
         }
     }
 
@@ -463,5 +500,35 @@ impl Model {
 
     pub(super) fn snapshots_in_memory(&self) -> Option<usize> {
         self.cache.try_read().ok().map(|c| c.len())
+    }
+
+    #[cfg(feature = "sound")]
+    pub(super) fn toggle_sound(&mut self) {
+        match &self.audio_player {
+            Ok(Some(_)) => {
+                self.behaviours.play_sound = !self.behaviours.play_sound;
+            }
+            Ok(None) => {
+                self.audio_player = match AudioPlayer::new() {
+                    Ok(ap) => Ok(Some(ap)),
+                    Err(e) => {
+                        warn!("couldn't set up audio player: {e}");
+                        Err(())
+                    }
+                };
+
+                if let Ok(Some(_)) = &self.audio_player {
+                    self.behaviours.play_sound = true;
+                }
+            }
+            Err(_) => {
+                self.user_msg = Some(UserMsg::error("sound notifications are unavailable"));
+            }
+        }
+    }
+
+    #[cfg(feature = "sound")]
+    pub(super) fn is_sound_unavailable(&self) -> bool {
+        self.audio_player.is_err()
     }
 }

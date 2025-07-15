@@ -19,7 +19,7 @@ fn showing_help_works() {
     success: true
     exit_code: 0
     ----- stdout -----
-    dfft shows you changes to files in a directory as they happen
+    see changes to files in a directory as they happen
 
     Usage: dfft [OPTIONS] <COMMAND>
 
@@ -36,6 +36,7 @@ fn showing_help_works() {
 }
 
 #[test]
+#[cfg(feature = "sound")]
 fn showing_help_for_run_works() {
     // GIVEN
     let fx = Fixture::new();
@@ -56,6 +57,7 @@ fn showing_help_for_run_works() {
           --debug           Output debug information without doing anything
           --no-prepop       Skip prepopulating cache with file snapshots
           --no-watch        Start with file watching disabled
+          --no-sound        Start with sound notifications disabled
       -h, --help            Print help
 
     ----- stderr -----
