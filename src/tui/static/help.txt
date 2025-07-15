@@ -7,10 +7,10 @@ General
     <ctrl+c>             exit immediately
 
 Diff Pane
-    j                    select next change
-    k                    select previous change
-    J / ↓                scroll diff down
-    K / ↑                scroll diff up
+    j / ↓                select next change
+    k / ↑                select previous change
+    J                    scroll diff down
+    K                    scroll diff up
     g                    select first change
     G                    select last change
     <space>              toggle watching

@@ -162,7 +162,7 @@ pub struct Model {
     pub diff_scroll: usize,
     pub max_diff_scroll_available: usize,
     #[cfg(feature = "sound")]
-    audio_player: Result<Option<AudioPlayer>, ()>,
+    pub audio_player: Result<Option<AudioPlayer>, ()>,
 }
 
 impl Model {
@@ -218,11 +218,6 @@ impl Model {
         };
 
         model.compute_max_help_scroll_available();
-
-        #[cfg(feature = "sound")]
-        if model.is_sound_unavailable() {
-            model.user_msg = Some(UserMsg::error("couldn't set up sound notifications"));
-        }
 
         model
     }
@@ -518,7 +513,6 @@ impl Model {
                     Ok(ap) => Ok(Some(ap)),
                     Err(e) => {
                         warn!("couldn't set up audio player: {e}");
-                        self.user_msg = Some(UserMsg::error("couldn't set up sound notifications"));
                         Err(())
                     }
                 };
