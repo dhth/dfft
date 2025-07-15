@@ -46,14 +46,16 @@ jobs:
     needs: changes
     if: ${{ needs.changes.outputs.code == 'true' }}
     strategy:
+      fail-fast: false
       matrix:
         features:
           - name: "default"
             flags: ""
             install_sound_deps: true
-          - name: "no-no-default-features"
+          - name: "no-sound"
             flags: "--no-default-features"
             install_sound_deps: false
+    name: lint-${{ matrix.features.name }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -73,15 +75,17 @@ jobs:
     needs: changes
     if: ${{ needs.changes.outputs.code == 'true' }}
     strategy:
+      fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest]
         features:
           - name: "default"
             flags: ""
             install_sound_deps: true
-          - name: "no-default-features"
+          - name: "no-sound"
             flags: "--no-default-features"
             install_sound_deps: false
+    name: build-${{ matrix.features.name }}
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
@@ -97,6 +101,7 @@ jobs:
     needs: changes
     if: ${{ needs.changes.outputs.code == 'true' }}
     strategy:
+      fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest]
         features:
@@ -106,6 +111,7 @@ jobs:
           - name: "no-sound"
             flags: "--no-default-features"
             install_sound_deps: false
+    name: test-${{ matrix.features.name }}
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
