@@ -9,8 +9,10 @@ General
 Diff Pane
     j / ↓                select next change
     k / ↑                select previous change
-    J                    scroll diff down
-    K                    scroll diff up
+    J                    scroll diff down by a line
+    K                    scroll diff up by a line
+    <c-d>                scroll diff down by half page
+    <c-u>                scroll diff up by half page
     g                    select first change
     G                    select last change
     <space>              toggle watching
@@ -24,8 +26,10 @@ Changes Pane
     k / ↑                select previous change
     g                    select first change
     G                    select last change
-    J                    scroll diff down (if applicable)
-    K                    scroll diff up (if applicable)
+    J                    scroll diff down
+    K                    scroll diff up
+    <c-d>                scroll diff down by half page
+    <c-u>                scroll diff up by half page
     f                    toggle following changes
     s                    toggle sound notifications
     <c-r>                reset list

@@ -75,3 +75,8 @@ impl From<(u16, u16)> for TerminalDimensions {
         Self { width, height }
     }
 }
+
+pub(super) enum ScrollKind {
+    Line,
+    HalfPage,
+}

@@ -17,8 +17,10 @@ pub fn update(model: &mut Model, msg: Msg) -> Vec<Cmd> {
         }
         Msg::QuitImmediately => model.running_state = RunningState::Done,
         Msg::ResetList => model.reset_list(),
-        Msg::ScrollDown => model.scroll_down(),
-        Msg::ScrollUp => model.scroll_up(),
+        Msg::ScrollDown => model.scroll_down(ScrollKind::Line),
+        Msg::ScrollHalfPageDown => model.scroll_down(ScrollKind::HalfPage),
+        Msg::ScrollHalfPageUp => model.scroll_up(ScrollKind::HalfPage),
+        Msg::ScrollUp => model.scroll_up(ScrollKind::Line),
         Msg::SelectFirst => model.select_first(),
         Msg::SelectLast => model.select_last(),
         Msg::SelectNext => model.select_next(),
