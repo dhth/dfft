@@ -17,6 +17,7 @@ use tracing::debug;
 
 const EVENT_CHANNEL_BUFFER: usize = 100;
 const PREPOPULATION_MAX_THRESHOLD: usize = 10000;
+const FS_EVENTS_DEBOUNCE_MILLIS: u64 = 500;
 
 // How this function behaves
 // - touch file.txt                                                            = CREATED
@@ -53,13 +54,17 @@ pub async fn watch_for_changes(
     let (tx, mut rx) = channel(EVENT_CHANNEL_BUFFER);
 
     let runtime_handle = tokio::runtime::Handle::current();
-    let mut debouncer = new_debouncer(Duration::from_millis(1000), None, move |res| {
-        let tx = tx.clone();
-        let runtime_handle = runtime_handle.clone();
-        runtime_handle.spawn(async move {
-            let _ = tx.send(res).await;
-        });
-    })
+    let mut debouncer = new_debouncer(
+        Duration::from_millis(FS_EVENTS_DEBOUNCE_MILLIS),
+        None,
+        move |res| {
+            let tx = tx.clone();
+            let runtime_handle = runtime_handle.clone();
+            runtime_handle.spawn(async move {
+                let _ = tx.send(res).await;
+            });
+        },
+    )
     .context("couldn't create notifications debouncer")?;
 
     debouncer

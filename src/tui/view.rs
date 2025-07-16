@@ -127,7 +127,7 @@ fn render_diff_pane(model: &mut Model, frame: &mut Frame, rect: Rect) {
         )
     };
 
-    let title = " diff ";
+    let pane_name = " diff ";
 
     let maybe_selected_index = model.changes.state.selected();
     let details = match maybe_selected_index {
@@ -162,12 +162,27 @@ fn render_diff_pane(model: &mut Model, frame: &mut Frame, rect: Rect) {
                 None => vec![Line::raw("something went wrong")],
             };
 
+            let section_title_span = Span::from(pane_name)
+                .bold()
+                .bg(title_color)
+                .fg(PANE_TITLE_FG_COLOR);
+
+            let title_spans = if let Some(fp) = model.current_file_path() {
+                vec![
+                    section_title_span,
+                    Span::from(" "),
+                    Span::from(fp).fg(title_color),
+                    Span::from(" "),
+                ]
+            } else {
+                vec![section_title_span.clone()]
+            };
+
             Paragraph::new(lines)
                 .block(
                     Block::bordered()
                         .border_style(Style::default().fg(border_color))
-                        .title_style(Style::new().bold().bg(title_color).fg(PANE_TITLE_FG_COLOR))
-                        .title(title)
+                        .title(Line::from(title_spans))
                         .padding(Padding::new(1, 0, 1, 0)),
                 )
                 .style(Style::new().white().on_black())
@@ -182,7 +197,7 @@ fn render_diff_pane(model: &mut Model, frame: &mut Frame, rect: Rect) {
             Block::bordered()
                 .border_style(Style::default().fg(border_color))
                 .title_style(Style::new().bold().bg(title_color).fg(PANE_TITLE_FG_COLOR))
-                .title(title)
+                .title(pane_name)
                 .padding(Padding::new(1, 0, 1, 0)),
         )
         .style(Style::new().fg(color))
@@ -195,18 +210,26 @@ fn render_diff_pane(model: &mut Model, frame: &mut Frame, rect: Rect) {
 fn render_changes_pane(model: &mut Model, frame: &mut Frame, rect: Rect) {
     let items: Vec<ListItem> = model.changes.items.iter().map(ListItem::from).collect();
 
-    let title = if items.is_empty() {
-        " changes ".to_string()
-    } else if let Some(i) = model.changes.state.selected() {
-        format!(" changes ({}/{}) ", i + 1, items.len())
-    } else {
-        format!(" changes ({}) ", items.len())
-    };
+    let pane_name = " changes ";
 
     let (border_color, title_color) = if model.active_pane == Pane::Changes {
         (PRIMARY_COLOR, PRIMARY_COLOR)
     } else {
         (INACTIVE_PANE_BORDER_COLOR, INACTIVE_PANE_TITLE_BG_COLOR)
+    };
+
+    let section_title_span = Span::from(pane_name)
+        .bold()
+        .bg(title_color)
+        .fg(PANE_TITLE_FG_COLOR);
+
+    let title_spans = if let Some(i) = model.changes.state.selected() {
+        vec![
+            section_title_span,
+            Span::from(format!(" ({}/{}) ", i + 1, items.len())).fg(title_color),
+        ]
+    } else {
+        vec![section_title_span]
     };
 
     if items.is_empty() {
@@ -215,7 +238,7 @@ fn render_changes_pane(model: &mut Model, frame: &mut Frame, rect: Rect) {
                 Block::bordered()
                     .border_style(Style::default().fg(border_color))
                     .title_style(Style::new().bold().bg(title_color).fg(PANE_TITLE_FG_COLOR))
-                    .title(title)
+                    .title(pane_name)
                     .padding(Padding::new(1, 0, 1, 0)),
             )
             .wrap(Wrap { trim: false })
@@ -229,8 +252,7 @@ fn render_changes_pane(model: &mut Model, frame: &mut Frame, rect: Rect) {
             Block::bordered()
                 .border_style(Style::default().fg(border_color))
                 .padding(Padding::new(0, 0, 1, 0))
-                .title_style(Style::new().bold().bg(title_color).fg(PANE_TITLE_FG_COLOR))
-                .title(title),
+                .title(Line::from(title_spans)),
         )
         .highlight_symbol("> ")
         .direction(ListDirection::TopToBottom);

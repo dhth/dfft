@@ -359,6 +359,14 @@ impl Model {
         }
     }
 
+    pub(super) fn current_file_path(&self) -> Option<&str> {
+        self.changes
+            .state
+            .selected()
+            .and_then(|i| self.changes.items.get(i))
+            .map(|item| item.change.file_path.as_str())
+    }
+
     pub(super) fn get_cancellation_token(&self) -> CancellationToken {
         self.cancellation_token.clone()
     }
