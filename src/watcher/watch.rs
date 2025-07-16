@@ -63,7 +63,7 @@ pub async fn watch_for_changes(
     .context("couldn't create notifications debouncer")?;
 
     debouncer
-        .watch(".", RecursiveMode::Recursive)
+        .watch(&root, RecursiveMode::Recursive)
         .context("couldn't start watching for changes")?;
     debug!("watching for changes...");
 

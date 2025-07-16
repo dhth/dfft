@@ -53,8 +53,9 @@ fn showing_help_for_run_works() {
     Usage: dfft run [OPTIONS]
 
     Options:
-      -f, --follow-changes  Start with the setting "follow changes" enabled
+      -p, --path <PATH>     Path of the directory to watch (defaults to current directory)
           --debug           Output debug information without doing anything
+      -f, --follow-changes  Start with the setting "follow changes" enabled
           --no-prepop       Skip prepopulating cache with file snapshots
           --no-watch        Start with file watching disabled
           --no-sound        Start with sound notifications disabled

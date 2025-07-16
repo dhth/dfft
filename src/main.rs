@@ -6,6 +6,8 @@ mod tui;
 mod utils;
 mod watcher;
 
+use std::path::PathBuf;
+
 use anyhow::Context;
 use args::{Args, DfftCommand};
 use clap::Parser;
@@ -23,6 +25,7 @@ async fn main() -> anyhow::Result<()> {
 
     match args.command {
         DfftCommand::Run {
+            path: maybe_path_str,
             follow_changes,
             no_prepopulation,
             no_watch,
@@ -31,9 +34,26 @@ async fn main() -> anyhow::Result<()> {
         } => {
             setup_logging().context("couldn't set up logging")?;
 
-            let root = tokio::fs::canonicalize(".")
+            let path_str = maybe_path_str.unwrap_or(".".to_string());
+            let path = PathBuf::from(&path_str);
+
+            let metadata = match tokio::fs::metadata(&path).await {
+                Ok(m) => m,
+                Err(e) if e.kind() == std::io::ErrorKind::NotFound => {
+                    anyhow::bail!("path doesn't exist: {}", &path_str);
+                }
+                Err(e) => {
+                    return Err(anyhow::anyhow!("couldn't check if path exists: {e}"));
+                }
+            };
+
+            if !metadata.is_dir() {
+                anyhow::bail!("path is not a directory: {}", &path_str);
+            }
+
+            let root = tokio::fs::canonicalize(path)
                 .await
-                .context("couldn't determine directory path")?;
+                .context("couldn't canonicalize directory path")?;
 
             let behaviours = TuiBehaviours {
                 watch: !no_watch,
