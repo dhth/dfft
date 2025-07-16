@@ -10,6 +10,8 @@ use ratatui::{
 };
 use std::path::PathBuf;
 use std::sync::Arc;
+#[cfg(feature = "sound")]
+use std::time::Instant;
 use tokio::sync::mpsc::{Receiver, Sender};
 use tokio::sync::{RwLock, mpsc};
 use tokio_util::sync::CancellationToken;
@@ -21,6 +23,9 @@ const CREATED_LABEL: &str = " created  ";
 const MODIFIED_LABEL: &str = " modified ";
 const REMOVED_LABEL: &str = " removed  ";
 const ERROR_LABEL: &str = "  error   ";
+
+#[cfg(feature = "sound")]
+const AUDIO_PLAYBACK_DEBOUNCE_DURATION_MILLIS: u128 = 1000;
 
 #[derive(Debug, Default, PartialEq, Eq)]
 pub enum RunningState {
@@ -170,6 +175,8 @@ pub struct Model {
     pub max_diff_scroll_available: usize,
     #[cfg(feature = "sound")]
     audio_handler: AudioHandler,
+    #[cfg(feature = "sound")]
+    audio_last_played_at: Option<Instant>,
 }
 
 impl Model {
@@ -209,6 +216,8 @@ impl Model {
             max_diff_scroll_available: 0,
             #[cfg(feature = "sound")]
             audio_handler: AudioHandler::NotInitialized,
+            #[cfg(feature = "sound")]
+            audio_last_played_at: None,
         };
 
         model.compute_max_help_scroll_available();
@@ -491,8 +500,13 @@ impl Model {
             self.initialize_audio_player();
         }
 
+        if should_audio_playback_be_debounced(&self.audio_last_played_at, Instant::now()) {
+            return;
+        }
+
         if let AudioHandler::Available(ap) = &self.audio_handler {
-            ap.play_change_sound(change_kind)
+            ap.play_change_sound(change_kind);
+            self.audio_last_played_at = Some(Instant::now());
         }
     }
 
@@ -502,8 +516,13 @@ impl Model {
             self.initialize_audio_player();
         }
 
+        if should_audio_playback_be_debounced(&self.audio_last_played_at, Instant::now()) {
+            return;
+        }
+
         if let AudioHandler::Available(ap) = &self.audio_handler {
-            ap.play_error_sound()
+            ap.play_error_sound();
+            self.audio_last_played_at = Some(Instant::now());
         }
     }
 
@@ -532,5 +551,42 @@ impl Model {
                 AudioHandler::Unavailable
             }
         };
+    }
+}
+
+#[cfg(feature = "sound")]
+fn should_audio_playback_be_debounced(last_played_at: &Option<Instant>, now: Instant) -> bool {
+    last_played_at.is_some_and(|lpa| {
+        now.checked_duration_since(lpa)
+            .is_some_and(|d| d.as_millis() < AUDIO_PLAYBACK_DEBOUNCE_DURATION_MILLIS)
+    })
+}
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    #[cfg(feature = "sound")]
+    fn debouncing_audio_playback_works() {
+        use std::time::{Duration, Instant};
+        // GIVEN
+        let now = Instant::now();
+        let test_cases = vec![
+            ("800ms", Some(now - Duration::from_millis(800)), true),
+            ("1100ms", Some(now - Duration::from_millis(1100)), false),
+            (
+                "last played is ahead of now for some reason",
+                Some(now + Duration::from_millis(1)),
+                false,
+            ),
+            ("none", None, false),
+        ];
+
+        // WHEN
+        // THEN
+        for (name, last_played_at, expected) in test_cases {
+            let debounce = super::should_audio_playback_be_debounced(&last_played_at, now);
+
+            assert_eq!(debounce, expected, "case: {name}");
+        }
     }
 }
