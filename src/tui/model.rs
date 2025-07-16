@@ -323,10 +323,10 @@ impl Model {
         }
     }
 
-    pub(super) fn scroll_down(&mut self) {
+    pub(super) fn scroll_down(&mut self, scroll_kind: ScrollKind) {
         match self.active_pane {
             Pane::Changes | Pane::Diff => {
-                self.scroll_diff_down();
+                self.scroll_diff_down(scroll_kind);
             }
             Pane::Help => {
                 self.scroll_help_down();
@@ -334,10 +334,10 @@ impl Model {
         }
     }
 
-    pub(super) fn scroll_up(&mut self) {
+    pub(super) fn scroll_up(&mut self, scroll_kind: ScrollKind) {
         match self.active_pane {
             Pane::Changes | Pane::Diff => {
-                self.scroll_diff_up();
+                self.scroll_diff_up(scroll_kind);
             }
             Pane::Help => {
                 self.scroll_help_up();
@@ -397,22 +397,23 @@ impl Model {
         self.help_scroll = self.help_scroll.saturating_sub(1);
     }
 
-    pub(super) fn scroll_diff_down(&mut self) {
+    pub(super) fn scroll_diff_down(&mut self, scroll_kind: ScrollKind) {
         if self.changes.state.selected().is_none() {
             return;
         }
 
-        if self.diff_scroll < self.max_diff_scroll_available {
-            self.diff_scroll += 1;
-        }
+        self.diff_scroll = (self.diff_scroll + self.diff_pane_scroll_line_count(scroll_kind))
+            .min(self.max_diff_scroll_available);
     }
 
-    pub(super) fn scroll_diff_up(&mut self) {
+    pub(super) fn scroll_diff_up(&mut self, scroll_kind: ScrollKind) {
         if self.changes.state.selected().is_none() {
             return;
         }
 
-        self.diff_scroll = self.diff_scroll.saturating_sub(1);
+        self.diff_scroll = self
+            .diff_scroll
+            .saturating_sub(self.diff_pane_scroll_line_count(scroll_kind));
     }
 
     pub(super) fn reset_help_scroll(&mut self) {
@@ -471,9 +472,7 @@ impl Model {
         let selected_index = self.changes.state.selected();
         let change_item = selected_index.and_then(|i| self.changes.items.get(i));
 
-        //       top border + padding top + lower border + changes pane (fixed) + status bar height
-        // 16 => 1          + 1           + 1            + 12                   + 1
-        let available_height = self.terminal_dimensions.height as usize - 16;
+        let available_height = self.available_diff_pane_height();
 
         self.max_diff_scroll_available = match change_item {
             Some(item) => match &item.change.kind {
@@ -492,6 +491,19 @@ impl Model {
                 0
             }
         };
+    }
+
+    fn available_diff_pane_height(&self) -> usize {
+        //       top border + padding top + lower border + changes pane (fixed) + status bar height
+        // 16 => 1          + 1           + 1            + 12                   + 1
+        self.terminal_dimensions.height as usize - 16
+    }
+
+    fn diff_pane_scroll_line_count(&self, scroll_kind: ScrollKind) -> usize {
+        match scroll_kind {
+            ScrollKind::Line => 1,
+            ScrollKind::HalfPage => self.available_diff_pane_height() / 2,
+        }
     }
 
     pub(super) fn cache(&self) -> Arc<RwLock<FileCache>> {

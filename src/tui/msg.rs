@@ -10,6 +10,8 @@ pub enum Msg {
     QuitImmediately,
     ResetList,
     ScrollDown,
+    ScrollHalfPageDown,
+    ScrollHalfPageUp,
     ScrollUp,
     SelectFirst,
     SelectLast,
@@ -44,6 +46,12 @@ pub fn get_event_handling_msg(model: &Model, event: Event) -> Option<Msg> {
                         KeyCode::Char('k') | KeyCode::Up => Some(Msg::SelectPrevious),
                         KeyCode::Char('J') => Some(Msg::ScrollDown),
                         KeyCode::Char('K') => Some(Msg::ScrollUp),
+                        KeyCode::Char('d') if key_event.modifiers == KeyModifiers::CONTROL => {
+                            Some(Msg::ScrollHalfPageDown)
+                        }
+                        KeyCode::Char('u') if key_event.modifiers == KeyModifiers::CONTROL => {
+                            Some(Msg::ScrollHalfPageUp)
+                        }
                         KeyCode::Char('g') => Some(Msg::SelectFirst),
                         KeyCode::Char('G') => Some(Msg::SelectLast),
                         KeyCode::Char('f') => Some(Msg::ToggleFollowChanges),
@@ -68,6 +76,12 @@ pub fn get_event_handling_msg(model: &Model, event: Event) -> Option<Msg> {
                         KeyCode::Char('G') => Some(Msg::SelectLast),
                         KeyCode::Char('J') => Some(Msg::ScrollDown),
                         KeyCode::Char('K') => Some(Msg::ScrollUp),
+                        KeyCode::Char('d') if key_event.modifiers == KeyModifiers::CONTROL => {
+                            Some(Msg::ScrollHalfPageDown)
+                        }
+                        KeyCode::Char('u') if key_event.modifiers == KeyModifiers::CONTROL => {
+                            Some(Msg::ScrollHalfPageUp)
+                        }
                         KeyCode::Tab | KeyCode::BackTab => Some(Msg::GoToPane(Pane::Changes)),
                         KeyCode::Char('f') => Some(Msg::ToggleFollowChanges),
                         KeyCode::Char(' ') => Some(Msg::ToggleWatching),
