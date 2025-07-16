@@ -37,11 +37,17 @@ async fn main() -> anyhow::Result<()> {
             let path_str = maybe_path_str.unwrap_or(".".to_string());
             let path = PathBuf::from(&path_str);
 
-            if !path.try_exists().context("couldn't check if path exists")? {
-                anyhow::bail!("path doesn't exist: {}", &path_str);
-            }
+            let metadata = match tokio::fs::metadata(&path).await {
+                Ok(m) => m,
+                Err(e) if e.kind() == std::io::ErrorKind::NotFound => {
+                    anyhow::bail!("path doesn't exist: {}", &path_str);
+                }
+                Err(e) => {
+                    return Err(anyhow::anyhow!("couldn't check if path exists: {e}"));
+                }
+            };
 
-            if !path.is_dir() {
+            if !metadata.is_dir() {
                 anyhow::bail!("path is not a directory: {}", &path_str);
             }
 
