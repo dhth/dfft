@@ -167,17 +167,16 @@ fn render_diff_pane(model: &mut Model, frame: &mut Frame, rect: Rect) {
                 .bg(title_color)
                 .fg(PANE_TITLE_FG_COLOR);
 
-            let title_spans =
-                model
-                    .current_file_path()
-                    .map_or(vec![section_title_span.clone()], |fp| {
-                        vec![
-                            section_title_span,
-                            Span::from(" "),
-                            Span::from(fp).fg(title_color),
-                            Span::from(" "),
-                        ]
-                    });
+            let title_spans = if let Some(fp) = model.current_file_path() {
+                vec![
+                    section_title_span,
+                    Span::from(" "),
+                    Span::from(fp).fg(title_color),
+                    Span::from(" "),
+                ]
+            } else {
+                vec![section_title_span.clone()]
+            };
 
             Paragraph::new(lines)
                 .block(
@@ -226,7 +225,7 @@ fn render_changes_pane(model: &mut Model, frame: &mut Frame, rect: Rect) {
 
     let title_spans = if let Some(i) = model.changes.state.selected() {
         vec![
-            section_title_span.clone(),
+            section_title_span,
             Span::from(format!(" ({}/{}) ", i + 1, items.len())).fg(title_color),
         ]
     } else {

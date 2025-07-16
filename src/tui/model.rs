@@ -360,13 +360,11 @@ impl Model {
     }
 
     pub(super) fn current_file_path(&self) -> Option<&str> {
-        if let Some(i) = self.changes.state.selected()
-            && let Some(change) = self.changes.items.get(i)
-        {
-            Some(&change.change.file_path)
-        } else {
-            None
-        }
+        self.changes
+            .state
+            .selected()
+            .and_then(|i| self.changes.items.get(i))
+            .map(|item| item.change.file_path.as_str())
     }
 
     pub(super) fn get_cancellation_token(&self) -> CancellationToken {
