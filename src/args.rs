@@ -14,6 +14,9 @@ pub struct Args {
 pub enum DfftCommand {
     /// Run dfft's TUI
     Run {
+        /// Path of the directory to watch (defaults to current directory)
+        #[arg(short = 'p', long = "path")]
+        path: Option<String>,
         /// Start with the setting "follow changes" enabled
         #[arg(short = 'f', long = "follow-changes")]
         follow_changes: bool,
@@ -34,6 +37,7 @@ impl std::fmt::Display for Args {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let output = match &self.command {
             DfftCommand::Run {
+                path,
                 follow_changes,
                 no_prepopulation,
                 no_watch,
@@ -44,20 +48,24 @@ impl std::fmt::Display for Args {
                 let output = format!(
                     r#"
 command:            run TUI
+path:               {}
 follow changes:     {follow_changes}
 no prepopulation:   {no_prepopulation}
 no watch:           {no_watch}
 no sound:           {no_sound}
 "#,
+                    path.as_deref().unwrap_or("current directory"),
                 );
                 #[cfg(not(feature = "sound"))]
                 let output = format!(
                     r#"
 command:            run TUI
+path:               {}
 follow changes:     {follow_changes}
 no prepopulation:   {no_prepopulation}
 no watch:           {no_watch}
 "#,
+                    path.as_deref().unwrap_or("current directory"),
                 );
                 output
             }
