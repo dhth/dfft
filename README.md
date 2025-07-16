@@ -8,25 +8,128 @@
 `dfft` (short for "diff-trail") watches for changes to files in a directory, and
 outputs them as they happen.
 
-> `dfft` is very early in the development process, and is not ready for use.
-> Its behaviour and interface is likely to change for a while.
+![dfft](https://github.com/user-attachments/assets/667ea732-c9f1-4623-a7d3-3fa4ffacbae1)
 
-Todo
+🤔 Motivation
 ---
 
-- [x] Add CLI
-- [x] Add basic TUI
-- [x] Scrollable diff section
-- [x] Help page
-- [x] More detailed diffs
-- [x] Allow following changes
-- [x] Keymaps for moving around the list from diff pane
-- [x] Show contents for new file
-- [x] [bug] error when "G" is pressed
-- [x] Stop/resume listening for changes
-- [x] Play sound when a change occurs
-- [x] Allow pre-populating snapshots at startup
-- [x] Show number of snapshots in memory
-- [x] Consider `dfft` specific ignore file
-- [x] Consider `.git/info/exclude`
-- [ ] Show errors while watching for fs events
+I recently started to make use of agentic AI tools in my day-to-day workflows.
+While I like setting them off on their own to solve problems, every now and then
+I find myself needing to keep an eye on the changes introduced by them, either
+to see if they're on the right track, or just because I'm curious about their
+approach. Most agentic tools will print the changes they make as they make them,
+but more often than not, the output gets scrolled out of view pretty fast. I
+wanted a fast and simple tool that would let me peruse the changes made by these
+agents at my own pace via a keyboard driven TUI. So, I wrote `dfft`.
+
+💾 Installation
+---
+
+**cargo**:
+
+```sh
+cargo install --git https://github.com/dhth/dfft.git
+```
+
+⚡️ Usage
+---
+
+```bash
+dfft run --help
+```
+
+```text
+Usage: dfft run [OPTIONS]
+
+Options:
+  -p, --path <PATH>     Path of the directory to watch (defaults to current directory)
+      --debug           Output debug information without doing anything
+  -f, --follow-changes  Start with the setting "follow changes" enabled
+      --no-prepop       Skip prepopulating cache with file snapshots
+      --no-watch        Start with file watching disabled
+      --no-sound        Start with sound notifications disabled
+  -h, --help            Print help
+```
+
+🔔 Notifications
+---
+
+By default `dfft` will play distinct sound notifications for each kind of change
+(`CREATION` / `MODIFICATION` / `REMOVAL`). You can toggle them on/off whenever
+needed. If you prefer to not use sound notifications at all, you can build a
+version of `dfft` that has no audio dependencies using the following.
+
+```bash
+cargo install --no-default-features --git https://github.com/dhth/dfft.git
+```
+
+📟 TUI
+---
+
+`dfft`'s TUI has 2 panes:
+
+- `diff`: shows the diff for a change, or file contents for newly created files.
+  Supports scrolling.
+- `changes`: Holds the list of changes, with a label for each change
+
+![start](https://tools.dhruvs.space/images/dfft/v0-1-0/start.png)
+
+![tui](https://tools.dhruvs.space/images/dfft/v0-1-0/tui.png)
+
+### General
+
+| Key         | Action              |
+|-------------|---------------------|
+| `?`         | show/hide help view |
+| `Esc` / `q` | go back/exit        |
+| `<Ctrl+C>`  | exit immediately    |
+
+### Diff Pane
+
+| Key                 | Action                        |
+|---------------------|-------------------------------|
+| `j` / `↓`           | select next change            |
+| `k` / `↑`           | select previous change        |
+| `J`                 | scroll diff down by a line    |
+| `K`                 | scroll diff up by a line      |
+| `<c-d>`             | scroll diff down by half page |
+| `<c-u>`             | scroll diff up by half page   |
+| `g`                 | select first change           |
+| `G`                 | select last change            |
+| `<space>`           | toggle watching               |
+| `<c-r>`             | reset list                    |
+| `f`                 | toggle following changes      |
+| `s`                 | toggle sound notifications    |
+| `<tab>` / `<s-tab>` | switch to changes pane        |
+
+### Changes Pane
+
+| Key                 | Action                        |
+|---------------------|-------------------------------|
+| `j` / `↓`           | select next change            |
+| `k` / `↑`           | select previous change        |
+| `g`                 | select first change           |
+| `G`                 | select last change            |
+| `J`                 | scroll diff down by a line    |
+| `K`                 | scroll diff up by a line      |
+| `<c-d>`             | scroll diff down by half page |
+| `<c-u>`             | scroll diff up by half page   |
+| `f`                 | toggle following changes      |
+| `s`                 | toggle sound notifications    |
+| `<c-r>`             | reset list                    |
+| `<space>`           | toggle watching               |
+| `<tab>` / `<s-tab>` | switch to diff pane           |
+
+### Help Pane
+
+| Key       | Action      |
+|-----------|-------------|
+| `j` / `↓` | scroll down |
+| `k` / `↑` | scroll up   |
+
+Ignoring files
+---
+
+By default, `dfft` will consider `.gitignore` and `.git/info/exclude` files when
+deciding which files to ignore. Additionally, you can create a `.dfftignore`
+file to exclude paths that are not covered by the previous two.
