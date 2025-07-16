@@ -329,7 +329,7 @@ fn diff_pane_doesnt_scroll_beyond_limits() {
         .draw(|f| view(&mut model, f))
         .expect("frame should've been drawn");
     assert_snapshot!(terminal.backend(), @r#"
-    "┌ diff ────────────────────────────────────────────────────────────────────────┐"
+    "┌ diff  modified_file.txt ─────────────────────────────────────────────────────┐"
     "│                                                                              │"
     "│ 1   1   | line 1                                                             │"
     "│ 2   2   | line 2                                                             │"
@@ -340,7 +340,7 @@ fn diff_pane_doesnt_scroll_beyond_limits() {
     "│     5   |+line 5 (modified)                                                  │"
     "│ 6   6   | line 6                                                             │"
     "└──────────────────────────────────────────────────────────────────────────────┘"
-    "┌ changes (1/1) ───────────────────────────────────────────────────────────────┐"
+    "┌ changes  (1/1) ──────────────────────────────────────────────────────────────┐"
     "│                                                                              │"
     "│>  modified  modified_file.txt                                                │"
     "│                                                                              │"
@@ -362,7 +362,7 @@ fn diff_pane_doesnt_scroll_beyond_limits() {
         .draw(|f| view(&mut model, f))
         .expect("frame should've been drawn");
     assert_snapshot!(terminal.backend(), @r#"
-    "┌ diff ────────────────────────────────────────────────────────────────────────┐"
+    "┌ diff  modified_file.txt ─────────────────────────────────────────────────────┐"
     "│                                                                              │"
     "│ 13  13  | line 13                                                            │"
     "│ 14      |-line 14                                                            │"
@@ -373,7 +373,7 @@ fn diff_pane_doesnt_scroll_beyond_limits() {
     "│ 17  17  | line 17                                                            │"
     "│ 18  18  | line 18                                                            │"
     "└──────────────────────────────────────────────────────────────────────────────┘"
-    "┌ changes (1/1) ───────────────────────────────────────────────────────────────┐"
+    "┌ changes  (1/1) ──────────────────────────────────────────────────────────────┐"
     "│                                                                              │"
     "│>  modified  modified_file.txt                                                │"
     "│                                                                              │"
@@ -603,7 +603,7 @@ fn main_view_renders_created_file_change() {
 
     // THEN
     assert_snapshot!(terminal.backend(), @r#"
-    "┌ diff ────────────────────────────────────────────────────────────────────────┐"
+    "┌ diff  new_file.txt ──────────────────────────────────────────────────────────┐"
     "│                                                                              │"
     "│ test file contents                                                           │"
     "│                                                                              │"
@@ -614,7 +614,7 @@ fn main_view_renders_created_file_change() {
     "│                                                                              │"
     "│                                                                              │"
     "└──────────────────────────────────────────────────────────────────────────────┘"
-    "┌ changes (1/1) ───────────────────────────────────────────────────────────────┐"
+    "┌ changes  (1/1) ──────────────────────────────────────────────────────────────┐"
     "│                                                                              │"
     "│>  created   new_file.txt                                                     │"
     "│                                                                              │"
@@ -668,7 +668,7 @@ line 2
 
     // THEN
     assert_snapshot!(terminal.backend(), @r#"
-    "┌ diff ────────────────────────────────────────────────────────────────────────┐"
+    "┌ diff  modified_file.txt ─────────────────────────────────────────────────────┐"
     "│                                                                              │"
     "│ 1   1   |                                                                    │"
     "│ 2       |-line 1                                                             │"
@@ -679,7 +679,7 @@ line 2
     "│     5   |+(prefix) line 3 (changed)                                          │"
     "│                                                                              │"
     "└──────────────────────────────────────────────────────────────────────────────┘"
-    "┌ changes (1/1) ───────────────────────────────────────────────────────────────┐"
+    "┌ changes  (1/1) ──────────────────────────────────────────────────────────────┐"
     "│                                                                              │"
     "│>  modified  modified_file.txt                                                │"
     "│                                                                              │"
@@ -814,7 +814,7 @@ fn selecting_first_change_from_diff_pane_works() {
         .draw(|f| view(&mut model, f))
         .expect("frame should've been drawn");
     assert_snapshot!(terminal.backend(), @r#"
-    "┌ diff ────────────────────────────────────────────────────────────────────────┐"
+    "┌ diff  file-5.txt ────────────────────────────────────────────────────────────┐"
     "│                                                                              │"
     "│ file 5 contents                                                              │"
     "│                                                                              │"
@@ -825,7 +825,7 @@ fn selecting_first_change_from_diff_pane_works() {
     "│                                                                              │"
     "│                                                                              │"
     "└──────────────────────────────────────────────────────────────────────────────┘"
-    "┌ changes (5/20) ──────────────────────────────────────────────────────────────┐"
+    "┌ changes  (5/20) ─────────────────────────────────────────────────────────────┐"
     "│                                                                              │"
     "│   created   file-1.txt                                                       │"
     "│   created   file-2.txt                                                       │"
@@ -849,7 +849,7 @@ fn selecting_first_change_from_diff_pane_works() {
 
     // THEN
     assert_snapshot!(terminal.backend(), @r#"
-    "┌ diff ────────────────────────────────────────────────────────────────────────┐"
+    "┌ diff  file-1.txt ────────────────────────────────────────────────────────────┐"
     "│                                                                              │"
     "│ file 1 contents                                                              │"
     "│                                                                              │"
@@ -860,7 +860,7 @@ fn selecting_first_change_from_diff_pane_works() {
     "│                                                                              │"
     "│                                                                              │"
     "└──────────────────────────────────────────────────────────────────────────────┘"
-    "┌ changes (1/20) ──────────────────────────────────────────────────────────────┐"
+    "┌ changes  (1/20) ─────────────────────────────────────────────────────────────┐"
     "│                                                                              │"
     "│>  created   file-1.txt                                                       │"
     "│   created   file-2.txt                                                       │"
@@ -904,7 +904,7 @@ fn selecting_first_change_from_changes_pane_works() {
         .draw(|f| view(&mut model, f))
         .expect("frame should've been drawn");
     assert_snapshot!(terminal.backend(), @r#"
-    "┌ diff ────────────────────────────────────────────────────────────────────────┐"
+    "┌ diff  file-5.txt ────────────────────────────────────────────────────────────┐"
     "│                                                                              │"
     "│ file 5 contents                                                              │"
     "│                                                                              │"
@@ -915,7 +915,7 @@ fn selecting_first_change_from_changes_pane_works() {
     "│                                                                              │"
     "│                                                                              │"
     "└──────────────────────────────────────────────────────────────────────────────┘"
-    "┌ changes (5/20) ──────────────────────────────────────────────────────────────┐"
+    "┌ changes  (5/20) ─────────────────────────────────────────────────────────────┐"
     "│                                                                              │"
     "│   created   file-1.txt                                                       │"
     "│   created   file-2.txt                                                       │"
@@ -939,7 +939,7 @@ fn selecting_first_change_from_changes_pane_works() {
 
     // THEN
     assert_snapshot!(terminal.backend(), @r#"
-    "┌ diff ────────────────────────────────────────────────────────────────────────┐"
+    "┌ diff  file-1.txt ────────────────────────────────────────────────────────────┐"
     "│                                                                              │"
     "│ file 1 contents                                                              │"
     "│                                                                              │"
@@ -950,7 +950,7 @@ fn selecting_first_change_from_changes_pane_works() {
     "│                                                                              │"
     "│                                                                              │"
     "└──────────────────────────────────────────────────────────────────────────────┘"
-    "┌ changes (1/20) ──────────────────────────────────────────────────────────────┐"
+    "┌ changes  (1/20) ─────────────────────────────────────────────────────────────┐"
     "│                                                                              │"
     "│>  created   file-1.txt                                                       │"
     "│   created   file-2.txt                                                       │"
@@ -995,7 +995,7 @@ fn selecting_last_change_from_diff_pane_works() {
 
     // THEN
     assert_snapshot!(terminal.backend(), @r#"
-    "┌ diff ────────────────────────────────────────────────────────────────────────┐"
+    "┌ diff  file-20.txt ───────────────────────────────────────────────────────────┐"
     "│                                                                              │"
     "│ file 20 contents                                                             │"
     "│                                                                              │"
@@ -1006,7 +1006,7 @@ fn selecting_last_change_from_diff_pane_works() {
     "│                                                                              │"
     "│                                                                              │"
     "└──────────────────────────────────────────────────────────────────────────────┘"
-    "┌ changes (20/20) ─────────────────────────────────────────────────────────────┐"
+    "┌ changes  (20/20) ────────────────────────────────────────────────────────────┐"
     "│                                                                              │"
     "│   created   file-12.txt                                                      │"
     "│   created   file-13.txt                                                      │"
@@ -1052,7 +1052,7 @@ fn selecting_last_change_from_changes_pane_works() {
 
     // THEN
     assert_snapshot!(terminal.backend(), @r#"
-    "┌ diff ────────────────────────────────────────────────────────────────────────┐"
+    "┌ diff  file-20.txt ───────────────────────────────────────────────────────────┐"
     "│                                                                              │"
     "│ file 20 contents                                                             │"
     "│                                                                              │"
@@ -1063,7 +1063,7 @@ fn selecting_last_change_from_changes_pane_works() {
     "│                                                                              │"
     "│                                                                              │"
     "└──────────────────────────────────────────────────────────────────────────────┘"
-    "┌ changes (20/20) ─────────────────────────────────────────────────────────────┐"
+    "┌ changes  (20/20) ────────────────────────────────────────────────────────────┐"
     "│                                                                              │"
     "│   created   file-12.txt                                                      │"
     "│   created   file-13.txt                                                      │"
@@ -1116,7 +1116,7 @@ fn diff_pane_renders_diff_with_several_hunks_correctly() {
 
     // THEN
     assert_snapshot!(terminal.backend(), @r#"
-    "┌ diff ────────────────────────────────────────────────────────────────────────┐"
+    "┌ diff  modified_file.txt ─────────────────────────────────────────────────────┐"
     "│                                                                              │"
     "│ 6      6      | line 6                                                       │"
     "│ 7      7      | line 7                                                       │"
@@ -1137,7 +1137,7 @@ fn diff_pane_renders_diff_with_several_hunks_correctly() {
     "│        9999   |+line 9999 (modified)                                         │"
     "│        10000  |+line 10000 (modified)                                        │"
     "└──────────────────────────────────────────────────────────────────────────────┘"
-    "┌ changes (1/1) ───────────────────────────────────────────────────────────────┐"
+    "┌ changes  (1/1) ──────────────────────────────────────────────────────────────┐"
     "│                                                                              │"
     "│>  modified  modified_file.txt                                                │"
     "│                                                                              │"
@@ -1187,7 +1187,7 @@ fn scrolling_diff_works() {
         .expect("frame should've been drawn");
 
     assert_snapshot!(terminal.backend(), @r#"
-    "┌ diff ────────────────────────────────────────────────────────────────────────┐"
+    "┌ diff  modified_file.txt ─────────────────────────────────────────────────────┐"
     "│                                                                              │"
     "│ 1   1   | line 1                                                             │"
     "│ 2   2   | line 2                                                             │"
@@ -1198,7 +1198,7 @@ fn scrolling_diff_works() {
     "│     5   |+line 5 (modified)                                                  │"
     "│ 6   6   | line 6                                                             │"
     "└──────────────────────────────────────────────────────────────────────────────┘"
-    "┌ changes (1/1) ───────────────────────────────────────────────────────────────┐"
+    "┌ changes  (1/1) ──────────────────────────────────────────────────────────────┐"
     "│                                                                              │"
     "│>  modified  modified_file.txt                                                │"
     "│                                                                              │"
@@ -1223,7 +1223,7 @@ fn scrolling_diff_works() {
 
     // THEN
     assert_snapshot!(terminal.backend(), @r#"
-    "┌ diff ────────────────────────────────────────────────────────────────────────┐"
+    "┌ diff  modified_file.txt ─────────────────────────────────────────────────────┐"
     "│                                                                              │"
     "│ 4       |-line 4                                                             │"
     "│ 5       |-line 5                                                             │"
@@ -1234,7 +1234,7 @@ fn scrolling_diff_works() {
     "│ 8   8   | line 8                                                             │"
     "│ -----------------------------------------------------------------------------│"
     "└──────────────────────────────────────────────────────────────────────────────┘"
-    "┌ changes (1/1) ───────────────────────────────────────────────────────────────┐"
+    "┌ changes  (1/1) ──────────────────────────────────────────────────────────────┐"
     "│                                                                              │"
     "│>  modified  modified_file.txt                                                │"
     "│                                                                              │"
@@ -1286,7 +1286,7 @@ fn diff_scroll_is_reset_when_follow_mode_is_on() {
         .expect("frame should've been drawn");
 
     assert_snapshot!(terminal.backend(), @r#"
-    "┌ diff ────────────────────────────────────────────────────────────────────────┐"
+    "┌ diff  modified_file.txt ─────────────────────────────────────────────────────┐"
     "│                                                                              │"
     "│     10  |+line 10 (modified)                                                 │"
     "│ 11  11  | line 11                                                            │"
@@ -1297,7 +1297,7 @@ fn diff_scroll_is_reset_when_follow_mode_is_on() {
     "│ 28  28  | line 28                                                            │"
     "│ 29  29  | line 29                                                            │"
     "└──────────────────────────────────────────────────────────────────────────────┘"
-    "┌ changes (1/1) ───────────────────────────────────────────────────────────────┐"
+    "┌ changes  (1/1) ──────────────────────────────────────────────────────────────┐"
     "│                                                                              │"
     "│>  modified  modified_file.txt                                                │"
     "│                                                                              │"
@@ -1332,7 +1332,7 @@ fn diff_scroll_is_reset_when_follow_mode_is_on() {
 
     // THEN
     assert_snapshot!(terminal.backend(), @r#"
-    "┌ diff ────────────────────────────────────────────────────────────────────────┐"
+    "┌ diff  another_modified_file.txt ─────────────────────────────────────────────┐"
     "│                                                                              │"
     "│ 1       |-line 1                                                             │"
     "│     1   |+line 1 (modified)                                                  │"
@@ -1343,7 +1343,7 @@ fn diff_scroll_is_reset_when_follow_mode_is_on() {
     "│                                                                              │"
     "│                                                                              │"
     "└──────────────────────────────────────────────────────────────────────────────┘"
-    "┌ changes (2/2) ───────────────────────────────────────────────────────────────┐"
+    "┌ changes  (2/2) ──────────────────────────────────────────────────────────────┐"
     "│                                                                              │"
     "│   modified  modified_file.txt                                                │"
     "│>  modified  another_modified_file.txt                                        │"
@@ -1408,7 +1408,7 @@ fn diff_scroll_is_reset_when_another_change_is_selected() {
         .expect("frame should've been drawn");
 
     assert_snapshot!(terminal.backend(), @r#"
-    "┌ diff ────────────────────────────────────────────────────────────────────────┐"
+    "┌ diff  modified_file.txt ─────────────────────────────────────────────────────┐"
     "│                                                                              │"
     "│     10  |+line 10 (modified)                                                 │"
     "│ 11  11  | line 11                                                            │"
@@ -1419,7 +1419,7 @@ fn diff_scroll_is_reset_when_another_change_is_selected() {
     "│ 28  28  | line 28                                                            │"
     "│ 29  29  | line 29                                                            │"
     "└──────────────────────────────────────────────────────────────────────────────┘"
-    "┌ changes (1/2) ───────────────────────────────────────────────────────────────┐"
+    "┌ changes  (1/2) ──────────────────────────────────────────────────────────────┐"
     "│                                                                              │"
     "│>  modified  modified_file.txt                                                │"
     "│   modified  another_modified_file.txt                                        │"
@@ -1442,7 +1442,7 @@ fn diff_scroll_is_reset_when_another_change_is_selected() {
 
     // THEN
     assert_snapshot!(terminal.backend(), @r#"
-    "┌ diff ────────────────────────────────────────────────────────────────────────┐"
+    "┌ diff  another_modified_file.txt ─────────────────────────────────────────────┐"
     "│                                                                              │"
     "│ 1       |-line 1                                                             │"
     "│     1   |+line 1 (modified)                                                  │"
@@ -1453,7 +1453,7 @@ fn diff_scroll_is_reset_when_another_change_is_selected() {
     "│                                                                              │"
     "│                                                                              │"
     "└──────────────────────────────────────────────────────────────────────────────┘"
-    "┌ changes (2/2) ───────────────────────────────────────────────────────────────┐"
+    "┌ changes  (2/2) ──────────────────────────────────────────────────────────────┐"
     "│                                                                              │"
     "│   modified  modified_file.txt                                                │"
     "│>  modified  another_modified_file.txt                                        │"
@@ -1504,7 +1504,7 @@ fn max_scroll_for_diff_is_reset_when_change_list_is_reset() {
         .expect("frame should've been drawn");
 
     assert_snapshot!(terminal.backend(), @r#"
-    "┌ diff ────────────────────────────────────────────────────────────────────────┐"
+    "┌ diff  modified_file.txt ─────────────────────────────────────────────────────┐"
     "│                                                                              │"
     "│     10  |+line 10 (modified)                                                 │"
     "│ 11  11  | line 11                                                            │"
@@ -1515,7 +1515,7 @@ fn max_scroll_for_diff_is_reset_when_change_list_is_reset() {
     "│ 28  28  | line 28                                                            │"
     "│ 29  29  | line 29                                                            │"
     "└──────────────────────────────────────────────────────────────────────────────┘"
-    "┌ changes (1/1) ───────────────────────────────────────────────────────────────┐"
+    "┌ changes  (1/1) ──────────────────────────────────────────────────────────────┐"
     "│                                                                              │"
     "│>  modified  modified_file.txt                                                │"
     "│                                                                              │"
@@ -1548,7 +1548,7 @@ fn max_scroll_for_diff_is_reset_when_change_list_is_reset() {
 
     // THEN
     assert_snapshot!(terminal.backend(), @r#"
-    "┌ diff ────────────────────────────────────────────────────────────────────────┐"
+    "┌ diff  newly_modified_file.txt ───────────────────────────────────────────────┐"
     "│                                                                              │"
     "│ 1       |-old                                                                │"
     "│     1   |+new                                                                │"
@@ -1559,7 +1559,7 @@ fn max_scroll_for_diff_is_reset_when_change_list_is_reset() {
     "│                                                                              │"
     "│                                                                              │"
     "└──────────────────────────────────────────────────────────────────────────────┘"
-    "┌ changes (1/1) ───────────────────────────────────────────────────────────────┐"
+    "┌ changes  (1/1) ──────────────────────────────────────────────────────────────┐"
     "│                                                                              │"
     "│>  modified  newly_modified_file.txt                                          │"
     "│                                                                              │"
@@ -1612,7 +1612,7 @@ fn max_scroll_for_diff_is_recomputed_when_terminal_height_changes() {
         .draw(|f| view(&mut model, f))
         .expect("frame should've been drawn");
     assert_snapshot!(terminal.backend(), @r#"
-    "┌ diff ────────────────────────────────────────────────────────────────────────┐"
+    "┌ diff  modified_file.txt ─────────────────────────────────────────────────────┐"
     "│                                                                              │"
     "│ 3   3   | line 3                                                             │"
     "│ 4   4   | line 4                                                             │"
@@ -1629,7 +1629,7 @@ fn max_scroll_for_diff_is_recomputed_when_terminal_height_changes() {
     "│ 18  18  | line 18                                                            │"
     "│ 19  19  | line 19                                                            │"
     "└──────────────────────────────────────────────────────────────────────────────┘"
-    "┌ changes (1/1) ───────────────────────────────────────────────────────────────┐"
+    "┌ changes  (1/1) ──────────────────────────────────────────────────────────────┐"
     "│                                                                              │"
     "│>  modified  modified_file.txt                                                │"
     "│                                                                              │"
@@ -1656,7 +1656,7 @@ fn max_scroll_for_diff_is_recomputed_when_terminal_height_changes() {
         .draw(|f| view(&mut model, f))
         .expect("frame should've been drawn");
     assert_snapshot!(new_terminal.backend(), @r#"
-    "┌ diff ────────────────────────────────────────────────────────────────────────┐"
+    "┌ diff  modified_file.txt ─────────────────────────────────────────────────────┐"
     "│                                                                              │"
     "│ 3   3   | line 3                                                             │"
     "│ 4   4   | line 4                                                             │"
@@ -1667,7 +1667,7 @@ fn max_scroll_for_diff_is_recomputed_when_terminal_height_changes() {
     "│ 14  14  | line 14                                                            │"
     "│ 15      |-line 15                                                            │"
     "└──────────────────────────────────────────────────────────────────────────────┘"
-    "┌ changes (1/1) ───────────────────────────────────────────────────────────────┐"
+    "┌ changes  (1/1) ──────────────────────────────────────────────────────────────┐"
     "│                                                                              │"
     "│>  modified  modified_file.txt                                                │"
     "│                                                                              │"
@@ -1690,7 +1690,7 @@ fn max_scroll_for_diff_is_recomputed_when_terminal_height_changes() {
         .draw(|f| view(&mut model, f))
         .expect("frame should've been drawn");
     assert_snapshot!(new_terminal.backend(), @r#"
-    "┌ diff ────────────────────────────────────────────────────────────────────────┐"
+    "┌ diff  modified_file.txt ─────────────────────────────────────────────────────┐"
     "│                                                                              │"
     "│ 14  14  | line 14                                                            │"
     "│ 15      |-line 15                                                            │"
@@ -1701,7 +1701,7 @@ fn max_scroll_for_diff_is_recomputed_when_terminal_height_changes() {
     "│ 18  18  | line 18                                                            │"
     "│ 19  19  | line 19                                                            │"
     "└──────────────────────────────────────────────────────────────────────────────┘"
-    "┌ changes (1/1) ───────────────────────────────────────────────────────────────┐"
+    "┌ changes  (1/1) ──────────────────────────────────────────────────────────────┐"
     "│                                                                              │"
     "│>  modified  modified_file.txt                                                │"
     "│                                                                              │"
@@ -1741,7 +1741,7 @@ fn main_view_renders_removed_file_change() {
 
     // THEN
     assert_snapshot!(terminal.backend(), @r#"
-    "┌ diff ────────────────────────────────────────────────────────────────────────┐"
+    "┌ diff  deleted_file.txt ──────────────────────────────────────────────────────┐"
     "│                                                                              │"
     "│ file removed                                                                 │"
     "│                                                                              │"
@@ -1752,7 +1752,7 @@ fn main_view_renders_removed_file_change() {
     "│                                                                              │"
     "│                                                                              │"
     "└──────────────────────────────────────────────────────────────────────────────┘"
-    "┌ changes (1/1) ───────────────────────────────────────────────────────────────┐"
+    "┌ changes  (1/1) ──────────────────────────────────────────────────────────────┐"
     "│                                                                              │"
     "│>  removed   deleted_file.txt                                                 │"
     "│                                                                              │"
@@ -1792,7 +1792,7 @@ fn main_view_renders_created_file_with_error() {
 
     // THEN
     assert_snapshot!(terminal.backend(), @r#"
-    "┌ diff ────────────────────────────────────────────────────────────────────────┐"
+    "┌ diff  error_file.txt ────────────────────────────────────────────────────────┐"
     "│                                                                              │"
     "│ error reading file contents: Permission denied                               │"
     "│                                                                              │"
@@ -1803,7 +1803,7 @@ fn main_view_renders_created_file_with_error() {
     "│                                                                              │"
     "│                                                                              │"
     "└──────────────────────────────────────────────────────────────────────────────┘"
-    "┌ changes (1/1) ───────────────────────────────────────────────────────────────┐"
+    "┌ changes  (1/1) ──────────────────────────────────────────────────────────────┐"
     "│                                                                              │"
     "│>   error    error_file.txt                                                   │"
     "│                                                                              │"
@@ -1843,7 +1843,7 @@ fn main_view_renders_modified_file_with_error() {
 
     // THEN
     assert_snapshot!(terminal.backend(), @r#"
-    "┌ diff ────────────────────────────────────────────────────────────────────────┐"
+    "┌ diff  error_modified.txt ────────────────────────────────────────────────────┐"
     "│                                                                              │"
     "│ error reading file contents: File not found                                  │"
     "│                                                                              │"
@@ -1854,7 +1854,7 @@ fn main_view_renders_modified_file_with_error() {
     "│                                                                              │"
     "│                                                                              │"
     "└──────────────────────────────────────────────────────────────────────────────┘"
-    "┌ changes (1/1) ───────────────────────────────────────────────────────────────┐"
+    "┌ changes  (1/1) ──────────────────────────────────────────────────────────────┐"
     "│                                                                              │"
     "│>   error    error_modified.txt                                               │"
     "│                                                                              │"
@@ -1894,7 +1894,7 @@ fn main_view_renders_initial_snapshot_change() {
 
     // THEN
     assert_snapshot!(terminal.backend(), @r#"
-    "┌ diff ────────────────────────────────────────────────────────────────────────┐"
+    "┌ diff  snapshot_file.txt ─────────────────────────────────────────────────────┐"
     "│                                                                              │"
     "│ initial snapshot captured; diffs will be available from now onwards          │"
     "│                                                                              │"
@@ -1905,7 +1905,7 @@ fn main_view_renders_initial_snapshot_change() {
     "│                                                                              │"
     "│                                                                              │"
     "└──────────────────────────────────────────────────────────────────────────────┘"
-    "┌ changes (1/1) ───────────────────────────────────────────────────────────────┐"
+    "┌ changes  (1/1) ──────────────────────────────────────────────────────────────┐"
     "│                                                                              │"
     "│>  modified  snapshot_file.txt                                                │"
     "│                                                                              │"
@@ -1947,7 +1947,7 @@ fn changes_list_shows_item_count_in_title() {
 
     // THEN
     assert_snapshot!(terminal.backend(), @r#"
-    "┌ diff ────────────────────────────────────────────────────────────────────────┐"
+    "┌ diff  file0.txt ─────────────────────────────────────────────────────────────┐"
     "│                                                                              │"
     "│ test file contents                                                           │"
     "│                                                                              │"
@@ -1958,7 +1958,7 @@ fn changes_list_shows_item_count_in_title() {
     "│                                                                              │"
     "│                                                                              │"
     "└──────────────────────────────────────────────────────────────────────────────┘"
-    "┌ changes (1/3) ───────────────────────────────────────────────────────────────┐"
+    "┌ changes  (1/3) ──────────────────────────────────────────────────────────────┐"
     "│                                                                              │"
     "│>  created   file0.txt                                                        │"
     "│   created   file1.txt                                                        │"
@@ -1986,7 +1986,7 @@ fn changes_list_handles_long_file_paths() {
     );
 
     let change = Change {
-        file_path: "very/long/path/to/a/file/that/exceeds/normal/length/limits/file.txt"
+        file_path: "a/very/long/path/to/a/file/that/goes/beyond/the/terminal/width/dimension.txt"
             .to_string(),
         kind: ChangeKind::Created(Ok("test file contents".to_string())),
     };
@@ -1999,7 +1999,7 @@ fn changes_list_handles_long_file_paths() {
 
     // THEN
     assert_snapshot!(terminal.backend(), @r#"
-    "┌ diff ────────────────────────────────────────────────────────────────────────┐"
+    "┌ diff  a/very/long/path/to/a/file/that/goes/beyond/the/terminal/width/dimensio┐"
     "│                                                                              │"
     "│ test file contents                                                           │"
     "│                                                                              │"
@@ -2010,9 +2010,9 @@ fn changes_list_handles_long_file_paths() {
     "│                                                                              │"
     "│                                                                              │"
     "└──────────────────────────────────────────────────────────────────────────────┘"
-    "┌ changes (1/1) ───────────────────────────────────────────────────────────────┐"
+    "┌ changes  (1/1) ──────────────────────────────────────────────────────────────┐"
     "│                                                                              │"
-    "│>  created   very/long/path/to/a/file/that/exceeds/normal/length/limits/file.t│"
+    "│>  created   a/very/long/path/to/a/file/that/goes/beyond/the/terminal/width/di│"
     "│                                                                              │"
     "│                                                                              │"
     "│                                                                              │"
@@ -2317,7 +2317,7 @@ fn cursor_moves_automatically_when_following_enabled() {
 
     // THEN
     assert_snapshot!(terminal.backend(), @r#"
-    "┌ diff ────────────────────────────────────────────────────────────────────────┐"
+    "┌ diff  this-should-be-selected.txt ───────────────────────────────────────────┐"
     "│                                                                              │"
     "│ test file contents                                                           │"
     "│                                                                              │"
@@ -2328,7 +2328,7 @@ fn cursor_moves_automatically_when_following_enabled() {
     "│                                                                              │"
     "│                                                                              │"
     "└──────────────────────────────────────────────────────────────────────────────┘"
-    "┌ changes (2/2) ───────────────────────────────────────────────────────────────┐"
+    "┌ changes  (2/2) ──────────────────────────────────────────────────────────────┐"
     "│                                                                              │"
     "│   created   first.txt                                                        │"
     "│>  created   this-should-be-selected.txt                                      │"
@@ -2368,7 +2368,7 @@ fn cursor_moves_to_the_end_when_following_is_turned_on_after_a_while() {
         .draw(|f| view(&mut model, f))
         .expect("frame should've been drawn");
     assert_snapshot!(terminal.backend(), @r#"
-    "┌ diff ────────────────────────────────────────────────────────────────────────┐"
+    "┌ diff  file-1.txt ────────────────────────────────────────────────────────────┐"
     "│                                                                              │"
     "│ test file contents                                                           │"
     "│                                                                              │"
@@ -2379,7 +2379,7 @@ fn cursor_moves_to_the_end_when_following_is_turned_on_after_a_while() {
     "│                                                                              │"
     "│                                                                              │"
     "└──────────────────────────────────────────────────────────────────────────────┘"
-    "┌ changes (1/3) ───────────────────────────────────────────────────────────────┐"
+    "┌ changes  (1/3) ──────────────────────────────────────────────────────────────┐"
     "│                                                                              │"
     "│>  created   file-1.txt                                                       │"
     "│   created   file-2.txt                                                       │"
@@ -2404,7 +2404,7 @@ fn cursor_moves_to_the_end_when_following_is_turned_on_after_a_while() {
         .draw(|f| view(&mut model, f))
         .expect("frame should've been drawn");
     assert_snapshot!(terminal.backend(), @r#"
-    "┌ diff ────────────────────────────────────────────────────────────────────────┐"
+    "┌ diff  this-should-be-selected.txt ───────────────────────────────────────────┐"
     "│                                                                              │"
     "│ test file contents                                                           │"
     "│                                                                              │"
@@ -2415,7 +2415,7 @@ fn cursor_moves_to_the_end_when_following_is_turned_on_after_a_while() {
     "│                                                                              │"
     "│                                                                              │"
     "└──────────────────────────────────────────────────────────────────────────────┘"
-    "┌ changes (4/4) ───────────────────────────────────────────────────────────────┐"
+    "┌ changes  (4/4) ──────────────────────────────────────────────────────────────┐"
     "│                                                                              │"
     "│   created   file-1.txt                                                       │"
     "│   created   file-2.txt                                                       │"
@@ -2461,7 +2461,7 @@ fn cursor_doesnt_move_by_itself_when_following_disabled() {
 
     // THEN
     assert_snapshot!(terminal.backend(), @r#"
-    "┌ diff ────────────────────────────────────────────────────────────────────────┐"
+    "┌ diff  this-will-still-be-selected.txt ───────────────────────────────────────┐"
     "│                                                                              │"
     "│ test file contents                                                           │"
     "│                                                                              │"
@@ -2472,7 +2472,7 @@ fn cursor_doesnt_move_by_itself_when_following_disabled() {
     "│                                                                              │"
     "│                                                                              │"
     "└──────────────────────────────────────────────────────────────────────────────┘"
-    "┌ changes (1/2) ───────────────────────────────────────────────────────────────┐"
+    "┌ changes  (1/2) ──────────────────────────────────────────────────────────────┐"
     "│                                                                              │"
     "│>  created   this-will-still-be-selected.txt                                  │"
     "│   created   second.txt                                                       │"
@@ -2518,7 +2518,7 @@ fn scrolling_for_created_file_contents_doesnt_go_beyond_limits() {
         .draw(|f| view(&mut model, f))
         .expect("frame should've been drawn");
     assert_snapshot!(terminal.backend(), @r#"
-    "┌ diff ────────────────────────────────────────────────────────────────────────┐"
+    "┌ diff  created.txt ───────────────────────────────────────────────────────────┐"
     "│                                                                              │"
     "│ line 1                                                                       │"
     "│ line 2                                                                       │"
@@ -2529,7 +2529,7 @@ fn scrolling_for_created_file_contents_doesnt_go_beyond_limits() {
     "│ line 7                                                                       │"
     "│ line 8                                                                       │"
     "└──────────────────────────────────────────────────────────────────────────────┘"
-    "┌ changes (1/1) ───────────────────────────────────────────────────────────────┐"
+    "┌ changes  (1/1) ──────────────────────────────────────────────────────────────┐"
     "│                                                                              │"
     "│>  created   created.txt                                                      │"
     "│                                                                              │"
@@ -2551,7 +2551,7 @@ fn scrolling_for_created_file_contents_doesnt_go_beyond_limits() {
         .draw(|f| view(&mut model, f))
         .expect("frame should've been drawn");
     assert_snapshot!(terminal.backend(), @r#"
-    "┌ diff ────────────────────────────────────────────────────────────────────────┐"
+    "┌ diff  created.txt ───────────────────────────────────────────────────────────┐"
     "│                                                                              │"
     "│ line 3                                                                       │"
     "│ line 4                                                                       │"
@@ -2562,7 +2562,7 @@ fn scrolling_for_created_file_contents_doesnt_go_beyond_limits() {
     "│ line 9                                                                       │"
     "│ line 10                                                                      │"
     "└──────────────────────────────────────────────────────────────────────────────┘"
-    "┌ changes (1/1) ───────────────────────────────────────────────────────────────┐"
+    "┌ changes  (1/1) ──────────────────────────────────────────────────────────────┐"
     "│                                                                              │"
     "│>  created   created.txt                                                      │"
     "│                                                                              │"
@@ -2608,7 +2608,7 @@ fn max_scroll_for_created_file_contents_is_recomputed_when_terminal_height_chang
         .draw(|f| view(&mut model, f))
         .expect("frame should've been drawn");
     assert_snapshot!(terminal.backend(), @r#"
-    "┌ diff ────────────────────────────────────────────────────────────────────────┐"
+    "┌ diff  created.txt ───────────────────────────────────────────────────────────┐"
     "│                                                                              │"
     "│ line 6                                                                       │"
     "│ line 7                                                                       │"
@@ -2625,7 +2625,7 @@ fn max_scroll_for_created_file_contents_is_recomputed_when_terminal_height_chang
     "│ line 18                                                                      │"
     "│ line 19                                                                      │"
     "└──────────────────────────────────────────────────────────────────────────────┘"
-    "┌ changes (1/1) ───────────────────────────────────────────────────────────────┐"
+    "┌ changes  (1/1) ──────────────────────────────────────────────────────────────┐"
     "│                                                                              │"
     "│>  created   created.txt                                                      │"
     "│                                                                              │"
@@ -2652,7 +2652,7 @@ fn max_scroll_for_created_file_contents_is_recomputed_when_terminal_height_chang
         .draw(|f| view(&mut model, f))
         .expect("frame should've been drawn");
     assert_snapshot!(new_terminal.backend(), @r#"
-    "┌ diff ────────────────────────────────────────────────────────────────────────┐"
+    "┌ diff  created.txt ───────────────────────────────────────────────────────────┐"
     "│                                                                              │"
     "│ line 6                                                                       │"
     "│ line 7                                                                       │"
@@ -2663,7 +2663,7 @@ fn max_scroll_for_created_file_contents_is_recomputed_when_terminal_height_chang
     "│ line 12                                                                      │"
     "│ line 13                                                                      │"
     "└──────────────────────────────────────────────────────────────────────────────┘"
-    "┌ changes (1/1) ───────────────────────────────────────────────────────────────┐"
+    "┌ changes  (1/1) ──────────────────────────────────────────────────────────────┐"
     "│                                                                              │"
     "│>  created   created.txt                                                      │"
     "│                                                                              │"
@@ -2686,7 +2686,7 @@ fn max_scroll_for_created_file_contents_is_recomputed_when_terminal_height_chang
         .draw(|f| view(&mut model, f))
         .expect("frame should've been drawn");
     assert_snapshot!(new_terminal.backend(), @r#"
-    "┌ diff ────────────────────────────────────────────────────────────────────────┐"
+    "┌ diff  created.txt ───────────────────────────────────────────────────────────┐"
     "│                                                                              │"
     "│ line 13                                                                      │"
     "│ line 14                                                                      │"
@@ -2697,7 +2697,7 @@ fn max_scroll_for_created_file_contents_is_recomputed_when_terminal_height_chang
     "│ line 19                                                                      │"
     "│ line 20                                                                      │"
     "└──────────────────────────────────────────────────────────────────────────────┘"
-    "┌ changes (1/1) ───────────────────────────────────────────────────────────────┐"
+    "┌ changes  (1/1) ──────────────────────────────────────────────────────────────┐"
     "│                                                                              │"
     "│>  created   created.txt                                                      │"
     "│                                                                              │"
@@ -2912,7 +2912,7 @@ fn showing_debug_info_works() {
 
     // THEN
     assert_snapshot!(terminal.backend(), @r#"
-    "┌ diff ──────────────────────────────────────────────────────────────────────────────────┐"
+    "┌ diff  created.txt ─────────────────────────────────────────────────────────────────────┐"
     "│                                                                                        │"
     "│ line 1                                                                                 │"
     "│ line 2                                                                                 │"
@@ -2923,7 +2923,7 @@ fn showing_debug_info_works() {
     "│                                                                                        │"
     "│                                                                                        │"
     "└────────────────────────────────────────────────────────────────────────────────────────┘"
-    "┌ changes (1/1) ─────────────────────────────────────────────────────────────────────────┐"
+    "┌ changes  (1/1) ────────────────────────────────────────────────────────────────────────┐"
     "│                                                                                        │"
     "│>  created   created.txt                                                                │"
     "│                                                                                        │"

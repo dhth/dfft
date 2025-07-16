@@ -359,6 +359,16 @@ impl Model {
         }
     }
 
+    pub(super) fn current_file_path(&self) -> Option<&str> {
+        if let Some(i) = self.changes.state.selected()
+            && let Some(change) = self.changes.items.get(i)
+        {
+            Some(&change.change.file_path)
+        } else {
+            None
+        }
+    }
+
     pub(super) fn get_cancellation_token(&self) -> CancellationToken {
         self.cancellation_token.clone()
     }
