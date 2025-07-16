@@ -138,6 +138,13 @@ impl From<&ChangeItem> for ListItem<'_> {
     }
 }
 
+#[cfg(feature = "sound")]
+enum AudioHandler {
+    NotInitialized,
+    Available(AudioPlayer),
+    Unavailable,
+}
+
 pub struct Model {
     pub behaviours: TuiBehaviours,
     pub root: PathBuf,
@@ -162,7 +169,7 @@ pub struct Model {
     pub diff_scroll: usize,
     pub max_diff_scroll_available: usize,
     #[cfg(feature = "sound")]
-    pub audio_player: Result<Option<AudioPlayer>, ()>,
+    audio_handler: AudioHandler,
 }
 
 impl Model {
@@ -176,19 +183,6 @@ impl Model {
             || terminal_dimensions.height < MIN_TERMINAL_HEIGHT;
 
         let (changes_tx, changes_rx) = mpsc::channel::<WatchUpdate>(100);
-
-        #[cfg(feature = "sound")]
-        let audio_player = if behaviours.play_sound {
-            match AudioPlayer::new() {
-                Ok(ap) => Ok(Some(ap)),
-                Err(e) => {
-                    warn!("couldn't set up audio player: {e}");
-                    Err(())
-                }
-            }
-        } else {
-            Ok(None)
-        };
 
         let mut model = Model {
             behaviours,
@@ -214,7 +208,7 @@ impl Model {
             diff_scroll: 0,
             max_diff_scroll_available: 0,
             #[cfg(feature = "sound")]
-            audio_player,
+            audio_handler: AudioHandler::NotInitialized,
         };
 
         model.compute_max_help_scroll_available();
@@ -344,10 +338,8 @@ impl Model {
 
     pub(super) fn add_change(&mut self, change: Change) {
         #[cfg(feature = "sound")]
-        if let Ok(Some(ap)) = &self.audio_player
-            && self.behaviours.play_sound
-        {
-            ap.play_change_sound(&change.kind);
+        if self.behaviours.play_sound {
+            self.play_change_sound(&change.kind);
         }
 
         self.changes.append(change, self.behaviours.follow_changes);
@@ -355,15 +347,6 @@ impl Model {
         if self.behaviours.follow_changes || self.changes.items.len() == 1 {
             self.reset_diff_scroll();
             self.compute_max_diff_scroll_available();
-        }
-    }
-
-    pub(super) fn play_error_sound(&self) {
-        #[cfg(feature = "sound")]
-        if let Ok(Some(ap)) = &self.audio_player
-            && self.behaviours.play_sound
-        {
-            ap.play_error_sound();
         }
     }
 
@@ -503,32 +486,51 @@ impl Model {
     }
 
     #[cfg(feature = "sound")]
-    pub(super) fn toggle_sound(&mut self) {
-        match &self.audio_player {
-            Ok(Some(_)) => {
-                self.behaviours.play_sound = !self.behaviours.play_sound;
-            }
-            Ok(None) => {
-                self.audio_player = match AudioPlayer::new() {
-                    Ok(ap) => Ok(Some(ap)),
-                    Err(e) => {
-                        warn!("couldn't set up audio player: {e}");
-                        Err(())
-                    }
-                };
+    fn play_change_sound(&mut self, change_kind: &ChangeKind) {
+        if matches!(&self.audio_handler, AudioHandler::NotInitialized) {
+            self.initialize_audio_player();
+        }
 
-                if let Ok(Some(_)) = &self.audio_player {
-                    self.behaviours.play_sound = true;
-                }
-            }
-            Err(_) => {
-                self.user_msg = Some(UserMsg::error("sound notifications are unavailable"));
-            }
+        if let AudioHandler::Available(ap) = &self.audio_handler {
+            ap.play_change_sound(change_kind)
         }
     }
 
     #[cfg(feature = "sound")]
+    pub(super) fn play_error_sound(&mut self) {
+        if matches!(&self.audio_handler, AudioHandler::NotInitialized) {
+            self.initialize_audio_player();
+        }
+
+        if let AudioHandler::Available(ap) = &self.audio_handler {
+            ap.play_error_sound()
+        }
+    }
+
+    #[cfg(feature = "sound")]
+    pub(super) fn toggle_sound(&mut self) {
+        self.behaviours.play_sound = !self.behaviours.play_sound;
+    }
+
+    #[cfg(feature = "sound")]
     pub(super) fn is_sound_unavailable(&self) -> bool {
-        self.audio_player.is_err()
+        matches!(&self.audio_handler, AudioHandler::Unavailable)
+    }
+
+    #[cfg(feature = "sound")]
+    #[cfg(test)]
+    pub(super) fn make_sound_unavailable(&mut self) {
+        self.audio_handler = AudioHandler::Unavailable;
+    }
+
+    #[cfg(feature = "sound")]
+    fn initialize_audio_player(&mut self) {
+        self.audio_handler = match AudioPlayer::new() {
+            Ok(ap) => AudioHandler::Available(ap),
+            Err(e) => {
+                warn!("couldn't set up audio player: {e}");
+                AudioHandler::Unavailable
+            }
+        };
     }
 }

@@ -61,12 +61,18 @@ pub fn update(model: &mut Model, msg: Msg) -> Vec<Cmd> {
         // this is just to trigger a render of TUI
         Msg::PrepopulationFinished => {}
         Msg::PrepopulationFailed(e) => {
-            model.play_error_sound();
+            #[cfg(feature = "sound")]
+            if model.behaviours.play_sound {
+                model.play_error_sound();
+            }
             model.behaviours.watch = false;
             model.user_msg = Some(UserMsg::error(format!("prepopulating changes failed: {e}")));
         }
         Msg::WatchingFailed(e) => {
-            model.play_error_sound();
+            #[cfg(feature = "sound")]
+            if model.behaviours.play_sound {
+                model.play_error_sound();
+            }
             model.behaviours.watch = false;
             model.user_msg = Some(UserMsg::error(format!("watching for changes failed: {e}")));
         }

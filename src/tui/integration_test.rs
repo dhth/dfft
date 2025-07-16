@@ -2848,7 +2848,7 @@ fn sound_unavailable_indicator_is_shown_when_applicable() {
         false,
     );
     model.behaviours.play_sound = true;
-    model.audio_player = Err(());
+    model.make_sound_unavailable();
 
     // WHEN
     terminal
