@@ -1,4 +1,4 @@
-use super::helpers::{get_ignore, is_file_to_be_ignored, is_file_too_large};
+use super::helpers::{get_ignore, is_file_too_large, is_path_to_be_ignored};
 use crate::domain::{Change, ChangeKind, Diff, FileCache, Modification, WatchUpdate};
 use anyhow::Context;
 use ignore::{Walk, gitignore::Gitignore};
@@ -86,7 +86,7 @@ pub async fn watch_for_changes(
                                 EventKind::Create(CreateKind::File) => {
                                     for event_path in &event.paths {
                                         debug!("got create event, path: {}", &event_path.to_string_lossy());
-                                        if is_file_to_be_ignored(event_path, &gitignore).await {
+                                        if is_path_to_be_ignored(event_path, &gitignore).await {
                                             continue;
                                         }
 
@@ -136,7 +136,7 @@ pub async fn watch_for_changes(
                                 EventKind::Modify(modify_kind) => {
                                     for event_path in &event.paths {
                                         debug!("got modify event, path: {}", &event_path.to_string_lossy());
-                                        if is_file_to_be_ignored(event_path, &gitignore).await {
+                                        if is_path_to_be_ignored(event_path, &gitignore).await {
                                             continue;
                                         }
 
@@ -238,7 +238,7 @@ pub async fn watch_for_changes(
                                 EventKind::Remove(RemoveKind::File) => {
                                     for event_path in &event.paths {
                                         debug!("got delete event, path: {}", &event_path.to_string_lossy());
-                                        if is_file_to_be_ignored(event_path, &gitignore).await {
+                                        if is_path_to_be_ignored(event_path, &gitignore).await {
                                             continue;
                                         }
 
@@ -271,7 +271,7 @@ pub async fn watch_for_changes(
                                 EventKind::Remove(RemoveKind::Folder) => {
                                     for event_path in &event.paths {
                                         debug!("got delete event for a folder, path: {}", &event_path.to_string_lossy());
-                                        if is_file_to_be_ignored(event_path, &gitignore).await {
+                                        if is_path_to_be_ignored(event_path, &gitignore).await {
                                             continue;
                                         }
 
@@ -342,7 +342,7 @@ where
             continue;
         }
 
-        if is_file_to_be_ignored(path, gitignore).await {
+        if is_path_to_be_ignored(path, gitignore).await {
             continue;
         }
 

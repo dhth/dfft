@@ -49,7 +49,7 @@ where
     ))
 }
 
-pub(super) async fn is_file_to_be_ignored<P>(path: P, gitignore: &Option<Gitignore>) -> bool
+pub(super) async fn is_path_to_be_ignored<P>(path: P, gitignore: &Option<Gitignore>) -> bool
 where
     P: AsRef<Path>,
 {
@@ -60,22 +60,22 @@ where
         return true;
     }
 
-    if is_extension_to_be_ignored(&path).unwrap_or(true) {
+    if is_extension_to_be_ignored(&path) {
         return true;
     }
 
     false
 }
 
-fn is_extension_to_be_ignored<P>(path: P) -> anyhow::Result<bool>
+fn is_extension_to_be_ignored<P>(path: P) -> bool
 where
     P: AsRef<Path>,
 {
     if let Some(ext) = path.as_ref().extension() {
         let ext = ext.to_string_lossy().to_lowercase();
-        Ok(EXTENSIONS_TO_IGNORE.contains(&ext.as_str()))
+        EXTENSIONS_TO_IGNORE.contains(&ext.as_str())
     } else {
-        Ok(false)
+        false
     }
 }
 
