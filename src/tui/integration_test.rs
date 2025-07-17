@@ -333,7 +333,7 @@ fn diff_pane_doesnt_scroll_beyond_limits() {
     let diff = Diff::new(&old, &new).expect("diff should've been created");
 
     let change = Change {
-        file_path: "modified_file.txt".to_string(),
+        path: "modified_file.txt".to_string(),
         kind: ChangeKind::Modified(Ok(Modification::Diff(diff))),
     };
     update(&mut model, Msg::ChangeReceived(change));
@@ -609,7 +609,7 @@ fn main_view_renders_created_file_change() {
     );
 
     let change = Change {
-        file_path: "new_file.txt".to_string(),
+        path: "new_file.txt".to_string(),
         kind: ChangeKind::Created(Ok("test file contents".to_string())),
     };
     update(&mut model, Msg::ChangeReceived(change));
@@ -674,7 +674,7 @@ line 2
     )
     .expect("diff should've been generated");
     let change = Change {
-        file_path: "modified_file.txt".to_string(),
+        path: "modified_file.txt".to_string(),
         kind: ChangeKind::Modified(Ok(Modification::Diff(diff))),
     };
     update(&mut model, Msg::ChangeReceived(change));
@@ -819,7 +819,7 @@ fn selecting_first_change_from_diff_pane_works() {
 
     for i in 1..=20 {
         let change = Change {
-            file_path: format!("file-{i}.txt"),
+            path: format!("file-{i}.txt"),
             kind: ChangeKind::Created(Ok(format!("file {i} contents"))),
         };
         update(&mut model, Msg::ChangeReceived(change));
@@ -909,7 +909,7 @@ fn selecting_first_change_from_changes_pane_works() {
 
     for i in 1..=20 {
         let change = Change {
-            file_path: format!("file-{i}.txt"),
+            path: format!("file-{i}.txt"),
             kind: ChangeKind::Created(Ok(format!("file {i} contents"))),
         };
         update(&mut model, Msg::ChangeReceived(change));
@@ -998,7 +998,7 @@ fn selecting_last_change_from_diff_pane_works() {
 
     for i in 1..=20 {
         let change = Change {
-            file_path: format!("file-{i}.txt"),
+            path: format!("file-{i}.txt"),
             kind: ChangeKind::Created(Ok(format!("file {i} contents"))),
         };
         update(&mut model, Msg::ChangeReceived(change));
@@ -1055,7 +1055,7 @@ fn selecting_last_change_from_changes_pane_works() {
 
     for i in 1..=20 {
         let change = Change {
-            file_path: format!("file-{i}.txt"),
+            path: format!("file-{i}.txt"),
             kind: ChangeKind::Created(Ok(format!("file {i} contents"))),
         };
         update(&mut model, Msg::ChangeReceived(change));
@@ -1122,7 +1122,7 @@ fn diff_pane_renders_diff_with_several_hunks_correctly() {
     let diff = Diff::new(&old, &new).expect("diff should've been created");
 
     let change = Change {
-        file_path: "modified_file.txt".to_string(),
+        path: "modified_file.txt".to_string(),
         kind: ChangeKind::Modified(Ok(Modification::Diff(diff))),
     };
     update(&mut model, Msg::ChangeReceived(change));
@@ -1196,7 +1196,7 @@ fn scrolling_diff_by_a_line_works() {
     let diff = Diff::new(&old, &new).expect("diff should've been created");
 
     let change = Change {
-        file_path: "modified_file.txt".to_string(),
+        path: "modified_file.txt".to_string(),
         kind: ChangeKind::Modified(Ok(Modification::Diff(diff))),
     };
     update(&mut model, Msg::ChangeReceived(change));
@@ -1327,7 +1327,7 @@ fn scrolling_diff_by_half_a_page_works() {
     let diff = Diff::new(&old, &new).expect("diff should've been created");
 
     let change = Change {
-        file_path: "modified_file.txt".to_string(),
+        path: "modified_file.txt".to_string(),
         kind: ChangeKind::Modified(Ok(Modification::Diff(diff))),
     };
     update(&mut model, Msg::ChangeReceived(change));
@@ -1453,7 +1453,7 @@ fn diff_scroll_is_reset_when_follow_mode_is_on() {
     let diff = Diff::new(&old, &new).expect("diff should've been created");
 
     let change = Change {
-        file_path: "modified_file.txt".to_string(),
+        path: "modified_file.txt".to_string(),
         kind: ChangeKind::Modified(Ok(Modification::Diff(diff))),
     };
     update(&mut model, Msg::ChangeReceived(change));
@@ -1501,7 +1501,7 @@ fn diff_scroll_is_reset_when_follow_mode_is_on() {
     let diff = Diff::new(&old, &new).expect("diff should've been created");
 
     let change = Change {
-        file_path: "another_modified_file.txt".to_string(),
+        path: "another_modified_file.txt".to_string(),
         kind: ChangeKind::Modified(Ok(Modification::Diff(diff))),
     };
     update(&mut model, Msg::ChangeReceived(change));
@@ -1561,7 +1561,7 @@ fn diff_scroll_is_reset_when_another_change_is_selected() {
     let diff = Diff::new(&old, &new).expect("diff should've been created");
 
     let change = Change {
-        file_path: "modified_file.txt".to_string(),
+        path: "modified_file.txt".to_string(),
         kind: ChangeKind::Modified(Ok(Modification::Diff(diff))),
     };
     update(&mut model, Msg::ChangeReceived(change));
@@ -1578,7 +1578,7 @@ fn diff_scroll_is_reset_when_another_change_is_selected() {
     let diff = Diff::new(&old, &new).expect("diff should've been created");
 
     let change = Change {
-        file_path: "another_modified_file.txt".to_string(),
+        path: "another_modified_file.txt".to_string(),
         kind: ChangeKind::Modified(Ok(Modification::Diff(diff))),
     };
     update(&mut model, Msg::ChangeReceived(change));
@@ -1670,7 +1670,7 @@ fn max_scroll_for_diff_is_reset_when_change_list_is_reset() {
     let diff = Diff::new(&old, &new).expect("diff should've been created");
 
     let change = Change {
-        file_path: "modified_file.txt".to_string(),
+        path: "modified_file.txt".to_string(),
         kind: ChangeKind::Modified(Ok(Modification::Diff(diff))),
     };
     update(&mut model, Msg::ChangeReceived(change));
@@ -1714,7 +1714,7 @@ fn max_scroll_for_diff_is_reset_when_change_list_is_reset() {
     let diff = Diff::new("old", "new").expect("diff should've been created");
 
     let change = Change {
-        file_path: "newly_modified_file.txt".to_string(),
+        path: "newly_modified_file.txt".to_string(),
         kind: ChangeKind::Modified(Ok(Modification::Diff(diff))),
     };
     update(&mut model, Msg::ChangeReceived(change));
@@ -1777,7 +1777,7 @@ fn max_scroll_for_diff_is_recomputed_when_terminal_height_changes() {
     let diff = Diff::new(&old, &new).expect("diff should've been created");
 
     let change = Change {
-        file_path: "modified_file.txt".to_string(),
+        path: "modified_file.txt".to_string(),
         kind: ChangeKind::Modified(Ok(Modification::Diff(diff))),
     };
     update(&mut model, Msg::ChangeReceived(change));
@@ -1908,8 +1908,8 @@ fn main_view_renders_removed_file_change() {
     );
 
     let change = Change {
-        file_path: "deleted_file.txt".to_string(),
-        kind: ChangeKind::Removed,
+        path: "deleted_file.txt".to_string(),
+        kind: ChangeKind::RemovedFile,
     };
     update(&mut model, Msg::ChangeReceived(change));
 
@@ -1959,7 +1959,7 @@ fn main_view_renders_created_file_with_error() {
     );
 
     let change = Change {
-        file_path: "error_file.txt".to_string(),
+        path: "error_file.txt".to_string(),
         kind: ChangeKind::Created(Err("Permission denied".to_string())),
     };
     update(&mut model, Msg::ChangeReceived(change));
@@ -2010,7 +2010,7 @@ fn main_view_renders_modified_file_with_error() {
     );
 
     let change = Change {
-        file_path: "error_modified.txt".to_string(),
+        path: "error_modified.txt".to_string(),
         kind: ChangeKind::Modified(Err("File not found".to_string())),
     };
     update(&mut model, Msg::ChangeReceived(change));
@@ -2061,7 +2061,7 @@ fn main_view_renders_initial_snapshot_change() {
     );
 
     let change = Change {
-        file_path: "snapshot_file.txt".to_string(),
+        path: "snapshot_file.txt".to_string(),
         kind: ChangeKind::Modified(Ok(Modification::InitialSnapshot)),
     };
     update(&mut model, Msg::ChangeReceived(change));
@@ -2113,7 +2113,7 @@ fn changes_list_shows_item_count_in_title() {
 
     for i in 0..3 {
         let change = Change {
-            file_path: format!("file{i}.txt"),
+            path: format!("file{i}.txt"),
             kind: ChangeKind::Created(Ok("test file contents".to_string())),
         };
         update(&mut model, Msg::ChangeReceived(change));
@@ -2165,7 +2165,7 @@ fn changes_list_handles_long_file_paths() {
     );
 
     let change = Change {
-        file_path: "a/very/long/path/to/a/file/that/goes/beyond/the/terminal/width/dimension.txt"
+        path: "a/very/long/path/to/a/file/that/goes/beyond/the/terminal/width/dimension.txt"
             .to_string(),
         kind: ChangeKind::Created(Ok("test file contents".to_string())),
     };
@@ -2478,13 +2478,13 @@ fn cursor_moves_automatically_when_following_enabled() {
     update(&mut model, Msg::ToggleFollowChanges);
 
     let change = Change {
-        file_path: "first.txt".to_string(),
+        path: "first.txt".to_string(),
         kind: ChangeKind::Created(Ok("test file contents".to_string())),
     };
     update(&mut model, Msg::ChangeReceived(change));
 
     let change = Change {
-        file_path: "this-should-be-selected.txt".to_string(),
+        path: "this-should-be-selected.txt".to_string(),
         kind: ChangeKind::Created(Ok("test file contents".to_string())),
     };
     update(&mut model, Msg::ChangeReceived(change));
@@ -2538,7 +2538,7 @@ fn cursor_moves_to_the_end_when_following_is_turned_on_after_a_while() {
     // THEN
     for i in 1..=3 {
         let change = Change {
-            file_path: format!("file-{i}.txt"),
+            path: format!("file-{i}.txt"),
             kind: ChangeKind::Created(Ok("test file contents".to_string())),
         };
         update(&mut model, Msg::ChangeReceived(change));
@@ -2575,7 +2575,7 @@ fn cursor_moves_to_the_end_when_following_is_turned_on_after_a_while() {
 
     update(&mut model, Msg::ToggleFollowChanges);
     let change = Change {
-        file_path: "this-should-be-selected.txt".to_string(),
+        path: "this-should-be-selected.txt".to_string(),
         kind: ChangeKind::Created(Ok("test file contents".to_string())),
     };
     update(&mut model, Msg::ChangeReceived(change));
@@ -2622,13 +2622,13 @@ fn cursor_doesnt_move_by_itself_when_following_disabled() {
     );
 
     let change = Change {
-        file_path: "this-will-still-be-selected.txt".to_string(),
+        path: "this-will-still-be-selected.txt".to_string(),
         kind: ChangeKind::Created(Ok("test file contents".to_string())),
     };
     update(&mut model, Msg::ChangeReceived(change));
 
     let change = Change {
-        file_path: "second.txt".to_string(),
+        path: "second.txt".to_string(),
         kind: ChangeKind::Created(Ok("test file contents".to_string())),
     };
     update(&mut model, Msg::ChangeReceived(change));
@@ -2683,7 +2683,7 @@ fn scrolling_for_created_file_contents_doesnt_go_beyond_limits() {
         .join("\n");
 
     let change = Change {
-        file_path: "created.txt".to_string(),
+        path: "created.txt".to_string(),
         kind: ChangeKind::Created(Ok(contents)),
     };
     update(&mut model, Msg::ChangeReceived(change));
@@ -2773,7 +2773,7 @@ fn max_scroll_for_created_file_contents_is_recomputed_when_terminal_height_chang
         .join("\n");
 
     let change = Change {
-        file_path: "created.txt".to_string(),
+        path: "created.txt".to_string(),
         kind: ChangeKind::Created(Ok(contents)),
     };
     update(&mut model, Msg::ChangeReceived(change));
@@ -2936,7 +2936,7 @@ fn max_scroll_for_diff_doesnt_change_when_only_terminal_width_changes() {
     let diff = Diff::new(&old, &new).expect("diff should've been created");
 
     let change = Change {
-        file_path: "modified_file.txt".to_string(),
+        path: "modified_file.txt".to_string(),
         kind: ChangeKind::Modified(Ok(Modification::Diff(diff))),
     };
     update(&mut model, Msg::ChangeReceived(change));
@@ -2997,7 +2997,7 @@ fn max_scroll_for_diff_is_recomputed_when_terminal_size_crosses_minimum_threshol
     let diff = Diff::new(&old, &new).expect("diff should've been created");
 
     let change = Change {
-        file_path: "modified_file.txt".to_string(),
+        path: "modified_file.txt".to_string(),
         kind: ChangeKind::Modified(Ok(Modification::Diff(diff))),
     };
     update(&mut model, Msg::ChangeReceived(change));
@@ -3079,7 +3079,7 @@ fn showing_debug_info_works() {
         .join("\n");
 
     let change = Change {
-        file_path: "created.txt".to_string(),
+        path: "created.txt".to_string(),
         kind: ChangeKind::Created(Ok(contents)),
     };
     update(&mut model, Msg::ChangeReceived(change));
