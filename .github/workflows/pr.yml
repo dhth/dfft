@@ -69,7 +69,7 @@ jobs:
       - name: Check formatting
         run: cargo fmt --all -- --check
       - name: Lint (${{ matrix.features.name }})
-        run: cargo clippy ${{ matrix.features.flags }}
+        run: cargo clippy --all-targets ${{ matrix.features.flags }}
 
   build:
     needs: changes
