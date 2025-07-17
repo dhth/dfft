@@ -2,6 +2,9 @@
   <h1 align="center">dfft</h1>
   <p align="center">
     <a href="https://github.com/dhth/dfft/actions/workflows/main.yml"><img alt="Build status" src="https://img.shields.io/github/actions/workflow/status/dhth/dfft/main.yml?style=flat-square"></a>
+    <a href="https://crates.io/crates/dfft"><img alt="crates.io" src="https://img.shields.io/crates/v/dfft?style=flat-square"></a>
+    <a href="https://github.com/dhth/dfft/releases/latest"><img alt="Latest Release" src="https://img.shields.io/github/release/dhth/dfft.svg?style=flat-square"></a>
+    <a href="https://github.com/dhth/dfft/releases"><img alt="Commits Since Latest Release" src="https://img.shields.io/github/commits-since/dhth/dfft/latest?style=flat-square"></a>
   </p>
 </p>
 
@@ -31,11 +34,21 @@ lets me catch issues early.
 💾 Installation
 ---
 
+**homebrew**:
+
+```sh
+brew install dhth/tap/dfft
+```
+
 **cargo**:
 
 ```sh
-cargo install --git https://github.com/dhth/dfft.git
+cargo install dfft
 ```
+
+Or get the binaries directly from a Github [release][1]. Read more about
+verifying the authenticity of released artifacts
+[here](#-verifying-release-artifacts).
 
 ⚡️ Usage
 ---
@@ -66,7 +79,7 @@ needed. If you prefer to not use sound notifications at all, you can build a
 version of `dfft` that has no audio dependencies using the following.
 
 ```bash
-cargo install --no-default-features --git https://github.com/dhth/dfft.git
+cargo install --no-default-features dfft
 ```
 
 📟 TUI
@@ -139,3 +152,45 @@ Ignoring files
 By default, `dfft` will consider `.gitignore` and `.git/info/exclude` files when
 deciding which files to ignore. Additionally, you can create a `.dfftignore`
 file to exclude paths that are not covered by the previous two.
+
+🔐 Verifying release artifacts
+---
+
+In case you get the `dfft` binary directly from a [release][1], you may want to
+verify its authenticity. Checksums are applied to all released artifacts, and
+the resulting checksum file is attested using [Github Attestations][2].
+
+Steps to verify (replace `A.B.C` in the commands below with the version you
+want):
+
+1. Download the sha256 checksum file for your platform from the release:
+
+   ```shell
+   curl -sSLO https://github.com/dhth/dfft/releases/download/vA.B.C/dfft-x86_64-unknown-linux-gnu.tar.xz.sha256
+   ```
+
+2. Verify the integrity of the checksum file using [gh][3].
+
+   ```shell
+   gh attestation verify dfft-x86_64-unknown-linux-gnu.tar.xz.sha256 --repo dhth/dfft
+   ```
+
+3. Download the compressed archive you want, and validate its checksum:
+
+   ```shell
+   curl -sSLO https://github.com/dhth/dfft/releases/download/vA.B.C/dfft-x86_64-unknown-linux-gnu.tar.xz
+   sha256sum --ignore-missing -c dfft-x86_64-unknown-linux-gnu.tar.xz.sha256
+   ```
+
+3. If checksum validation goes through, uncompress the archive:
+
+   ```shell
+   tar -xzf dfft-x86_64-unknown-linux-gnu.tar.xz
+   cd dfft-x86_64-unknown-linux-gnu
+   ./dfft
+   # profit!
+   ```
+
+[1]: https://github.com/dhth/dfft/releases
+[2]: https://github.blog/news-insights/product-news/introducing-artifact-attestations-now-in-public-beta/
+[3]: https://github.com/cli/cli
