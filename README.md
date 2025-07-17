@@ -5,10 +5,10 @@
   </p>
 </p>
 
-`dfft` (short for "diff-trail") watches for changes to files in a directory and
-displays them in a TUI as they happen.
+`dfft` (short for "diff-trail") lets you monitor changes as AI agents modify
+your codebase.
 
-![dfft](https://github.com/user-attachments/assets/4f2b4182-87cb-47a4-bfb1-0aa45a8a24d0)
+![usage](https://tools.dhruvs.space/images/dfft/v0-1-0/dfft.gif)
 
 🤔 Motivation
 ---
