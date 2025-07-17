@@ -7,6 +7,7 @@ use std::path::Path;
 const GITIGNORE_PATH: &str = ".gitignore";
 const DFFTIGNORE_PATH: &str = ".dfftignore";
 const MAX_FILE_SIZE: u64 = 1024 * 1024; // 1MB
+const VCS_DIRS: [&str; 4] = [".git", ".jj", ".hg", ".svn"];
 
 pub(super) fn get_ignore<P>(root: P) -> anyhow::Result<Option<Gitignore>>
 where
@@ -20,6 +21,9 @@ where
     ];
 
     let mut builder = GitignoreBuilder::new(&root);
+    for vcs_dir in VCS_DIRS {
+        let _ = builder.add_line(None, vcs_dir);
+    }
 
     let mut skip = true;
     for path in &ignore_paths {
