@@ -305,7 +305,11 @@ fn render_status_line(model: &Model, frame: &mut Frame, rect: Rect) {
         && n > 0
     {
         status_bar_lines.push(Span::styled(
-            format!(" [{n} snapshots in memory]"),
+            if n == 1 {
+                " [1 snapshot in memory]".to_string()
+            } else {
+                format!(" [{n} snapshots in memory]")
+            },
             Style::default().fg(SNAPSHOTS_COLOR).bold(),
         ));
     }
