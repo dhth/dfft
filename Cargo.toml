@@ -1,10 +1,10 @@
 [package]
 name = "dfft"
-version = "0.1.0-alpha.1"
+version = "0.1.0"
 edition = "2024"
 license = "MIT"
 repository = "https://github.com/dhth/dfft"
-description = "see changes to files in a directory as they happen"
+description = "monitor changes as AI agents modify your codebase"
 homepage = "https://tools.dhruvs.space/dfft/"
 keywords = [
     "cli",
@@ -15,6 +15,8 @@ categories = [
 ]
 exclude = [
     ".github",
+    "docker-compose.yml",
+    "justfile",
 ]
 
 [features]
