@@ -8,7 +8,7 @@ pub enum WatchUpdate {
 
 #[derive(Clone, Debug)]
 pub struct Change {
-    pub file_path: String,
+    pub path: String,
     pub kind: ChangeKind,
 }
 
@@ -16,7 +16,8 @@ pub struct Change {
 pub enum ChangeKind {
     Created(Result<String, String>),
     Modified(Result<Modification, String>),
-    Removed,
+    RemovedFile,
+    RemovedDir,
 }
 
 #[derive(Clone, Debug)]

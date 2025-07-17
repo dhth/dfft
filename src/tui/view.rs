@@ -157,7 +157,8 @@ fn render_diff_pane(model: &mut Model, frame: &mut Frame, rect: Rect) {
                     ChangeKind::Modified(Err(e)) => {
                         vec![Line::raw(format!("error reading file contents: {e}"))]
                     }
-                    ChangeKind::Removed => vec![Line::raw("file removed")],
+                    ChangeKind::RemovedFile => vec![Line::raw("file removed")],
+                    ChangeKind::RemovedDir => vec![Line::raw("directory removed")],
                 },
                 None => vec![Line::raw("something went wrong")],
             };

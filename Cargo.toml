@@ -38,7 +38,7 @@ tracing = "0.1.41"
 tracing-subscriber = { version = "0.3.19", features = ["env-filter"] }
 
 [dev-dependencies]
-insta = "1.43.1"
+insta = { version = "1.43.1", features = ["yaml"] }
 insta-cmd = "0.6.0"
 strip-ansi-escapes = "0.2.1"
 

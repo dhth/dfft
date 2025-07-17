@@ -28,7 +28,7 @@ impl AudioPlayer {
         let sound_data = match change_kind {
             ChangeKind::Created(_) => CREATE_SOUND,
             ChangeKind::Modified { .. } => MODIFY_SOUND,
-            ChangeKind::Removed => REMOVE_SOUND,
+            ChangeKind::RemovedFile | ChangeKind::RemovedDir => REMOVE_SOUND,
         };
 
         self.play_sound(sound_data);

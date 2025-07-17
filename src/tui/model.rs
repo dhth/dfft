@@ -130,13 +130,13 @@ impl From<&ChangeItem> for ListItem<'_> {
             ChangeKind::Created(Err(_)) => (ERROR_LABEL, FILE_ERROR_COLOR),
             ChangeKind::Modified(Ok(_)) => (MODIFIED_LABEL, MODIFICATION_COLOR),
             ChangeKind::Modified(Err(_)) => (ERROR_LABEL, FILE_ERROR_COLOR),
-            ChangeKind::Removed => (REMOVED_LABEL, SUBTRACTION_COLOR),
+            ChangeKind::RemovedFile | ChangeKind::RemovedDir => (REMOVED_LABEL, SUBTRACTION_COLOR),
         };
 
         let line = Line::from(vec![
             Span::styled(label, Style::default().bg(color).black().bold()),
             " ".into(),
-            Span::from(value.change.file_path.clone()),
+            Span::from(value.change.path.clone()),
         ]);
 
         ListItem::new(line)
@@ -364,7 +364,7 @@ impl Model {
             .state
             .selected()
             .and_then(|i| self.changes.items.get(i))
-            .map(|item| item.change.file_path.as_str())
+            .map(|item| item.change.path.as_str())
     }
 
     pub(super) fn get_cancellation_token(&self) -> CancellationToken {
