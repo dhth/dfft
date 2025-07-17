@@ -19,7 +19,7 @@ fn showing_help_works() {
     success: true
     exit_code: 0
     ----- stdout -----
-    see changes to files in a directory as they happen
+    monitor changes as AI agents modify your codebase
 
     Usage: dfft [OPTIONS] <COMMAND>
 
