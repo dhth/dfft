@@ -5,8 +5,8 @@
   </p>
 </p>
 
-`dfft` (short for "diff-trail") watches for changes to files in a directory, and
-outputs them as they happen.
+`dfft` (short for "diff-trail") watches for changes to files in a directory and
+displays them in a TUI as they happen.
 
 ![dfft](https://github.com/user-attachments/assets/4f2b4182-87cb-47a4-bfb1-0aa45a8a24d0)
 
@@ -20,7 +20,13 @@ to see if they're on the right track, or just because I'm curious about their
 approach. Most agentic tools will print the changes they make as they make them,
 but more often than not, the output gets scrolled out of view pretty fast. I
 wanted a fast and simple tool that would let me peruse the changes made by these
-agents at my own pace via a keyboard driven TUI. So, I wrote `dfft`.
+agents at my own pace via a keyboard driven TUI.
+
+`dfft` came out of my attempts at finding a good balance between letting AI
+agents operate freely and having control over every little change in my
+codebases. The hope is that the added transparency `dfft` provides helps me
+understand the process AI agents follow when implementing a change, and also
+lets me catch issues early.
 
 💾 Installation
 ---
