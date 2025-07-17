@@ -288,7 +288,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          repository: "dht/homebrew-tap"
+          repository: "dhth/homebrew-tap"
           token: ${{ secrets.HOMEBREW_TAP_TOKEN }}
       # So we have access to the formula
       - name: Fetch homebrew formulae
@@ -335,3 +335,12 @@ jobs:
       - uses: actions/checkout@v4
         with:
           submodules: recursive
+
+  custom-publish-crates:
+    needs:
+      - plan
+      - announce
+    uses: ./.github/workflows/publish-crates.yml
+    with:
+      plan: ${{ needs.plan.outputs.val }}
+    secrets: inherit
