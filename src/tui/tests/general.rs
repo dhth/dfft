@@ -1,7 +1,7 @@
 use super::super::TuiBehaviours;
 use super::super::model::{Model, UserMsg};
-use super::helpers::{get_test_terminal, get_test_terminal_with_dims};
 use super::super::{msg::Msg, update::update, view::view};
+use super::helpers::{get_test_terminal, get_test_terminal_with_dims};
 use crate::domain::{Change, ChangeKind, Modification};
 use insta::assert_snapshot;
 use std::path::PathBuf;

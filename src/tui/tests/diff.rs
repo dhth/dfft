@@ -1,8 +1,8 @@
 use super::super::TuiBehaviours;
 use super::super::common::{Pane, TerminalDimensions};
 use super::super::model::Model;
-use super::helpers::{get_test_terminal, get_test_terminal_with_dims};
 use super::super::{msg::Msg, update::update, view::view};
+use super::helpers::{get_test_terminal, get_test_terminal_with_dims};
 use crate::domain::{Change, ChangeKind, Diff, Modification};
 use insta::assert_snapshot;
 use std::path::PathBuf;
