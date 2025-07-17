@@ -191,7 +191,7 @@ mod tests {
         let result = cache.remove_directory("src/");
 
         // THEN
-        assert_eq!(result, true);
+        assert!(result);
         assert_yaml_snapshot!(cache.paths(), @"- tests/test.rs");
     }
 
@@ -208,7 +208,7 @@ mod tests {
         let result = cache.remove_directory("src/");
 
         // THEN
-        assert_eq!(result, true);
+        assert!(result);
         assert_yaml_snapshot!(cache.paths(), @r"
         - project/src/main.rs
         - some_src/main.rs
@@ -226,7 +226,7 @@ mod tests {
         let result = cache.remove_directory("nonexistent/");
 
         // THEN
-        assert_eq!(result, false);
+        assert!(!result);
         assert_yaml_snapshot!(cache.paths(), @"- file.txt");
     }
 
@@ -239,7 +239,7 @@ mod tests {
         let result = cache.remove_directory("any/");
 
         // THEN
-        assert_eq!(result, false);
+        assert!(!result);
         assert_yaml_snapshot!(cache.paths(), @"[]");
     }
 
@@ -257,7 +257,7 @@ mod tests {
         let result = cache.remove_directory("project/");
 
         // THEN
-        assert_eq!(result, true);
+        assert!(result);
         assert_yaml_snapshot!(cache.paths(), @"- other/file.rs");
     }
 
@@ -275,7 +275,7 @@ mod tests {
         let result = cache.remove_directory("project/src/");
 
         // THEN
-        assert_eq!(result, true);
+        assert!(result);
         assert_yaml_snapshot!(cache.paths(), @r"
         - other/file.rs
         - project/Cargo.toml
@@ -293,14 +293,14 @@ mod tests {
         // WHEN
         // THEN
         let result = cache.remove_directory("");
-        assert_eq!(result, false);
+        assert!(!result);
         assert_yaml_snapshot!(cache.paths(), @r"
         - dir/file2.txt
         - file1.txt
         ");
 
         let result = cache.remove_directory("/");
-        assert_eq!(result, false);
+        assert!(!result);
         assert_yaml_snapshot!(cache.paths(), @r"
         - dir/file2.txt
         - file1.txt
@@ -319,7 +319,7 @@ mod tests {
         let result = cache.remove_directory("src/");
 
         // THEN
-        assert_eq!(result, true);
+        assert!(result);
         assert_yaml_snapshot!(cache.paths(), @r"
         - SRC/main.rs
         - sRc/main.rs
@@ -340,7 +340,7 @@ mod tests {
         let result = cache.remove_directory("app/");
 
         // THEN
-        assert_eq!(result, true);
+        assert!(result);
         assert_yaml_snapshot!(cache.paths(), @r"
         - app_test/src/test.rs
         - myapp/src/other.rs
@@ -360,7 +360,7 @@ mod tests {
         let result = cache.remove_directory("src");
 
         // THEN
-        assert_eq!(result, true);
+        assert!(result);
         assert_yaml_snapshot!(cache.paths(), @"- tests/test.rs");
     }
 
@@ -378,7 +378,7 @@ mod tests {
         let result = cache.remove_directory("app");
 
         // THEN
-        assert_eq!(result, true);
+        assert!(result);
         assert_yaml_snapshot!(cache.paths(), @r"
         - application/config.rs
         - myapp/config.rs
@@ -414,7 +414,7 @@ mod tests {
         let result = cache.remove_directory("src\\");
 
         // THEN
-        assert_eq!(result, true);
+        assert!(result);
         assert_yaml_snapshot!(cache.paths(), @"- tests/test.rs");
     }
 
@@ -430,7 +430,7 @@ mod tests {
         let result = cache.remove_directory("src");
 
         // THEN
-        assert_eq!(result, true);
+        assert!(result);
         assert_yaml_snapshot!(cache.paths(), @"- src_backup/main.rs");
     }
 
@@ -447,7 +447,7 @@ mod tests {
         let result = cache.remove_directory("project/src");
 
         // THEN
-        assert_eq!(result, true);
+        assert!(result);
         assert_yaml_snapshot!(cache.paths(), @"- project/tests/test.rs");
     }
 }

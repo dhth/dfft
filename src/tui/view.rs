@@ -43,8 +43,8 @@ Y88b 888 888    888    Y88b.
  "Y88888 888    888     "Y888
 
 
-see changes to files in a directory as they happen
-‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾
+will show you changes in this directory as they happen
+‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾
 
 In the diff pane:
 - use j/k/↓/↑ to scroll diff
@@ -63,7 +63,7 @@ const BANNER_SMALL: &str = r#"
 dfft
 ‾‾‾‾
 
-see changes to files in a directory as they happen
+will show you changes in this directory as they happen
 "#;
 
 pub fn view(model: &mut Model, frame: &mut Frame) {
