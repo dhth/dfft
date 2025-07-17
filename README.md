@@ -8,7 +8,7 @@
 `dfft` (short for "diff-trail") watches for changes to files in a directory, and
 outputs them as they happen.
 
-![dfft](https://github.com/user-attachments/assets/667ea732-c9f1-4623-a7d3-3fa4ffacbae1)
+![dfft](https://github.com/user-attachments/assets/4f2b4182-87cb-47a4-bfb1-0aa45a8a24d0)
 
 🤔 Motivation
 ---
