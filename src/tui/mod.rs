@@ -3,10 +3,10 @@ mod behaviours;
 mod cmd;
 mod common;
 mod handle;
-#[cfg(test)]
-mod integration_test;
 mod model;
 mod msg;
+#[cfg(test)]
+mod tests;
 mod update;
 mod view;
 
