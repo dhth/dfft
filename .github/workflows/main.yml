@@ -171,7 +171,7 @@ jobs:
   publish-check:
     needs: changes
     if: ${{ needs.changes.outputs.publish == 'true' }}
-    runs-on: ubuntu-latest
+    runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
       - name: Install toolchain
