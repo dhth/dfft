@@ -46,14 +46,10 @@ Y88b 888 888    888    Y88b.
 will show you changes in this directory as they happen
 ‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾
 
-In the diff pane:
-- use j/k/↓/↑ to scroll diff
-- use h/l/←/→ to move between changes
+Press h/l/↓/↑ to move between changes
+Press J/K/<c-d>/<c-u> to scroll diff
 
-In the changes pane:
-- use j/k/↓/↑ to move between changes
-
-Tab/<S-Tab>/J/K to move between panes
+Press Tab/<S-Tab> to move between panes
 
 Press ? for help
 "#;
@@ -186,7 +182,6 @@ fn render_diff_pane(model: &mut Model, frame: &mut Frame, rect: Rect) {
                         .title(Line::from(title_spans))
                         .padding(Padding::new(1, 0, 1, 0)),
                 )
-                .style(Style::new().white().on_black())
                 .alignment(Alignment::Left)
         }
         None => Paragraph::new(if model.terminal_dimensions.height >= 30 {
