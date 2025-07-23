@@ -46,10 +46,10 @@ Y88b 888 888    888    Y88b.
 will show you changes in this directory as they happen
 ‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾
 
-Press h/l/↓/↑ to move between changes
+Press j/k/↓/↑ to move between changes
 Press J/K/<c-d>/<c-u> to scroll diff
 
-Press Tab/<S-Tab> to move between panes
+Press tab/<s-tab> to move between panes
 
 Press ? for help
 "#;
