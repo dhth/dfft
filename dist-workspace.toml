@@ -21,7 +21,6 @@ publish-jobs = ["homebrew"]
 install-updater = false
 # Post-announce jobs to run in CI
 post-announce-jobs = ["./publish-crates"]
-pr-run-mode = "upload"
 # CI dependencies
 [dist.dependencies.apt]
 libasound2-dev = { version = '*', stage = ["build"] }
