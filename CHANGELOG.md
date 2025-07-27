@@ -12,4 +12,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Show correct keymaps on banner
 
 [unreleased]: https://github.com/dhth/dfft/compare/v0.1.1...HEAD
-[v0.1.0]: https://github.com/dhth/dfft/commits/v0.1.0/
+[v0.1.1]: https://github.com/dhth/dfft/compare/v0.1.0...v0.1.1
