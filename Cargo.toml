@@ -1,6 +1,6 @@
 [package]
 name = "dfft"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2024"
 license = "MIT"
 repository = "https://github.com/dhth/dfft"
@@ -15,6 +15,7 @@ categories = [
 ]
 exclude = [
     ".github",
+    "deny.toml",
     "docker-compose.yml",
     "justfile",
 ]
