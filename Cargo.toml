@@ -31,7 +31,7 @@ console = "0.16.0"
 rodio = { version = "0.21.1", default-features = false, features = ["playback", "wav"], optional = true }
 etcetera = "0.10.0"
 ignore = "0.4.23"
-notify = "8.1.0"
+notify = "8.2.0"
 notify-debouncer-full = "0.5.0"
 ratatui = "0.29.0"
 similar = { version = "2.7.0", features = [ "inline" ] }
