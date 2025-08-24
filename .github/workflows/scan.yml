@@ -1,7 +1,6 @@
 name: scan
 
 on:
-  pull_request:
   workflow_dispatch:
   schedule:
     - cron: '0 6 11 * *'
@@ -125,7 +124,6 @@ jobs:
             ${{ steps.cargo-dist.outputs.paths }}
             ${{ env.BUILD_MANIFEST_NAME }}
 
-  # Determines if we should publish/announce
   host:
     needs:
       - plan
@@ -167,7 +165,6 @@ jobs:
           # Overwrite the previous copy
           name: artifacts-dist-manifest
           path: dist-manifest.json
-      # Create a GitHub Release while uploading all files to it
       - name: "Download GitHub Artifacts"
         uses: actions/download-artifact@v4
         with:
