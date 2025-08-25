@@ -19,7 +19,7 @@ jobs:
       yml: ${{ steps.filter.outputs.yml }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - uses: dorny/paths-filter@v3
         id: filter
         with:
@@ -62,7 +62,7 @@ jobs:
     name: lint-${{ matrix.features.name }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Install system dependencies
         if: matrix.features.install_sound_deps
         run: sudo apt-get update && sudo apt-get install -y libasound2-dev
@@ -92,7 +92,7 @@ jobs:
     name: build-${{ matrix.os }}-${{ matrix.features.name }}
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Install system dependencies (Ubuntu)
         if: matrix.os == 'ubuntu-latest' && matrix.features.install_sound_deps
         run: sudo apt-get update && sudo apt-get install -y libasound2-dev
@@ -118,7 +118,7 @@ jobs:
     name: test-${{ matrix.os }}-${{ matrix.features.name }}
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Install system dependencies (Ubuntu)
         if: matrix.os == 'ubuntu-latest' && matrix.features.install_sound_deps
         run: sudo apt-get update && sudo apt-get install -y libasound2-dev
@@ -139,7 +139,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - uses: dhth/composite-actions/.github/actions/lint-yaml@main
 
   lint-workflows:
@@ -148,7 +148,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - uses: dhth/composite-actions/.github/actions/lint-actions@main
 
   dstlled-diff:
@@ -159,7 +159,7 @@ jobs:
       contents: read
       pull-requests: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 0
       - id: get-dstlled-diff
@@ -175,7 +175,7 @@ jobs:
     if: ${{ needs.changes.outputs.deps == 'true' }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Install toolchain
         uses: actions-rust-lang/setup-rust-toolchain@v1
       - name: Install cargo-deny
@@ -190,7 +190,7 @@ jobs:
     if: ${{ needs.changes.outputs.publish == 'true' }}
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Install toolchain
         uses: actions-rust-lang/setup-rust-toolchain@v1
       - name: cargo publish check
