@@ -4,8 +4,6 @@ updates:
     directory: "/"
     schedule:
       interval: "monthly"
-    exclude-paths:
-      - ".github/workflows/scan.yml"
     labels:
       - "dependencies"
     commit-message:
