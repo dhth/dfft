@@ -25,7 +25,7 @@ default = ["sound"]
 sound = ["dep:rodio"]
 
 [dependencies]
-anyhow = "1.0.99"
+anyhow = "1.0.100"
 clap = { version = "4.5.47", features = ["derive"] }
 console = "0.16.1"
 rodio = { version = "0.21.1", default-features = false, features = ["playback", "wav"], optional = true }
