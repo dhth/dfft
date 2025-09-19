@@ -5,7 +5,6 @@ updates:
     schedule:
       interval: "monthly"
     exclude-paths:
-      - ".github/workflows/release.yml"
       - ".github/workflows/scan.yml"
     labels:
       - "dependencies"
@@ -19,3 +18,6 @@ updates:
       - "dependencies"
     commit-message:
       prefix: "ci"
+    exclude-paths:
+      - .github/workflows/release.yml
+      - .github/workflows/scan.yml
