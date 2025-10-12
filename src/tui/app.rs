@@ -7,9 +7,10 @@ use super::msg::{Msg, get_event_handling_msg};
 use super::update::update;
 use super::view::view;
 use crate::domain::WatchUpdate;
-use ratatui::Terminal;
+use anyhow::Context;
 use ratatui::backend::CrosstermBackend;
 use ratatui::crossterm::event::poll;
+use ratatui::{Terminal, try_restore};
 use std::path::PathBuf;
 use std::time::Duration;
 use tokio::sync::mpsc;
@@ -50,7 +51,20 @@ impl AppTui {
         })
     }
 
-    pub async fn run(&mut self) -> anyhow::Result<()> {
+    async fn run(&mut self) -> anyhow::Result<()> {
+        let result = self.run_inner().await;
+        self.model.pause_watching();
+
+        if let Err(restore_err) = try_restore()
+            && result.is_ok()
+        {
+            return Err(restore_err).context("couldn't restore terminal to its original state");
+        }
+
+        result
+    }
+
+    async fn run_inner(&mut self) -> anyhow::Result<()> {
         let _ = self.terminal.clear();
 
         // first render
@@ -119,12 +133,6 @@ impl AppTui {
             }
         }
 
-        self.exit()
-    }
-
-    fn exit(&mut self) -> anyhow::Result<()> {
-        self.model.pause_watching();
-        ratatui::try_restore()?;
         Ok(())
     }
 }
