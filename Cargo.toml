@@ -30,7 +30,7 @@ clap = { version = "4.5.48", features = ["derive"] }
 console = "0.16.1"
 rodio = { version = "0.21.1", default-features = false, features = ["playback", "wav"], optional = true }
 etcetera = "0.11.0"
-ignore = "0.4.23"
+ignore = "0.4.25"
 notify = "8.2.0"
 notify-debouncer-full = "0.6.0"
 ratatui = "0.29.0"
