@@ -3,7 +3,12 @@ updates:
   - package-ecosystem: cargo
     directory: "/"
     schedule:
-      interval: "monthly"
+      interval: monthly
+    groups:
+      patch-updates:
+        update-types: ["patch"]
+      minor-updates:
+        update-types: ["minor"]
     labels:
       - "dependencies"
     commit-message:
@@ -11,11 +16,11 @@ updates:
   - package-ecosystem: github-actions
     directory: "/"
     schedule:
-      interval: "monthly"
+      interval: monthly
+    exclude-paths:
+      - .github/workflows/release.yml
+      - .github/workflows/scan.yml
     labels:
       - "dependencies"
     commit-message:
       prefix: "ci"
-    exclude-paths:
-      - .github/workflows/release.yml
-      - .github/workflows/scan.yml
