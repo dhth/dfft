@@ -36,7 +36,7 @@ notify-debouncer-full = "0.6.0"
 ratatui = "0.29.0"
 similar = { version = "2.7.0", features = [ "inline" ] }
 tokio = { version = "1.48.0", features = ["fs", "macros", "rt-multi-thread", "sync", "time"] }
-tokio-util = "0.7.16"
+tokio-util = "0.7.17"
 tracing = "0.1.41"
 tracing-subscriber = { version = "0.3.20", features = ["env-filter"] }
 
