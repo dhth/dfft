@@ -4,7 +4,7 @@ use crate::domain::{Change, ChangeKind, FileCache, Modification, WatchUpdate};
 #[cfg(feature = "sound")]
 use crate::notifs::AudioPlayer;
 use ratatui::{
-    style::{Style, Stylize},
+    style::Style,
     text::{Line, Span},
     widgets::{ListItem, ListState},
 };
@@ -118,7 +118,7 @@ impl Changes {
             }
         };
 
-        self.state = self.state.clone().with_selected(selected);
+        self.state = self.state.with_selected(selected);
     }
 }
 
