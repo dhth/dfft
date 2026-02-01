@@ -32,7 +32,7 @@ rodio = { version = "0.21.1", default-features = false, features = ["playback", 
 etcetera = "0.11.0"
 ignore = "0.4.25"
 notify = "8.2.0"
-notify-debouncer-full = "0.6.0"
+notify-debouncer-full = "0.7.0"
 ratatui = "0.30.0"
 similar = { version = "2.7.0", features = [ "inline" ] }
 tokio = { version = "1.49.0", features = ["fs", "macros", "rt-multi-thread", "sync", "time"] }
