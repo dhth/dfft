@@ -28,7 +28,7 @@ sound = ["dep:rodio"]
 anyhow = "1.0.100"
 clap = { version = "4.5.56", features = ["derive"] }
 console = "0.16.2"
-rodio = { version = "0.21.1", default-features = false, features = ["playback", "wav"], optional = true }
+rodio = { version = "0.22.1", default-features = false, features = ["playback", "wav"], optional = true }
 etcetera = "0.11.0"
 ignore = "0.4.25"
 notify = "8.2.0"
