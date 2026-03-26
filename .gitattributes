@@ -1,1 +1,2 @@
-*justfile linguist-vendored
+* linguist-detectable=false
+*.rs linguist-detectable=true
