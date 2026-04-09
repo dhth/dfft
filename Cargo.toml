@@ -25,9 +25,9 @@ default = ["sound"]
 sound = ["dep:rodio"]
 
 [dependencies]
-anyhow = "1.0.100"
+anyhow = "1.0.102"
 clap = { version = "4.5.56", features = ["derive"] }
-console = "0.16.2"
+console = "0.16.3"
 rodio = { version = "0.21.1", default-features = false, features = ["playback", "wav"], optional = true }
 etcetera = "0.11.0"
 ignore = "0.4.25"
@@ -38,7 +38,7 @@ similar = { version = "2.7.0", features = [ "inline" ] }
 tokio = { version = "1.49.0", features = ["fs", "macros", "rt-multi-thread", "sync", "time"] }
 tokio-util = "0.7.18"
 tracing = "0.1.44"
-tracing-subscriber = { version = "0.3.22", features = ["env-filter"] }
+tracing-subscriber = { version = "0.3.23", features = ["env-filter"] }
 
 [dev-dependencies]
 insta = { version = "1.46.2", features = ["yaml"] }
