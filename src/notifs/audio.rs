@@ -1,7 +1,7 @@
 use crate::domain::ChangeKind;
 use anyhow::Context;
 use rodio::mixer::Mixer;
-use rodio::{Decoder, OutputStream, OutputStreamBuilder, Sink};
+use rodio::{Decoder, DeviceSinkBuilder, MixerDeviceSink, Player};
 use std::io::Cursor;
 use tracing::error;
 
@@ -11,16 +11,16 @@ const REMOVE_SOUND: &[u8] = include_bytes!("assets/remove.wav");
 const ERROR_SOUND: &[u8] = include_bytes!("assets/error.wav");
 
 pub struct AudioPlayer {
-    stream: OutputStream,
+    sink: MixerDeviceSink,
 }
 
 impl AudioPlayer {
     pub fn new() -> anyhow::Result<Self> {
-        let mut stream = OutputStreamBuilder::open_default_stream()
+        let mut sink = DeviceSinkBuilder::open_default_sink()
             .context("couldn't open default output stream")?;
-        stream.log_on_drop(false);
+        sink.log_on_drop(false);
 
-        Ok(AudioPlayer { stream })
+        Ok(AudioPlayer { sink })
     }
 
     pub fn play_change_sound(&self, change_kind: &ChangeKind) {
@@ -39,7 +39,7 @@ impl AudioPlayer {
 
     fn play_sound(&self, sound_data: &'static [u8]) {
         if tokio::runtime::Handle::try_current().is_ok() {
-            let mixer = self.stream.mixer().clone();
+            let mixer = self.sink.mixer().clone();
 
             tokio::task::spawn_blocking(move || {
                 if let Err(e) = try_playing_sound(sound_data, &mixer) {
@@ -51,12 +51,12 @@ impl AudioPlayer {
 }
 
 fn try_playing_sound(sound_data: &'static [u8], mixer: &Mixer) -> anyhow::Result<()> {
-    let sink = Sink::connect_new(mixer);
+    let player = Player::connect_new(mixer);
     let cursor = Cursor::new(sound_data);
     let source = Decoder::new(cursor)?;
 
-    sink.append(source);
-    sink.sleep_until_end();
+    player.append(source);
+    player.sleep_until_end();
 
     Ok(())
 }
