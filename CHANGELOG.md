@@ -5,11 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v0.1.2] - May 16, 2026
+
+### Changed
+
+- Maintenance release with dependency and toolchain updates and no functional changes
+
 ## [v0.1.1] - Jul 27, 2025
 
 ### Fixed
 
 - Show correct keymaps on banner
 
-[unreleased]: https://github.com/dhth/dfft/compare/v0.1.1...HEAD
+[unreleased]: https://github.com/dhth/dfft/compare/v0.1.2...HEAD
+[v0.1.2]: https://github.com/dhth/dfft/compare/v0.1.1...v0.1.2
 [v0.1.1]: https://github.com/dhth/dfft/compare/v0.1.0...v0.1.1
